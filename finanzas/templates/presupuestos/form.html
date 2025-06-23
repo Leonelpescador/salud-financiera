@@ -1,0 +1,409 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ titulo }} - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h1>{{ titulo }}</h1>
+        <a href="{% url 'presupuestos_lista' %}" class="btn-back">← Volver a Presupuestos</a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="budget-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Información básica -->
+                <div class="form-section">
+                    <h3>📋 Información Básica</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}">Nombre del Presupuesto *</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="error-message">{{ form.nombre.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="error-message">{{ form.descripcion.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.monto_objetivo.id_for_label }}">Monto Objetivo *</label>
+                            {{ form.monto_objetivo }}
+                            {% if form.monto_objetivo.errors %}
+                                <div class="error-message">{{ form.monto_objetivo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.periodo.id_for_label }}">Período *</label>
+                            {{ form.periodo }}
+                            {% if form.periodo.errors %}
+                                <div class="error-message">{{ form.periodo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fechas -->
+                <div class="form-section">
+                    <h3>📅 Período del Presupuesto</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.fecha_inicio.id_for_label }}">Fecha de Inicio *</label>
+                            {{ form.fecha_inicio }}
+                            {% if form.fecha_inicio.errors %}
+                                <div class="error-message">{{ form.fecha_inicio.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.fecha_fin.id_for_label }}">Fecha de Fin *</label>
+                            {{ form.fecha_fin }}
+                            {% if form.fecha_fin.errors %}
+                                <div class="error-message">{{ form.fecha_fin.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categorías -->
+                <div class="form-section">
+                    <h3>📂 Categorías a Controlar</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.categorias.id_for_label }}">Seleccionar Categorías *</label>
+                        <div class="categories-selector">
+                            {{ form.categorias }}
+                        </div>
+                        {% if form.categorias.errors %}
+                            <div class="error-message">{{ form.categorias.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-help">Selecciona las categorías que quieres controlar en este presupuesto</small>
+                    </div>
+                </div>
+
+                <!-- Configuración -->
+                <div class="form-section">
+                    <h3>⚙️ Configuración</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.estado.id_for_label }}">Estado</label>
+                        {{ form.estado }}
+                        {% if form.estado.errors %}
+                            <div class="error-message">{{ form.estado.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.icono.id_for_label }}">Icono</label>
+                            {{ form.icono }}
+                            {% if form.icono.errors %}
+                                <div class="error-message">{{ form.icono.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.color.id_for_label }}">Color</label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                                <div class="error-message">{{ form.color.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                {{ form.notificar_al_80 }}
+                                <span class="checkmark"></span>
+                                Notificar al 80% del presupuesto
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                {{ form.notificar_al_100 }}
+                                <span class="checkmark"></span>
+                                Notificar al 100% del presupuesto
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {% if presupuesto %}Actualizar Presupuesto{% else %}Crear Presupuesto{% endif %}
+                </button>
+                <a href="{% url 'presupuestos_lista' %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .form-header h1 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .btn-back {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .btn-back:hover {
+        color: #2980b9;
+        text-decoration: none;
+    }
+
+    .form-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        gap: 30px;
+    }
+
+    .form-section {
+        border: 1px solid #ecf0f1;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .form-group input[type="color"] {
+        height: 50px;
+        padding: 5px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .categories-selector {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .categories-selector select {
+        border: none;
+        padding: 0;
+        height: auto;
+    }
+
+    .form-help {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    /* Checkboxes personalizados */
+    .checkbox-group {
+        margin-top: 10px;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .form-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    // Auto-completar fecha de fin basado en el período seleccionado
+    document.addEventListener('DOMContentLoaded', function() {
+        const periodoSelect = document.getElementById('{{ form.periodo.id_for_label }}');
+        const fechaInicio = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
+        const fechaFin = document.getElementById('{{ form.fecha_fin.id_for_label }}');
+
+        function calcularFechaFin() {
+            if (fechaInicio.value && periodoSelect.value) {
+                const inicio = new Date(fechaInicio.value);
+                let fin = new Date(inicio);
+
+                switch (periodoSelect.value) {
+                    case 'mensual':
+                        fin.setMonth(fin.getMonth() + 1);
+                        break;
+                    case 'trimestral':
+                        fin.setMonth(fin.getMonth() + 3);
+                        break;
+                    case 'semestral':
+                        fin.setMonth(fin.getMonth() + 6);
+                        break;
+                    case 'anual':
+                        fin.setFullYear(fin.getFullYear() + 1);
+                        break;
+                }
+
+                // Restar un día para que sea el último día del período
+                fin.setDate(fin.getDate() - 1);
+                
+                fechaFin.value = fin.toISOString().split('T')[0];
+            }
+        }
+
+        periodoSelect.addEventListener('change', calcularFechaFin);
+        fechaInicio.addEventListener('change', calcularFechaFin);
+    });
+</script>
+{% endblock %} 

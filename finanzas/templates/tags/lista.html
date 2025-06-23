@@ -1,0 +1,205 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Tags - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="tags-container">
+    <div class="page-header">
+        <h1>Tags</h1>
+        <a href="{% url 'tag_crear' %}" class="btn-primary">
+            <span>➕</span> Nuevo Tag
+        </a>
+    </div>
+
+    {% if tags %}
+        <div class="tags-grid">
+            {% for tag in tags %}
+            <div class="tag-card">
+                <div class="tag-color" style="background-color: {{ tag.color }};"></div>
+                <div class="tag-info">
+                    <h3>#{{ tag.nombre }}</h3>
+                    <p>Creado: {{ tag.fecha_creacion|date:"d/m/Y" }}</p>
+                </div>
+                <div class="tag-actions">
+                    <a href="{% url 'tag_editar' tag.pk %}" class="btn-edit">✏️ Editar</a>
+                    <a href="{% url 'tag_eliminar' tag.pk %}" class="btn-delete">🗑️ Eliminar</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🏷️</div>
+            <h3>No hay tags</h3>
+            <p>Aún no has creado ningún tag. Los tags te ayudan a organizar mejor tus transacciones.</p>
+            <a href="{% url 'tag_crear' %}" class="btn-primary">Crear Primer Tag</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .tags-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .btn-primary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #3498db;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+
+    .tags-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .tag-card {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: transform 0.3s ease;
+    }
+
+    .tag-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .tag-color {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .tag-info {
+        flex: 1;
+    }
+
+    .tag-info h3 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1.2rem;
+    }
+
+    .tag-info p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .tag-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        padding: 6px 12px;
+        border-radius: 15px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-edit {
+        background: #f39c12;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: #e67e22;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c0392b;
+        color: white;
+        text-decoration: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .tags-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tag-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .tag-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %} 

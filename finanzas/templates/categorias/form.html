@@ -1,0 +1,294 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ titulo }} - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="page-header">
+        <h1>{{ titulo }}</h1>
+        <a href="{% url 'categorias_lista' %}" class="btn-secondary">
+            ← Volver a Categorías
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="category-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Información Básica -->
+                <div class="form-section">
+                    <h3>Información Básica</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}">Nombre *</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="error-message">{{ form.nombre.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="error-message">{{ form.descripcion.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Descripción opcional de la categoría</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.tipo.id_for_label }}">Tipo *</label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}
+                            <div class="error-message">{{ form.tipo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Personalización -->
+                <div class="form-section">
+                    <h3>Personalización</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.icono.id_for_label }}">Icono *</label>
+                        {{ form.icono }}
+                        {% if form.icono.errors %}
+                            <div class="error-message">{{ form.icono.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Emoji o símbolo para representar la categoría</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.color.id_for_label }}">Color *</label>
+                        <div class="color-picker-container">
+                            {{ form.color }}
+                            <div class="color-preview" id="color-preview"></div>
+                        </div>
+                        {% if form.color.errors %}
+                            <div class="error-message">{{ form.color.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Color para identificar la categoría</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores generales -->
+            {% if form.non_field_errors %}
+                <div class="error-message general-error">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {% if categoria %}Actualizar{% else %}Crear{% endif %} Categoría
+                </button>
+                <a href="{% url 'categorias_lista' %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .form-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .general-error {
+        background: #fdf2f2;
+        border: 1px solid #fecaca;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* Color picker */
+    .color-picker-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .color-picker-container input[type="color"] {
+        width: 60px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        background: #3498db;
+    }
+
+    /* Botones */
+    .btn-primary {
+        background: #3498db;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Actualizar preview del color
+    document.getElementById('{{ form.color.id_for_label }}').addEventListener('input', function() {
+        document.getElementById('color-preview').style.backgroundColor = this.value;
+    });
+
+    // Inicializar preview del color
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInput = document.getElementById('{{ form.color.id_for_label }}');
+        const colorPreview = document.getElementById('color-preview');
+        if (colorInput.value) {
+            colorPreview.style.backgroundColor = colorInput.value;
+        }
+    });
+</script>
+{% endblock %} 

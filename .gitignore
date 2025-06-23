@@ -1,0 +1,52 @@
+# Archivo .gitignore para un proyecto Django
+
+### Entorno Virtual ###
+# Ignora la carpeta del entorno virtual. Es la regla más importante.
+venv/
+env/
+
+### Archivos de configuración local y secretos ###
+# Nunca subas tus variables de entorno (contraseñas, claves secretas)
+.env
+*.env
+
+### Base de Datos ###
+# Ignora la base de datos de desarrollo local
+db.sqlite3
+db.sqlite3-journal
+
+### Archivos generados por Python y Django ###
+# Ignora la caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de sesión de Django
+*.log
+celerybeat-schedule
+
+### Archivos Estáticos y de Medios ###
+# Ignora los archivos estáticos que se recolectan para producción
+# La carpeta "static" de tus apps sí debe estar en el repositorio
+staticfiles/
+static_root/
+
+# Ignora los archivos que los usuarios suben
+media/
+media_root/
+
+### Archivos de Editores de Código e IDEs ###
+# Común en Visual Studio Code
+.vscode/
+
+# Común en PyCharm
+.idea/
+
+# Común en Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+### Archivos del Sistema Operativo ###
+.DS_Store
+Thumbs.db

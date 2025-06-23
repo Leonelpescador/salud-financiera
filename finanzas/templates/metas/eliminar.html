@@ -1,0 +1,190 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Eliminar Meta - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="delete-header">
+            <div class="delete-icon">⚠️</div>
+            <h1>Eliminar Meta</h1>
+        </div>
+
+        <div class="delete-content">
+            <div class="goal-info">
+                <h3>{{ meta.nombre }}</h3>
+                <div class="goal-details">
+                    <p><strong>Tipo:</strong> {{ meta.get_tipo_display }}</p>
+                    <p><strong>Monto Objetivo:</strong> ${{ meta.monto_objetivo|floatformat:2 }}</p>
+                    <p><strong>Monto Actual:</strong> ${{ meta.monto_actual|floatformat:2 }}</p>
+                    <p><strong>Fecha Objetivo:</strong> {{ meta.fecha_objetivo|date:"d/m/Y" }}</p>
+                    <p><strong>Estado:</strong> {{ meta.get_estado_display }}</p>
+                </div>
+            </div>
+
+            <div class="warning-message">
+                <h4>⚠️ ¿Estás seguro?</h4>
+                <p>Esta acción eliminará permanentemente la meta <strong>"{{ meta.nombre }}"</strong> y toda su información asociada.</p>
+                <p>Esta acción no se puede deshacer.</p>
+            </div>
+
+            <form method="post" class="delete-form">
+                {% csrf_token %}
+                <div class="form-actions">
+                    <button type="submit" class="btn-delete">🗑️ Eliminar Meta</button>
+                    <a href="{% url 'metas_lista' %}" class="btn-cancel">❌ Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .delete-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .delete-header {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .delete-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .delete-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+    }
+
+    .delete-content {
+        padding: 30px;
+    }
+
+    .goal-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .goal-info h3 {
+        margin: 0 0 15px 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .goal-details p {
+        margin: 8px 0;
+        color: #2c3e50;
+    }
+
+    .goal-details strong {
+        color: #34495e;
+    }
+
+    .warning-message {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .warning-message h4 {
+        margin: 0 0 10px 0;
+        color: #856404;
+        font-size: 1.1rem;
+    }
+
+    .warning-message p {
+        margin: 8px 0;
+        color: #856404;
+    }
+
+    .delete-form {
+        margin-top: 20px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-delete,
+    .btn-cancel {
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c0392b;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: 10px;
+        }
+
+        .delete-header {
+            padding: 20px;
+        }
+
+        .delete-content {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-delete,
+        .btn-cancel {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %} 

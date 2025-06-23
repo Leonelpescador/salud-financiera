@@ -1,0 +1,215 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Eliminar Transacción - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="delete-header">
+            <div class="delete-icon">⚠️</div>
+            <h1>Eliminar Transacción</h1>
+        </div>
+
+        <div class="delete-content">
+            <p class="delete-message">
+                ¿Estás seguro de que quieres eliminar la transacción <strong>"{{ transaccion.descripcion }}"</strong>?
+            </p>
+            
+            <div class="transaction-preview">
+                <div class="preview-header">
+                    <div class="preview-icon">
+                        {% if transaccion.tipo == 'ingreso' %}📈{% elif transaccion.tipo == 'gasto' %}📉{% else %}🔄{% endif %}
+                    </div>
+                    <div class="preview-info">
+                        <h3>{{ transaccion.descripcion }}</h3>
+                        <p>{{ transaccion.fecha|date:"d/m/Y" }} - {{ transaccion.categoria.nombre }}</p>
+                    </div>
+                    <div class="preview-amount {% if transaccion.tipo == 'ingreso' %}positive{% else %}negative{% endif %}">
+                        {% if transaccion.tipo == 'gasto' %}-{% endif %}${{ transaccion.monto|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-message">
+                <p><strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer. La transacción será eliminada permanentemente.</p>
+            </div>
+        </div>
+
+        <div class="delete-actions">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete">🗑️ Eliminar Transacción</button>
+                <a href="{% url 'transacciones_lista' %}" class="btn-cancel">❌ Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 50px auto;
+    }
+
+    .delete-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .delete-header {
+        margin-bottom: 30px;
+    }
+
+    .delete-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .delete-header h1 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.8rem;
+    }
+
+    .delete-content {
+        margin-bottom: 30px;
+    }
+
+    .delete-message {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+
+    .transaction-preview {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .preview-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        text-align: center;
+    }
+
+    .preview-info {
+        flex: 1;
+        text-align: left;
+    }
+
+    .preview-info h3 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .preview-info p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .preview-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .preview-amount.positive {
+        color: #27ae60;
+    }
+
+    .preview-amount.negative {
+        color: #e74c3c;
+    }
+
+    .warning-message {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .warning-message p {
+        margin: 0;
+        color: #856404;
+        font-size: 0.95rem;
+    }
+
+    .delete-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-delete,
+    .btn-cancel {
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c0392b;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .delete-container {
+            margin: 20px auto;
+        }
+
+        .delete-card {
+            padding: 25px;
+        }
+
+        .preview-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .preview-info {
+            text-align: center;
+        }
+
+        .delete-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %} 

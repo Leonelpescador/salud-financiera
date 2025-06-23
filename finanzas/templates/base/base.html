@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Salud Financiera{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ecf0f1;
+        }
+
+        .sidebar-header p {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #95a5a6;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: #34495e;
+            color: #3498db;
+            border-left-color: #3498db;
+        }
+
+        .nav-link.active {
+            background: #34495e;
+            color: #3498db;
+            border-left-color: #3498db;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #2c3e50;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        /* Messages */
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>💰 Salud Financiera</h2>
+                <p>Gestiona tu dinero de forma inteligente</p>
+            </div>
+
+            <ul class="nav-menu">
+                <!-- Dashboard -->
+                <div class="nav-section">
+                    <div class="nav-section-title">General</div>
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Registro y Visibilidad -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Registro y Visibilidad</div>
+                    <li class="nav-item">
+                        <a href="{% url 'transacciones_lista' %}" class="nav-link {% if 'transaccion' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">📝</span>
+                            Transacciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'categorias_lista' %}" class="nav-link {% if 'categoria' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">📂</span>
+                            Categorías
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'cuentas_lista' %}" class="nav-link {% if 'cuenta' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">🏦</span>
+                            Cuentas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'tags_lista' %}" class="nav-link {% if 'tag' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">🏷️</span>
+                            Etiquetas
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Planificación y Metas -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Planificación y Metas</div>
+                    <li class="nav-item">
+                        <a href="{% url 'presupuestos_lista' %}" class="nav-link {% if 'presupuesto' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">💰</span>
+                            Presupuestos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'metas_lista' %}" class="nav-link {% if 'meta' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">🎯</span>
+                            Metas
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Análisis e Inteligencia -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Análisis e Inteligencia</div>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📈</span>
+                            Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            Gráficos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🔍</span>
+                            Análisis
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Educación y Motivación -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Educación y Motivación</div>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📚</span>
+                            Consejos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🎓</span>
+                            Educación
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🏆</span>
+                            Logros
+                        </a>
+                    </li>
+                </div>
+
+                <!-- Configuración -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Configuración</div>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            Configuración
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'logout' %}" class="nav-link">
+                            <span class="nav-icon">🚪</span>
+                            Cerrar Sesión
+                        </a>
+                    </li>
+                </div>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Cerrar sidebar en móvil al hacer clic en un enlace
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sidebar = document.getElementById('sidebar');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,653 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Dashboard - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h1>¡Hola, {{ user.username }}! 👋</h1>
+        <p>Aquí tienes un resumen de tu salud financiera</p>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="summary-section">
+        <div class="summary-grid">
+            <div class="summary-card income">
+                <div class="card-icon">📈</div>
+                <div class="card-content">
+                    <h3>Ingresos del Mes</h3>
+                    <p class="amount">${{ ingresos_mes|floatformat:2 }}</p>
+                </div>
+            </div>
+            <div class="summary-card expense">
+                <div class="card-icon">📉</div>
+                <div class="card-content">
+                    <h3>Gastos del Mes</h3>
+                    <p class="amount">${{ gastos_mes|floatformat:2 }}</p>
+                </div>
+            </div>
+            <div class="summary-card balance">
+                <div class="card-icon">💰</div>
+                <div class="card-content">
+                    <h3>Balance Neto</h3>
+                    <p class="amount {% if balance_neto < 0 %}negative{% else %}positive{% endif %}">
+                        ${{ balance_neto|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+            <div class="summary-card accounts">
+                <div class="card-icon">🏦</div>
+                <div class="card-content">
+                    <h3>Total Cuentas</h3>
+                    <p class="amount">{{ total_cuentas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presupuestos y Metas -->
+    <div class="goals-budgets-section">
+        <div class="section-grid">
+            <!-- Presupuestos Activos -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>📊 Presupuestos Activos</h2>
+                    <a href="{% url 'presupuestos_lista' %}" class="view-all">Ver todos</a>
+                </div>
+                {% if presupuestos_activos %}
+                    <div class="budgets-list">
+                        {% for presupuesto in presupuestos_activos %}
+                        <div class="budget-item">
+                            <div class="budget-info">
+                                <h4>{{ presupuesto.nombre }}</h4>
+                                <p>${{ presupuesto.monto_gastado|floatformat:2 }} / ${{ presupuesto.monto_objetivo|floatformat:2 }}</p>
+                            </div>
+                            <div class="budget-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill {% if presupuesto.esta_sobrepasado %}over{% elif presupuesto.porcentaje_completado >= 80 %}warning{% else %}normal{% endif %}" 
+                                         style="width: {{ presupuesto.porcentaje_completado|floatformat:1 }}%"></div>
+                                </div>
+                                <span class="progress-text">{{ presupuesto.porcentaje_completado|floatformat:1 }}%</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No hay presupuestos activos</p>
+                        <a href="{% url 'presupuesto_crear' %}" class="btn-small">Crear Presupuesto</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Metas Activas -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>🎯 Metas Activas</h2>
+                    <a href="{% url 'metas_lista' %}" class="view-all">Ver todas</a>
+                </div>
+                {% if metas_activas %}
+                    <div class="goals-list">
+                        {% for meta in metas_activas %}
+                        <div class="goal-item">
+                            <div class="goal-info">
+                                <h4>{{ meta.nombre }}</h4>
+                                <p>${{ meta.monto_actual|floatformat:2 }} / ${{ meta.monto_objetivo|floatformat:2 }}</p>
+                            </div>
+                            <div class="goal-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill {% if meta.esta_completada %}completed{% elif meta.porcentaje_completado >= 80 %}near{% else %}normal{% endif %}" 
+                                         style="width: {{ meta.porcentaje_completado|floatformat:1 }}%"></div>
+                                </div>
+                                <span class="progress-text">{{ meta.porcentaje_completado|floatformat:1 }}%</span>
+                            </div>
+                            <div class="goal-timeline">
+                                <small>{% if meta.dias_restantes > 0 %}{{ meta.dias_restantes }} días{% elif meta.esta_vencida %}Vencida{% else %}¡Completada!{% endif %}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No hay metas activas</p>
+                        <a href="{% url 'meta_crear' %}" class="btn-small">Crear Meta</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos y Análisis -->
+    <div class="charts-section">
+        <div class="section-grid">
+            <!-- Gastos por Categoría -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>📊 Gastos por Categoría</h2>
+                </div>
+                {% if gastos_por_categoria %}
+                    <div class="chart-container">
+                        <div class="pie-chart">
+                            {% for categoria in gastos_por_categoria %}
+                            <div class="pie-segment" 
+                                 style="--percentage: {{ categoria.porcentaje }}%; --color: {{ categoria.color }}; --start: {{ forloop.counter0|add:1 }};">
+                                <div class="segment-label">{{ categoria.nombre }}</div>
+                                <div class="segment-value">${{ categoria.total|floatformat:2 }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="chart-legend">
+                            {% for categoria in gastos_por_categoria %}
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: {{ categoria.color }};"></span>
+                                <span class="legend-text">{{ categoria.nombre }} ({{ categoria.porcentaje|floatformat:1 }}%)</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No hay gastos registrados</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Balance de Cuentas -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>🏦 Balance de Cuentas</h2>
+                </div>
+                {% if cuentas_activas %}
+                    <div class="accounts-chart">
+                        {% for cuenta in cuentas_activas %}
+                        <div class="account-bar">
+                            <div class="account-info">
+                                <span class="account-name">{{ cuenta.icono }} {{ cuenta.nombre }}</span>
+                                <span class="account-balance">${{ cuenta.saldo_actual|floatformat:2 }}</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="balance-bar {% if cuenta.saldo_actual < 0 %}negative{% else %}positive{% endif %}" 
+                                     style="width: {{ cuenta.porcentaje_saldo }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No hay cuentas activas</p>
+                        <a href="{% url 'cuenta_crear' %}" class="btn-small">Crear Cuenta</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Transacciones Recientes -->
+    <div class="recent-transactions">
+        <div class="section-header">
+            <h2>📝 Transacciones Recientes</h2>
+            <a href="{% url 'transacciones_lista' %}" class="view-all">Ver todas</a>
+        </div>
+        {% if transacciones_recientes %}
+            <div class="transactions-list">
+                {% for transaccion in transacciones_recientes %}
+                <div class="transaction-item">
+                    <div class="transaction-icon">
+                        {% if transaccion.tipo == 'ingreso' %}📈{% elif transaccion.tipo == 'gasto' %}📉{% else %}🔄{% endif %}
+                    </div>
+                    <div class="transaction-details">
+                        <h4>{{ transaccion.descripcion }}</h4>
+                        <p>{{ transaccion.categoria.nombre }} • {{ transaccion.fecha|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="transaction-amount {% if transaccion.tipo == 'ingreso' %}positive{% else %}negative{% endif %}">
+                        {% if transaccion.tipo == 'gasto' %}-{% endif %}${{ transaccion.monto|floatformat:2 }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No hay transacciones recientes</p>
+                <a href="{% url 'transaccion_crear' %}" class="btn-small">Crear Transacción</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .welcome-section {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+    }
+
+    .welcome-section h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5rem;
+    }
+
+    .welcome-section p {
+        margin: 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    /* Resumen General */
+    .summary-section {
+        margin-bottom: 40px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        width: 60px;
+        text-align: center;
+    }
+
+    .card-content h3 {
+        margin: 0 0 10px 0;
+        color: #7f8c8d;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .card-content .amount {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .amount.positive {
+        color: #27ae60;
+    }
+
+    .amount.negative {
+        color: #e74c3c;
+    }
+
+    /* Presupuestos y Metas */
+    .goals-budgets-section {
+        margin-bottom: 40px;
+    }
+
+    .section-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+    }
+
+    .section-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .view-all {
+        color: #3498db;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .view-all:hover {
+        text-decoration: underline;
+    }
+
+    /* Listas de presupuestos y metas */
+    .budgets-list,
+    .goals-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .budget-item,
+    .goal-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .budget-info,
+    .goal-info {
+        margin-bottom: 10px;
+    }
+
+    .budget-info h4,
+    .goal-info h4 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .budget-info p,
+    .goal-info p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .budget-progress,
+    .goal-progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: #ecf0f1;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-fill.normal {
+        background: #27ae60;
+    }
+
+    .progress-fill.warning {
+        background: #f39c12;
+    }
+
+    .progress-fill.over {
+        background: #e74c3c;
+    }
+
+    .progress-fill.near {
+        background: #f39c12;
+    }
+
+    .progress-fill.completed {
+        background: #3498db;
+    }
+
+    .progress-text {
+        font-size: 0.8rem;
+        color: #7f8c8d;
+        font-weight: 500;
+        min-width: 40px;
+    }
+
+    .goal-timeline {
+        margin-top: 8px;
+    }
+
+    .goal-timeline small {
+        color: #7f8c8d;
+        font-size: 0.8rem;
+    }
+
+    /* Gráficos */
+    .charts-section {
+        margin-bottom: 40px;
+    }
+
+    .chart-container {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .pie-chart {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: conic-gradient(
+            {% for categoria in gastos_por_categoria %}
+            {{ categoria.color }} 0deg {{ categoria.porcentaje|floatformat:1 }}deg,
+            {% endfor %}
+            #ecf0f1 0deg 360deg
+        );
+        position: relative;
+    }
+
+    .chart-legend {
+        flex: 1;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+
+    .legend-text {
+        font-size: 0.9rem;
+        color: #2c3e50;
+    }
+
+    /* Balance de cuentas */
+    .accounts-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .account-bar {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .account-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-width: 200px;
+    }
+
+    .account-name {
+        font-size: 0.9rem;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .account-balance {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        font-weight: 600;
+    }
+
+    .bar-container {
+        flex: 1;
+        height: 8px;
+        background: #ecf0f1;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .balance-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .balance-bar.positive {
+        background: #27ae60;
+    }
+
+    .balance-bar.negative {
+        background: #e74c3c;
+    }
+
+    /* Transacciones recientes */
+    .recent-transactions {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .transactions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .transaction-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+
+    .transaction-item:hover {
+        background: #ecf0f1;
+    }
+
+    .transaction-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        text-align: center;
+    }
+
+    .transaction-details {
+        flex: 1;
+    }
+
+    .transaction-details h4 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .transaction-details p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .transaction-amount {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .transaction-amount.positive {
+        color: #27ae60;
+    }
+
+    .transaction-amount.negative {
+        color: #e74c3c;
+    }
+
+    /* Estados vacíos */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #7f8c8d;
+    }
+
+    .empty-state p {
+        margin-bottom: 15px;
+    }
+
+    .btn-small {
+        background: #3498db;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+
+    .btn-small:hover {
+        background: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .welcome-section h1 {
+            font-size: 2rem;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .pie-chart {
+            width: 150px;
+            height: 150px;
+        }
+
+        .account-info {
+            min-width: auto;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %} 

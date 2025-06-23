@@ -1,0 +1,374 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ titulo }} - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="page-header">
+        <h1>{{ titulo }}</h1>
+        <a href="{% url 'transacciones_lista' %}" class="btn-secondary">
+            ← Volver a Transacciones
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data" class="transaction-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Información Básica -->
+                <div class="form-section">
+                    <h3>Información Básica</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.monto.id_for_label }}">Monto *</label>
+                        {{ form.monto }}
+                        {% if form.monto.errors %}
+                            <div class="error-message">{{ form.monto.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.fecha.id_for_label }}">Fecha *</label>
+                        {{ form.fecha }}
+                        {% if form.fecha.errors %}
+                            <div class="error-message">{{ form.fecha.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.tipo.id_for_label }}">Tipo *</label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}
+                            <div class="error-message">{{ form.tipo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.descripcion.id_for_label }}">Descripción *</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="error-message">{{ form.descripcion.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Clasificación -->
+                <div class="form-section">
+                    <h3>Clasificación</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.categoria.id_for_label }}">Categoría *</label>
+                        {{ form.categoria }}
+                        {% if form.categoria.errors %}
+                            <div class="error-message">{{ form.categoria.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.cuenta.id_for_label }}">Cuenta *</label>
+                        {{ form.cuenta }}
+                        {% if form.cuenta.errors %}
+                            <div class="error-message">{{ form.cuenta.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.tags.id_for_label }}">Etiquetas</label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}
+                            <div class="error-message">{{ form.tags.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples etiquetas</small>
+                    </div>
+                </div>
+
+                <!-- Transferencia -->
+                <div class="form-section" id="transferencia-section" style="display: none;">
+                    <h3>Transferencia</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.cuenta_destino.id_for_label }}">Cuenta Destino *</label>
+                        {{ form.cuenta_destino }}
+                        {% if form.cuenta_destino.errors %}
+                            <div class="error-message">{{ form.cuenta_destino.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recurrencia -->
+                <div class="form-section">
+                    <h3>Recurrencia</h3>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ form.es_recurrente }}
+                            <span class="checkmark"></span>
+                            Marcar como recurrente
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="frecuencia-group" style="display: none;">
+                        <label for="{{ form.frecuencia_recurrencia.id_for_label }}">Frecuencia</label>
+                        <select name="{{ form.frecuencia_recurrencia.name }}" id="{{ form.frecuencia_recurrencia.id_for_label }}" class="form-control">
+                            <option value="">Seleccionar frecuencia</option>
+                            <option value="diaria">Diaria</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="quincenal">Quincenal</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Adjuntos -->
+                <div class="form-section">
+                    <h3>Adjuntos</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.imagen_recibo.id_for_label }}">Imagen del Recibo</label>
+                        {{ form.imagen_recibo }}
+                        {% if form.imagen_recibo.errors %}
+                            <div class="error-message">{{ form.imagen_recibo.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Formatos permitidos: JPG, PNG, PDF. Máximo 5MB.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores generales -->
+            {% if form.non_field_errors %}
+                <div class="error-message general-error">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {% if transaccion %}Actualizar{% else %}Crear{% endif %} Transacción
+                </button>
+                <a href="{% url 'transacciones_lista' %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .form-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .form-group select[multiple] {
+        height: 120px;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .general-error {
+        background: #fdf2f2;
+        border: 1px solid #fecaca;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* Checkbox personalizado */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: normal;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+    }
+
+    /* Botones */
+    .btn-primary {
+        background: #3498db;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Mostrar/ocultar sección de transferencia
+    document.getElementById('{{ form.tipo.id_for_label }}').addEventListener('change', function() {
+        const transferenciaSection = document.getElementById('transferencia-section');
+        if (this.value === 'transferencia') {
+            transferenciaSection.style.display = 'block';
+        } else {
+            transferenciaSection.style.display = 'none';
+        }
+    });
+
+    // Mostrar/ocultar frecuencia de recurrencia
+    document.getElementById('{{ form.es_recurrente.id_for_label }}').addEventListener('change', function() {
+        const frecuenciaGroup = document.getElementById('frecuencia-group');
+        if (this.checked) {
+            frecuenciaGroup.style.display = 'block';
+        } else {
+            frecuenciaGroup.style.display = 'none';
+        }
+    });
+
+    // Inicializar estado de los campos
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('{{ form.tipo.id_for_label }}');
+        const transferenciaSection = document.getElementById('transferencia-section');
+        if (tipoSelect.value === 'transferencia') {
+            transferenciaSection.style.display = 'block';
+        }
+
+        const esRecurrenteCheckbox = document.getElementById('{{ form.es_recurrente.id_for_label }}');
+        const frecuenciaGroup = document.getElementById('frecuencia-group');
+        if (esRecurrenteCheckbox.checked) {
+            frecuenciaGroup.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %} 

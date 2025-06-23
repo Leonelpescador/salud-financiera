@@ -1,0 +1,49 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Autenticación
+    path('', views.login, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # Dashboard
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('api/dashboard-data/', views.api_dashboard_data, name='api_dashboard_data'),
+    
+    # Transacciones
+    path('transacciones/', views.transacciones_lista, name='transacciones_lista'),
+    path('transacciones/crear/', views.transaccion_crear, name='transaccion_crear'),
+    path('transacciones/<int:pk>/editar/', views.transaccion_editar, name='transaccion_editar'),
+    path('transacciones/<int:pk>/eliminar/', views.transaccion_eliminar, name='transaccion_eliminar'),
+    
+    # Categorías
+    path('categorias/', views.categorias_lista, name='categorias_lista'),
+    path('categorias/crear/', views.categoria_crear, name='categoria_crear'),
+    path('categorias/<int:pk>/editar/', views.categoria_editar, name='categoria_editar'),
+    path('categorias/<int:pk>/eliminar/', views.categoria_eliminar, name='categoria_eliminar'),
+    
+    # Cuentas
+    path('cuentas/', views.cuentas_lista, name='cuentas_lista'),
+    path('cuentas/crear/', views.cuenta_crear, name='cuenta_crear'),
+    path('cuentas/<int:pk>/editar/', views.cuenta_editar, name='cuenta_editar'),
+    path('cuentas/<int:pk>/eliminar/', views.cuenta_eliminar, name='cuenta_eliminar'),
+    
+    # Tags
+    path('tags/', views.tags_lista, name='tags_lista'),
+    path('tags/crear/', views.tag_crear, name='tag_crear'),
+    path('tags/<int:pk>/editar/', views.tag_editar, name='tag_editar'),
+    path('tags/<int:pk>/eliminar/', views.tag_eliminar, name='tag_eliminar'),
+    
+    # Presupuestos
+    path('presupuestos/', views.presupuestos_lista, name='presupuestos_lista'),
+    path('presupuestos/crear/', views.presupuesto_crear, name='presupuesto_crear'),
+    path('presupuestos/<int:pk>/editar/', views.presupuesto_editar, name='presupuesto_editar'),
+    path('presupuestos/<int:pk>/eliminar/', views.presupuesto_eliminar, name='presupuesto_eliminar'),
+    
+    # Metas
+    path('metas/', views.metas_lista, name='metas_lista'),
+    path('metas/crear/', views.meta_crear, name='meta_crear'),
+    path('metas/<int:pk>/editar/', views.meta_editar, name='meta_editar'),
+    path('metas/<int:pk>/eliminar/', views.meta_eliminar, name='meta_eliminar'),
+    path('metas/<int:pk>/actualizar-progreso/', views.meta_actualizar_progreso, name='meta_actualizar_progreso'),
+]
