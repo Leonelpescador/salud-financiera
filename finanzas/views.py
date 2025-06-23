@@ -2,16 +2,35 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
 from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes
-from .forms import TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm, PresupuestoForm, MetaForm
+from .forms import (
+    TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm,
+    PresupuestoForm, MetaForm, UsuarioCrearForm, UsuarioEditarForm, 
+    ConfiguracionUsuarioForm, ConfiguracionSistemaForm
+)
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.utils import timezone
 from calendar import monthrange
 import json
+from functools import wraps
+
+# Decorador personalizado para verificar permisos de staff
+def staff_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'No tienes permisos para acceder a esta sección.')
+            return render(request, 'configuracion/acceso_denegado.html', status=403)
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 def login(request):
     if request.method == 'POST':
@@ -774,4 +793,325 @@ def corte_mes_detalle(request, pk):
     }
     
     return render(request, 'corte_mes/detalle.html', context)
+
+@login_required
+def usuarios_lista(request):
+    usuarios = User.objects.filter(is_superuser=False).order_by('username')
+    context = {
+        'usuarios': usuarios,
+    }
+    return render(request, 'usuarios/lista.html', context)
+
+@login_required
+def usuario_crear(request):
+    if request.method == 'POST':
+        form = UsuarioCrearForm(request.POST, user=request.user)
+        if form.is_valid():
+            usuario = form.save(commit=False)
+            usuario.password = make_password(form.cleaned_data['password'])
+            usuario.save()
+            messages.success(request, 'Usuario creado exitosamente.')
+            return redirect('usuarios_lista')
+    else:
+        form = UsuarioCrearForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'titulo': 'Nuevo Usuario',
+    }
+    return render(request, 'usuarios/form.html', context)
+
+@login_required
+def usuario_editar(request, pk):
+    usuario = get_object_or_404(User, pk=pk, is_superuser=False)
+    
+    if request.method == 'POST':
+        form = UsuarioEditarForm(request.POST, instance=usuario, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Usuario actualizado exitosamente.')
+            return redirect('usuarios_lista')
+    else:
+        form = UsuarioEditarForm(instance=usuario, user=request.user)
+    
+    context = {
+        'form': form,
+        'usuario': usuario,
+        'titulo': 'Editar Usuario',
+    }
+    return render(request, 'usuarios/form.html', context)
+
+@login_required
+def usuario_eliminar(request, pk):
+    usuario = get_object_or_404(User, pk=pk, is_superuser=False)
+    
+    if request.method == 'POST':
+        usuario.delete()
+        messages.success(request, 'Usuario eliminado exitosamente.')
+        return redirect('usuarios_lista')
+    
+    context = {
+        'usuario': usuario
+    }
+    return render(request, 'usuarios/eliminar.html', context)
+
+@login_required
+def configuracion_usuario(request):
+    if request.method == 'POST':
+        form = ConfiguracionUsuarioForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Configuración del usuario actualizada exitosamente.')
+            return redirect('dashboard')
+    else:
+        form = ConfiguracionUsuarioForm(instance=request.user)
+    
+    context = {
+        'form': form,
+        'titulo': 'Configuración del Usuario',
+    }
+    return render(request, 'configuracion_usuario/form.html', context)
+
+@login_required
+def configuracion_sistema(request):
+    if request.method == 'POST':
+        form = ConfiguracionSistemaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Configuración del sistema actualizada exitosamente.')
+            return redirect('dashboard')
+    else:
+        form = ConfiguracionSistemaForm()
+    
+    context = {
+        'form': form,
+        'titulo': 'Configuración del Sistema',
+    }
+    return render(request, 'configuracion_sistema/form.html', context)
+
+# Vistas para Configuración del Sistema
+@login_required
+@staff_required
+def configuracion(request):
+    """Vista principal de configuración del sistema"""
+    # Obtener todos los usuarios
+    usuarios = User.objects.all().order_by('username')
+    
+    # Obtener configuración del sistema (usar la del usuario actual como ejemplo)
+    try:
+        config = ConfiguracionUsuario.objects.get(usuario=request.user)
+    except ConfiguracionUsuario.DoesNotExist:
+        config = ConfiguracionUsuario.objects.create(usuario=request.user)
+    
+    # Estadísticas del sistema
+    total_usuarios = User.objects.count()
+    total_transacciones = Transaccion.objects.count()
+    total_cuentas = Cuenta.objects.count()
+    total_categorias = Categoria.objects.count()
+    
+    context = {
+        'usuarios': usuarios,
+        'config': config,
+        'total_usuarios': total_usuarios,
+        'total_transacciones': total_transacciones,
+        'total_cuentas': total_cuentas,
+        'total_categorias': total_categorias,
+    }
+    return render(request, 'configuracion/configuracion.html', context)
+
+@login_required
+@staff_required
+def usuario_crear(request):
+    """Crear nuevo usuario"""
+    if request.method == 'POST':
+        form = UsuarioCrearForm(request.POST)
+        config_form = ConfiguracionUsuarioForm(request.POST)
+        
+        if form.is_valid() and config_form.is_valid():
+            usuario = form.save()
+            
+            # Crear configuración para el usuario
+            config = config_form.save(commit=False)
+            config.usuario = usuario
+            config.save()
+            
+            messages.success(request, f'Usuario "{usuario.username}" creado exitosamente.')
+            return redirect('configuracion')
+    else:
+        form = UsuarioCrearForm()
+        config_form = ConfiguracionUsuarioForm()
+    
+    context = {
+        'form': form,
+        'config_form': config_form,
+        'titulo': 'Nuevo Usuario',
+    }
+    return render(request, 'configuracion/usuario_form.html', context)
+
+@login_required
+@staff_required
+def usuario_editar(request, pk):
+    """Editar usuario existente"""
+    usuario = get_object_or_404(User, pk=pk)
+    
+    # Obtener o crear configuración del usuario
+    try:
+        config = ConfiguracionUsuario.objects.get(usuario=usuario)
+    except ConfiguracionUsuario.DoesNotExist:
+        config = ConfiguracionUsuario.objects.create(usuario=usuario)
+    
+    if request.method == 'POST':
+        form = UsuarioEditarForm(request.POST, instance=usuario)
+        config_form = ConfiguracionUsuarioForm(request.POST, instance=config)
+        
+        if form.is_valid() and config_form.is_valid():
+            # Manejar cambio de contraseña
+            new_password = request.POST.get('new_password')
+            if new_password:
+                usuario.password = make_password(new_password)
+            
+            form.save()
+            config_form.save()
+            
+            messages.success(request, f'Usuario "{usuario.username}" actualizado exitosamente.')
+            return redirect('configuracion')
+    else:
+        form = UsuarioEditarForm(instance=usuario)
+        config_form = ConfiguracionUsuarioForm(instance=config)
+    
+    context = {
+        'form': form,
+        'config_form': config_form,
+        'usuario': usuario,
+        'titulo': 'Editar Usuario',
+    }
+    return render(request, 'configuracion/usuario_form.html', context)
+
+@login_required
+@staff_required
+def usuario_eliminar(request, pk):
+    """Eliminar usuario"""
+    usuario = get_object_or_404(User, pk=pk)
+    
+    # No permitir eliminar superusuarios
+    if usuario.is_superuser:
+        messages.error(request, 'No se puede eliminar un superusuario.')
+        return redirect('configuracion')
+    
+    if request.method == 'POST':
+        username = usuario.username
+        usuario.delete()
+        messages.success(request, f'Usuario "{username}" eliminado exitosamente.')
+        return redirect('configuracion')
+    
+    context = {
+        'usuario': usuario
+    }
+    return render(request, 'configuracion/usuario_eliminar.html', context)
+
+@login_required
+@staff_required
+def usuario_activar(request, pk):
+    """Activar usuario"""
+    usuario = get_object_or_404(User, pk=pk)
+    usuario.is_active = True
+    usuario.save()
+    messages.success(request, f'Usuario "{usuario.username}" activado exitosamente.')
+    return redirect('configuracion')
+
+@login_required
+@staff_required
+def usuario_desactivar(request, pk):
+    """Desactivar usuario"""
+    usuario = get_object_or_404(User, pk=pk)
+    
+    # No permitir desactivar superusuarios
+    if usuario.is_superuser:
+        messages.error(request, 'No se puede desactivar un superusuario.')
+        return redirect('configuracion')
+    
+    usuario.is_active = False
+    usuario.save()
+    messages.success(request, f'Usuario "{usuario.username}" desactivado exitosamente.')
+    return redirect('configuracion')
+
+@login_required
+@staff_required
+def configuracion_guardar(request):
+    """Guardar configuración del sistema"""
+    if request.method == 'POST':
+        # Obtener configuración del usuario actual
+        try:
+            config = ConfiguracionUsuario.objects.get(usuario=request.user)
+        except ConfiguracionUsuario.DoesNotExist:
+            config = ConfiguracionUsuario.objects.create(usuario=request.user)
+        
+        # Actualizar configuración
+        config.moneda_principal = request.POST.get('moneda_principal', 'ARS')
+        config.zona_horaria = request.POST.get('zona_horaria', 'America/Argentina/Buenos_Aires')
+        config.notificaciones_activas = request.POST.get('notificaciones_activas') == 'on'
+        config.recordatorios_pago = request.POST.get('recordatorios_pago') == 'on'
+        config.save()
+        
+        messages.success(request, 'Configuración guardada exitosamente.')
+    
+    return redirect('configuracion')
+
+# Vistas para acciones del sistema
+@login_required
+@staff_required
+def backup_datos(request):
+    """Crear backup de datos"""
+    # Aquí implementarías la lógica de backup
+    messages.info(request, 'Función de backup en desarrollo.')
+    return redirect('configuracion')
+
+@login_required
+@staff_required
+def limpiar_datos(request):
+    """Limpiar datos antiguos"""
+    # Aquí implementarías la lógica de limpieza
+    messages.info(request, 'Función de limpieza en desarrollo.')
+    return redirect('configuracion')
+
+@login_required
+@staff_required
+def exportar_datos(request):
+    """Exportar datos"""
+    # Aquí implementarías la lógica de exportación
+    messages.info(request, 'Función de exportación en desarrollo.')
+    return redirect('configuracion')
+
+@login_required
+@staff_required
+def importar_datos(request):
+    """Importar datos"""
+    # Aquí implementarías la lógica de importación
+    messages.info(request, 'Función de importación en desarrollo.')
+    return redirect('configuracion')
+
+@login_required
+def configuracion_personal(request):
+    """Vista para configuración personal del usuario"""
+    # Obtener o crear configuración del usuario
+    try:
+        config = ConfiguracionUsuario.objects.get(usuario=request.user)
+    except ConfiguracionUsuario.DoesNotExist:
+        config = ConfiguracionUsuario.objects.create(usuario=request.user)
+    
+    if request.method == 'POST':
+        form = ConfiguracionUsuarioForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tu configuración personal ha sido actualizada exitosamente.')
+            return redirect('dashboard')
+    else:
+        form = ConfiguracionUsuarioForm(instance=config)
+    
+    context = {
+        'form': form,
+        'config': config,
+        'titulo': 'Mi Configuración',
+    }
+    return render(request, 'configuracion/configuracion_personal.html', context)
 

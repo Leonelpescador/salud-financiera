@@ -1,0 +1,392 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ titulo }} - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="page-header">
+        <h1>{{ titulo }}</h1>
+        <a href="{% url 'configuracion' %}" class="btn-secondary">
+            ← Volver a Configuración
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="user-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Información Básica -->
+                <div class="form-section">
+                    <h3>Información Básica</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}">Nombre de Usuario *</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="error-message">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Nombre único para identificar al usuario</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">Email *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="error-message">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Email válido para notificaciones</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}">Nombre</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="error-message">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}">Apellido</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="error-message">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-section">
+                    <h3>Contraseña</h3>
+                    
+                    {% if not usuario %}
+                    <div class="form-group">
+                        <label for="{{ form.password1.id_for_label }}">Contraseña *</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <div class="error-message">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Mínimo 8 caracteres, incluir letras y números</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}">Confirmar Contraseña *</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="error-message">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <label for="new_password">Nueva Contraseña</label>
+                        <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Dejar en blanco para mantener la actual">
+                        <small class="help-text">Mínimo 8 caracteres, incluir letras y números</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirmar Nueva Contraseña</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirmar nueva contraseña">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Permisos -->
+                <div class="form-section">
+                    <h3>Permisos y Estado</h3>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ form.is_active }}
+                            <span class="checkmark"></span>
+                            Usuario activo
+                        </label>
+                        {% if form.is_active.errors %}
+                            <div class="error-message">{{ form.is_active.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Los usuarios inactivos no pueden acceder al sistema</small>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ form.is_staff }}
+                            <span class="checkmark"></span>
+                            Acceso al panel de administración
+                        </label>
+                        {% if form.is_staff.errors %}
+                            <div class="error-message">{{ form.is_staff.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Permite acceder al panel de administración de Django</small>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ form.is_superuser }}
+                            <span class="checkmark"></span>
+                            Superusuario
+                        </label>
+                        {% if form.is_superuser.errors %}
+                            <div class="error-message">{{ form.is_superuser.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Acceso completo a todas las funciones del sistema</small>
+                    </div>
+                </div>
+
+                <!-- Configuración Personalizada -->
+                <div class="form-section">
+                    <h3>Configuración Personalizada</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ config_form.moneda_principal.id_for_label }}">Moneda Principal</label>
+                        {{ config_form.moneda_principal }}
+                        {% if config_form.moneda_principal.errors %}
+                            <div class="error-message">{{ config_form.moneda_principal.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ config_form.zona_horaria.id_for_label }}">Zona Horaria</label>
+                        {{ config_form.zona_horaria }}
+                        {% if config_form.zona_horaria.errors %}
+                            <div class="error-message">{{ config_form.zona_horaria.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ config_form.notificaciones_activas }}
+                            <span class="checkmark"></span>
+                            Activar notificaciones
+                        </label>
+                        {% if config_form.notificaciones_activas.errors %}
+                            <div class="error-message">{{ config_form.notificaciones_activas.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            {{ config_form.recordatorios_pago }}
+                            <span class="checkmark"></span>
+                            Activar recordatorios de pago
+                        </label>
+                        {% if config_form.recordatorios_pago.errors %}
+                            <div class="error-message">{{ config_form.recordatorios_pago.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores generales -->
+            {% if form.non_field_errors %}
+                <div class="error-message general-error">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {% if usuario %}Actualizar{% else %}Crear{% endif %} Usuario
+                </button>
+                <a href="{% url 'configuracion' %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .form-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+
+    .error-message {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .general-error {
+        background: #fdf2f2;
+        border: 1px solid #fecaca;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* Checkbox personalizado */
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: normal;
+        margin-bottom: 10px;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+    }
+
+    /* Botones */
+    .btn-primary {
+        background: #3498db;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Validación de contraseñas
+    document.addEventListener('DOMContentLoaded', function() {
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+        
+        if (newPassword && confirmPassword) {
+            function validatePasswords() {
+                if (newPassword.value && confirmPassword.value) {
+                    if (newPassword.value !== confirmPassword.value) {
+                        confirmPassword.setCustomValidity('Las contraseñas no coinciden');
+                    } else {
+                        confirmPassword.setCustomValidity('');
+                    }
+                }
+            }
+            
+            newPassword.addEventListener('input', validatePasswords);
+            confirmPassword.addEventListener('input', validatePasswords);
+        }
+    });
+</script>
+{% endblock %} 

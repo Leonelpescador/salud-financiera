@@ -1,0 +1,317 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Acceso Denegado - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-header">
+            <div class="error-icon">🚫</div>
+            <h1>Acceso Denegado</h1>
+        </div>
+
+        <div class="error-content">
+            <p class="error-message">
+                No tienes permisos para acceder a la <strong>Configuración del Sistema</strong>.
+            </p>
+            
+            <div class="permission-info">
+                <h3>¿Por qué no puedo acceder?</h3>
+                <p>Esta sección está reservada para administradores del sistema. Solo los usuarios con permisos de <strong>Staff</strong> o <strong>Superusuario</strong> pueden gestionar la configuración del sistema.</p>
+                
+                <div class="user-status-info">
+                    <h4>Tu estado actual:</h4>
+                    <div class="status-item">
+                        <span class="status-label">Usuario:</span>
+                        <span class="status-value">{{ user.username }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Staff:</span>
+                        <span class="status-value {% if user.is_staff %}yes{% else %}no{% endif %}">
+                            {% if user.is_staff %}✅ Sí{% else %}❌ No{% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Superusuario:</span>
+                        <span class="status-value {% if user.is_superuser %}yes{% else %}no{% endif %}">
+                            {% if user.is_superuser %}✅ Sí{% else %}❌ No{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alternative-options">
+                <h3>¿Qué puedes hacer?</h3>
+                <div class="options-grid">
+                    <a href="{% url 'configuracion_personal' %}" class="option-card">
+                        <div class="option-icon">👤</div>
+                        <h4>Mi Configuración</h4>
+                        <p>Personaliza tu configuración personal, moneda, zona horaria y notificaciones.</p>
+                    </a>
+                    <a href="{% url 'dashboard' %}" class="option-card">
+                        <div class="option-icon">📊</div>
+                        <h4>Dashboard</h4>
+                        <p>Ve a tu panel principal para gestionar tus finanzas personales.</p>
+                    </a>
+                    <a href="{% url 'transacciones_lista' %}" class="option-card">
+                        <div class="option-icon">📝</div>
+                        <h4>Transacciones</h4>
+                        <p>Gestiona tus transacciones, ingresos y gastos personales.</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="contact-info">
+                <h3>¿Necesitas acceso administrativo?</h3>
+                <p>Si crees que necesitas acceso a la configuración del sistema, contacta con el administrador del sistema para solicitar los permisos correspondientes.</p>
+            </div>
+        </div>
+
+        <div class="error-actions">
+            <a href="{% url 'configuracion_personal' %}" class="btn-primary">👤 Ir a Mi Configuración</a>
+            <a href="{% url 'dashboard' %}" class="btn-secondary">📊 Volver al Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        max-width: 800px;
+        margin: 50px auto;
+    }
+
+    .error-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .error-header {
+        margin-bottom: 30px;
+    }
+
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .error-header h1 {
+        margin: 0;
+        color: #e74c3c;
+        font-size: 2rem;
+    }
+
+    .error-content {
+        margin-bottom: 30px;
+        text-align: left;
+    }
+
+    .error-message {
+        font-size: 1.2rem;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .permission-info {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .permission-info h3 {
+        margin: 0 0 15px 0;
+        color: #2c3e50;
+        font-size: 1.2rem;
+    }
+
+    .permission-info p {
+        margin: 0 0 20px 0;
+        color: #7f8c8d;
+        line-height: 1.6;
+    }
+
+    .user-status-info {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ecf0f1;
+    }
+
+    .user-status-info h4 {
+        margin: 0 0 15px 0;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .status-item:last-child {
+        border-bottom: none;
+    }
+
+    .status-label {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .status-value {
+        font-weight: 500;
+    }
+
+    .status-value.yes {
+        color: #27ae60;
+    }
+
+    .status-value.no {
+        color: #e74c3c;
+    }
+
+    .alternative-options {
+        margin-bottom: 25px;
+    }
+
+    .alternative-options h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .option-card {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .option-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-color: #3498db;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .option-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .option-card h4 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .option-card p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .contact-info {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+
+    .contact-info h3 {
+        margin: 0 0 10px 0;
+        color: #856404;
+        font-size: 1.1rem;
+    }
+
+    .contact-info p {
+        margin: 0;
+        color: #856404;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .error-container {
+            margin: 20px auto;
+        }
+
+        .error-card {
+            padding: 25px;
+        }
+
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .error-actions {
+            flex-direction: column;
+        }
+
+        .status-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %} 

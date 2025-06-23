@@ -1,0 +1,335 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Eliminar Usuario - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="delete-header">
+            <div class="delete-icon">⚠️</div>
+            <h1>Eliminar Usuario</h1>
+        </div>
+
+        <div class="delete-content">
+            <p class="delete-message">
+                ¿Estás seguro de que quieres eliminar al usuario <strong>"{{ usuario.username }}"</strong>?
+            </p>
+            
+            <div class="user-preview">
+                <div class="preview-header">
+                    <div class="preview-avatar">
+                        {% if usuario.is_superuser %}
+                            👑
+                        {% else %}
+                            👤
+                        {% endif %}
+                    </div>
+                    <div class="preview-info">
+                        <h3>{{ usuario.username }}</h3>
+                        <p>{{ usuario.email|default:"Sin email" }}</p>
+                        <p class="user-details">
+                            {{ usuario.first_name|default:"" }} {{ usuario.last_name|default:"" }}
+                            {% if usuario.first_name or usuario.last_name %}<br>{% endif %}
+                            <span class="user-status {% if usuario.is_active %}active{% else %}inactive{% endif %}">
+                                {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Transacciones:</span>
+                    <span class="stat-value">{{ usuario.transacciones.count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Cuentas:</span>
+                    <span class="stat-value">{{ usuario.cuentas.count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Categorías:</span>
+                    <span class="stat-value">{{ usuario.categorias.count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Presupuestos:</span>
+                    <span class="stat-value">{{ usuario.presupuestos.count }}</span>
+                </div>
+            </div>
+
+            {% if usuario.transacciones.count > 0 or usuario.cuentas.count > 0 %}
+            <div class="warning-message">
+                <p><strong>⚠️ Advertencia:</strong> Este usuario tiene datos asociados:</p>
+                <ul>
+                    {% if usuario.transacciones.count > 0 %}
+                        <li>{{ usuario.transacciones.count }} transacción(es)</li>
+                    {% endif %}
+                    {% if usuario.cuentas.count > 0 %}
+                        <li>{{ usuario.cuentas.count }} cuenta(s)</li>
+                    {% endif %}
+                    {% if usuario.categorias.count > 0 %}
+                        <li>{{ usuario.categorias.count }} categoría(s)</li>
+                    {% endif %}
+                    {% if usuario.presupuestos.count > 0 %}
+                        <li>{{ usuario.presupuestos.count }} presupuesto(s)</li>
+                    {% endif %}
+                </ul>
+                <p><strong>Al eliminar el usuario, todos estos datos también serán eliminados permanentemente.</strong></p>
+            </div>
+            {% endif %}
+
+            {% if usuario.is_superuser %}
+            <div class="warning-message superuser-warning">
+                <p><strong>🚨 ADVERTENCIA CRÍTICA:</strong> Este usuario es un superusuario con acceso completo al sistema. Su eliminación puede afectar la funcionalidad del sistema.</p>
+            </div>
+            {% endif %}
+
+            <div class="warning-message">
+                <p><strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer. El usuario y todos sus datos serán eliminados permanentemente.</p>
+            </div>
+        </div>
+
+        <div class="delete-actions">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete">🗑️ Eliminar Usuario</button>
+                <a href="{% url 'configuracion' %}" class="btn-cancel">❌ Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 50px auto;
+    }
+
+    .delete-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .delete-header {
+        margin-bottom: 30px;
+    }
+
+    .delete-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .delete-header h1 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.8rem;
+    }
+
+    .delete-content {
+        margin-bottom: 30px;
+    }
+
+    .delete-message {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+
+    .user-preview {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .preview-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+
+    .preview-info {
+        flex: 1;
+        text-align: left;
+    }
+
+    .preview-info h3 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .preview-info p {
+        margin: 0 0 5px 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .user-details {
+        font-size: 0.85rem;
+        color: #95a5a6;
+    }
+
+    .user-status {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .user-status.active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .user-status.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .user-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #ecf0f1;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .warning-message {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        text-align: left;
+    }
+
+    .warning-message p {
+        margin: 0 0 10px 0;
+        color: #856404;
+        font-size: 0.95rem;
+    }
+
+    .warning-message ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+
+    .warning-message li {
+        color: #856404;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .superuser-warning {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .superuser-warning p {
+        color: #721c24;
+    }
+
+    .delete-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-delete,
+    .btn-cancel {
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c0392b;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .delete-container {
+            margin: 20px auto;
+        }
+
+        .delete-card {
+            padding: 25px;
+        }
+
+        .preview-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .user-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .delete-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %} 

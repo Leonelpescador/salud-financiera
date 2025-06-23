@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta
 from django.utils import timezone
 from datetime import date
@@ -204,4 +205,90 @@ class MetaForm(forms.ModelForm):
         if fecha_objetivo and fecha_objetivo < date.today():
             raise ValidationError('La fecha objetivo no puede ser anterior a hoy.')
         
-        return fecha_objetivo 
+        return fecha_objetivo
+
+# Formularios para gestión de usuarios
+class UsuarioCrearForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-control'}),
+        }
+
+class UsuarioEditarForm(UserChangeForm):
+    password = None  # No mostrar campo de contraseña en edición
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-control'}),
+        }
+
+class ConfiguracionUsuarioForm(forms.ModelForm):
+    class Meta:
+        model = ConfiguracionUsuario
+        fields = ['moneda_principal', 'zona_horaria', 'notificaciones_activas', 'recordatorios_pago']
+        widgets = {
+            'moneda_principal': forms.Select(attrs={'class': 'form-control'}),
+            'zona_horaria': forms.Select(attrs={'class': 'form-control'}),
+            'notificaciones_activas': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'recordatorios_pago': forms.CheckboxInput(attrs={'class': 'form-control'}),
+        }
+
+class ConfiguracionSistemaForm(forms.Form):
+    MONEDA_CHOICES = [
+        ('ARS', 'Peso Argentino'),
+        ('USD', 'Dólar Estadounidense'),
+        ('EUR', 'Euro'),
+        ('BRL', 'Real Brasileño'),
+        ('CLP', 'Peso Chileno'),
+        ('COP', 'Peso Colombiano'),
+        ('MXN', 'Peso Mexicano'),
+        ('PEN', 'Sol Peruano'),
+        ('UYU', 'Peso Uruguayo'),
+        ('VES', 'Bolívar Venezolano'),
+    ]
+    
+    ZONA_HORARIA_CHOICES = [
+        ('America/Argentina/Buenos_Aires', 'Argentina (Buenos Aires)'),
+        ('America/New_York', 'Estados Unidos (Nueva York)'),
+        ('Europe/Madrid', 'España (Madrid)'),
+        ('America/Sao_Paulo', 'Brasil (São Paulo)'),
+        ('America/Santiago', 'Chile (Santiago)'),
+        ('America/Bogota', 'Colombia (Bogotá)'),
+        ('America/Mexico_City', 'México (Ciudad de México)'),
+        ('America/Lima', 'Perú (Lima)'),
+        ('America/Montevideo', 'Uruguay (Montevideo)'),
+        ('America/Caracas', 'Venezuela (Caracas)'),
+    ]
+    
+    moneda_principal = forms.ChoiceField(
+        choices=MONEDA_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    zona_horaria = forms.ChoiceField(
+        choices=ZONA_HORARIA_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    notificaciones_activas = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-control'})
+    )
+    recordatorios_pago = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-control'})
+    ) 

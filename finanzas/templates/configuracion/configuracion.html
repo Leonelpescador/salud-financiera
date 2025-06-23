@@ -1,0 +1,801 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Configuración - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="config-container">
+    <div class="page-header">
+        <h1>⚙️ Configuración del Sistema</h1>
+        <p class="subtitle">Gestiona usuarios y configuraciones del sistema</p>
+    </div>
+
+    <!-- Pestañas de navegación -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="usuarios">
+                👥 Gestión de Usuarios
+            </button>
+            <button class="tab-btn" data-tab="configuracion">
+                ⚙️ Configuración General
+            </button>
+            <button class="tab-btn" data-tab="sistema">
+                🔧 Configuración del Sistema
+            </button>
+        </div>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content">
+            <!-- Pestaña de Usuarios -->
+            <div id="usuarios" class="tab-pane active">
+                <div class="section-header">
+                    <h2>👥 Gestión de Usuarios</h2>
+                    <a href="{% url 'usuario_crear' %}" class="btn-primary">
+                        <span>➕</span> Nuevo Usuario
+                    </a>
+                </div>
+
+                <div class="users-grid">
+                    {% for usuario in usuarios %}
+                    <div class="user-card {% if not usuario.is_active %}inactive{% endif %}">
+                        <div class="user-header">
+                            <div class="user-avatar">
+                                {% if usuario.is_superuser %}
+                                    👑
+                                {% else %}
+                                    👤
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <h3>{{ usuario.username }}</h3>
+                                <p>{{ usuario.email|default:"Sin email" }}</p>
+                                <span class="user-status {% if usuario.is_active %}active{% else %}inactive{% endif %}">
+                                    {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="user-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Nombre:</span>
+                                <span class="detail-value">{{ usuario.first_name|default:"No especificado" }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Apellido:</span>
+                                <span class="detail-value">{{ usuario.last_name|default:"No especificado" }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Último acceso:</span>
+                                <span class="detail-value">
+                                    {% if usuario.last_login %}
+                                        {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        Nunca
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Fecha registro:</span>
+                                <span class="detail-value">{{ usuario.date_joined|date:"d/m/Y" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="user-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Transacciones:</span>
+                                <span class="stat-value">{{ usuario.transacciones.count }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Cuentas:</span>
+                                <span class="stat-value">{{ usuario.cuentas.count }}</span>
+                            </div>
+                        </div>
+
+                        <div class="user-actions">
+                            <a href="{% url 'usuario_editar' usuario.pk %}" class="btn-edit">✏️ Editar</a>
+                            {% if usuario.is_active %}
+                                <a href="{% url 'usuario_desactivar' usuario.pk %}" class="btn-warning">🚫 Desactivar</a>
+                            {% else %}
+                                <a href="{% url 'usuario_activar' usuario.pk %}" class="btn-success">✅ Activar</a>
+                            {% endif %}
+                            {% if not usuario.is_superuser %}
+                                <a href="{% url 'usuario_eliminar' usuario.pk %}" class="btn-delete">🗑️ Eliminar</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <h3>No hay usuarios</h3>
+                        <p>Aún no se han registrado usuarios en el sistema.</p>
+                        <a href="{% url 'usuario_crear' %}" class="btn-primary">Crear Primer Usuario</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pestaña de Configuración -->
+            <div id="configuracion" class="tab-pane">
+                <div class="section-header">
+                    <h2>⚙️ Configuración General</h2>
+                </div>
+
+                <div class="config-form">
+                    <form method="post" action="{% url 'configuracion_guardar' %}">
+                        {% csrf_token %}
+                        
+                        <div class="form-section">
+                            <h3>Configuración de Moneda</h3>
+                            <div class="form-group">
+                                <label for="moneda_principal">Moneda Principal</label>
+                                <select name="moneda_principal" id="moneda_principal" class="form-control">
+                                    <option value="ARS" {% if config.moneda_principal == 'ARS' %}selected{% endif %}>Peso Argentino (ARS)</option>
+                                    <option value="USD" {% if config.moneda_principal == 'USD' %}selected{% endif %}>Dólar Estadounidense (USD)</option>
+                                    <option value="EUR" {% if config.moneda_principal == 'EUR' %}selected{% endif %}>Euro (EUR)</option>
+                                    <option value="BRL" {% if config.moneda_principal == 'BRL' %}selected{% endif %}>Real Brasileño (BRL)</option>
+                                    <option value="CLP" {% if config.moneda_principal == 'CLP' %}selected{% endif %}>Peso Chileno (CLP)</option>
+                                    <option value="COP" {% if config.moneda_principal == 'COP' %}selected{% endif %}>Peso Colombiano (COP)</option>
+                                    <option value="MXN" {% if config.moneda_principal == 'MXN' %}selected{% endif %}>Peso Mexicano (MXN)</option>
+                                    <option value="PEN" {% if config.moneda_principal == 'PEN' %}selected{% endif %}>Sol Peruano (PEN)</option>
+                                    <option value="UYU" {% if config.moneda_principal == 'UYU' %}selected{% endif %}>Peso Uruguayo (UYU)</option>
+                                    <option value="VES" {% if config.moneda_principal == 'VES' %}selected{% endif %}>Bolívar Venezolano (VES)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Configuración de Zona Horaria</h3>
+                            <div class="form-group">
+                                <label for="zona_horaria">Zona Horaria</label>
+                                <select name="zona_horaria" id="zona_horaria" class="form-control">
+                                    <option value="America/Argentina/Buenos_Aires" {% if config.zona_horaria == 'America/Argentina/Buenos_Aires' %}selected{% endif %}>Argentina (Buenos Aires)</option>
+                                    <option value="America/New_York" {% if config.zona_horaria == 'America/New_York' %}selected{% endif %}>Estados Unidos (Nueva York)</option>
+                                    <option value="Europe/Madrid" {% if config.zona_horaria == 'Europe/Madrid' %}selected{% endif %}>España (Madrid)</option>
+                                    <option value="America/Sao_Paulo" {% if config.zona_horaria == 'America/Sao_Paulo' %}selected{% endif %}>Brasil (São Paulo)</option>
+                                    <option value="America/Santiago" {% if config.zona_horaria == 'America/Santiago' %}selected{% endif %}>Chile (Santiago)</option>
+                                    <option value="America/Bogota" {% if config.zona_horaria == 'America/Bogota' %}selected{% endif %}>Colombia (Bogotá)</option>
+                                    <option value="America/Mexico_City" {% if config.zona_horaria == 'America/Mexico_City' %}selected{% endif %}>México (Ciudad de México)</option>
+                                    <option value="America/Lima" {% if config.zona_horaria == 'America/Lima' %}selected{% endif %}>Perú (Lima)</option>
+                                    <option value="America/Montevideo" {% if config.zona_horaria == 'America/Montevideo' %}selected{% endif %}>Uruguay (Montevideo)</option>
+                                    <option value="America/Caracas" {% if config.zona_horaria == 'America/Caracas' %}selected{% endif %}>Venezuela (Caracas)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Configuración de Notificaciones</h3>
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="notificaciones_activas" {% if config.notificaciones_activas %}checked{% endif %}>
+                                    <span class="checkmark"></span>
+                                    Activar notificaciones
+                                </label>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="recordatorios_pago" {% if config.recordatorios_pago %}checked{% endif %}>
+                                    <span class="checkmark"></span>
+                                    Activar recordatorios de pago
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">💾 Guardar Configuración</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Pestaña del Sistema -->
+            <div id="sistema" class="tab-pane">
+                <div class="section-header">
+                    <h2>🔧 Configuración del Sistema</h2>
+                </div>
+
+                <div class="system-info">
+                    <div class="info-card">
+                        <h3>📊 Estadísticas del Sistema</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">👥</div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ total_usuarios }}</span>
+                                    <span class="stat-label">Usuarios Totales</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ total_transacciones }}</span>
+                                    <span class="stat-label">Transacciones</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🏦</div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ total_cuentas }}</span>
+                                    <span class="stat-label">Cuentas</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-content">
+                                    <span class="stat-number">{{ total_categorias }}</span>
+                                    <span class="stat-label">Categorías</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🛠️ Acciones del Sistema</h3>
+                        <div class="actions-grid">
+                            <a href="{% url 'backup_datos' %}" class="action-btn">
+                                <span class="action-icon">💾</span>
+                                <span class="action-text">Crear Backup</span>
+                            </a>
+                            <a href="{% url 'limpiar_datos' %}" class="action-btn warning">
+                                <span class="action-icon">🧹</span>
+                                <span class="action-text">Limpiar Datos</span>
+                            </a>
+                            <a href="{% url 'exportar_datos' %}" class="action-btn">
+                                <span class="action-icon">📤</span>
+                                <span class="action-text">Exportar Datos</span>
+                            </a>
+                            <a href="{% url 'importar_datos' %}" class="action-btn">
+                                <span class="action-icon">📥</span>
+                                <span class="action-text">Importar Datos</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .config-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+        font-size: 2.5rem;
+    }
+
+    .subtitle {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* Pestañas */
+    .tabs-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .tabs {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 15px 20px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #7f8c8d;
+        transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+        background: white;
+        color: #3498db;
+        border-bottom: 3px solid #3498db;
+    }
+
+    .tab-btn:hover {
+        background: #ecf0f1;
+        color: #2c3e50;
+    }
+
+    .tab-content {
+        padding: 30px;
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* Sección de usuarios */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
+    }
+
+    .user-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        border-left: 4px solid #3498db;
+    }
+
+    .user-card.inactive {
+        border-left-color: #e74c3c;
+        opacity: 0.7;
+    }
+
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .user-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .user-info {
+        flex: 1;
+    }
+
+    .user-info h3 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .user-info p {
+        margin: 0 0 8px 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .user-status {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .user-status.active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .user-status.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .user-details {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .detail-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .detail-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .user-stats {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #ecf0f1;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    /* Botones */
+    .btn-primary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #3498db;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-edit,
+    .btn-warning,
+    .btn-success,
+    .btn-delete {
+        padding: 8px 15px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-edit {
+        background: #f39c12;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: #e67e22;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-warning {
+        background: #f39c12;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: #e67e22;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #229954;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c0392b;
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Formulario de configuración */
+    .config-form {
+        max-width: 600px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: normal;
+        margin-bottom: 10px;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+    }
+
+    .form-actions {
+        text-align: center;
+        padding-top: 20px;
+    }
+
+    /* Información del sistema */
+    .system-info {
+        display: grid;
+        gap: 30px;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 15px;
+        border-left: 4px solid #3498db;
+    }
+
+    .info-card h3 {
+        margin: 0 0 20px 0;
+        color: #2c3e50;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .action-btn {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 2px solid transparent;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        text-decoration: none;
+        border-color: #3498db;
+    }
+
+    .action-btn.warning:hover {
+        border-color: #e74c3c;
+    }
+
+    .action-icon {
+        display: block;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .action-text {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    /* Estado vacío */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media (max-width: 768px) {
+        .tabs {
+            flex-direction: column;
+        }
+
+        .users-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .user-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .user-stats {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-actions {
+            justify-content: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    // Funcionalidad de pestañas
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                
+                // Remover clase active de todos los botones y paneles
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                // Agregar clase active al botón clickeado y su panel correspondiente
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -48,8 +48,26 @@ urlpatterns = [
     path('metas/<int:pk>/actualizar-progreso/', views.meta_actualizar_progreso, name='meta_actualizar_progreso'),
     
     # Corte de Mes
-    path('corte-mes/', views.cortes_mes_lista, name='cortes_mes_lista'),
     path('corte-mes/confirmar/', views.corte_mes_confirmar, name='corte_mes_confirmar'),
     path('corte-mes/ejecutar/', views.corte_mes_ejecutar, name='corte_mes_ejecutar'),
-    path('corte-mes/<int:pk>/', views.corte_mes_detalle, name='corte_mes_detalle'),
+    path('cortes-mes/', views.cortes_mes_lista, name='cortes_mes_lista'),
+    path('corte-mes/<int:pk>/detalle/', views.corte_mes_detalle, name='corte_mes_detalle'),
+    
+    # Configuración del Sistema
+    path('configuracion/', views.configuracion, name='configuracion'),
+    path('configuracion/guardar/', views.configuracion_guardar, name='configuracion_guardar'),
+    path('mi-configuracion/', views.configuracion_personal, name='configuracion_personal'),
+    
+    # Gestión de Usuarios
+    path('usuarios/crear/', views.usuario_crear, name='usuario_crear'),
+    path('usuarios/<int:pk>/editar/', views.usuario_editar, name='usuario_editar'),
+    path('usuarios/<int:pk>/eliminar/', views.usuario_eliminar, name='usuario_eliminar'),
+    path('usuarios/<int:pk>/activar/', views.usuario_activar, name='usuario_activar'),
+    path('usuarios/<int:pk>/desactivar/', views.usuario_desactivar, name='usuario_desactivar'),
+    
+    # Acciones del Sistema
+    path('sistema/backup/', views.backup_datos, name='backup_datos'),
+    path('sistema/limpiar/', views.limpiar_datos, name='limpiar_datos'),
+    path('sistema/exportar/', views.exportar_datos, name='exportar_datos'),
+    path('sistema/importar/', views.importar_datos, name='importar_datos'),
 ]
