@@ -7,6 +7,18 @@
     <div class="welcome-section">
         <h1>¡Hola, {{ user.username }}! 👋</h1>
         <p>Aquí tienes un resumen de tu salud financiera</p>
+        
+        <!-- Acciones Rápidas -->
+        <div class="quick-actions">
+            <a href="{% url 'corte_mes_confirmar' %}" class="quick-action-btn">
+                <span class="action-icon">📅</span>
+                <span class="action-text">Cortar Mes</span>
+            </a>
+            <a href="{% url 'transaccion_crear' %}" class="quick-action-btn">
+                <span class="action-icon">➕</span>
+                <span class="action-text">Nueva Transacción</span>
+            </a>
+        </div>
     </div>
 
     <!-- Resumen General -->
@@ -235,9 +247,9 @@
     }
 
     .welcome-section p {
-        margin: 0;
+        color: #7f8c8d;
         font-size: 1.1rem;
-        opacity: 0.9;
+        margin-top: 10px;
     }
 
     /* Resumen General */
@@ -648,6 +660,44 @@
             align-items: flex-start;
             gap: 5px;
         }
+    }
+
+    /* Acciones Rápidas */
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+    }
+
+    .quick-action-btn:hover {
+        background: linear-gradient(135deg, #2980b9, #1f5f8b);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .action-icon {
+        font-size: 1.2rem;
+    }
+
+    .action-text {
+        font-size: 0.95rem;
     }
 </style>
 {% endblock %} 

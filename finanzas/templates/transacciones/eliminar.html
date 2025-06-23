@@ -1,215 +1,290 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Eliminar Transacción - Salud Financiera{% endblock %}
+{% block title %}Eliminar Transacción{% endblock %}
 
 {% block content %}
-<div class="delete-container">
-    <div class="delete-card">
-        <div class="delete-header">
-            <div class="delete-icon">⚠️</div>
-            <h1>Eliminar Transacción</h1>
-        </div>
-
-        <div class="delete-content">
-            <p class="delete-message">
-                ¿Estás seguro de que quieres eliminar la transacción <strong>"{{ transaccion.descripcion }}"</strong>?
-            </p>
-            
-            <div class="transaction-preview">
-                <div class="preview-header">
-                    <div class="preview-icon">
-                        {% if transaccion.tipo == 'ingreso' %}📈{% elif transaccion.tipo == 'gasto' %}📉{% else %}🔄{% endif %}
-                    </div>
-                    <div class="preview-info">
-                        <h3>{{ transaccion.descripcion }}</h3>
-                        <p>{{ transaccion.fecha|date:"d/m/Y" }} - {{ transaccion.categoria.nombre }}</p>
-                    </div>
-                    <div class="preview-amount {% if transaccion.tipo == 'ingreso' %}positive{% else %}negative{% endif %}">
-                        {% if transaccion.tipo == 'gasto' %}-{% endif %}${{ transaccion.monto|floatformat:2 }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="warning-message">
-                <p><strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer. La transacción será eliminada permanentemente.</p>
-            </div>
-        </div>
-
-        <div class="delete-actions">
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn-delete">🗑️ Eliminar Transacción</button>
-                <a href="{% url 'transacciones_lista' %}" class="btn-cancel">❌ Cancelar</a>
-            </form>
-        </div>
-    </div>
-</div>
-
 <style>
-    .delete-container {
+    .eliminar-container {
         max-width: 600px;
-        margin: 50px auto;
+        margin: 0 auto;
+        padding: 20px;
     }
 
-    .delete-card {
-        background: white;
-        padding: 40px;
+    .eliminar-header {
+        background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        color: white;
+        padding: 30px;
         border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
         text-align: center;
+        box-shadow: 0 10px 30px rgba(225, 112, 85, 0.3);
     }
 
-    .delete-header {
-        margin-bottom: 30px;
+    .eliminar-header h4 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    .delete-icon {
-        font-size: 4rem;
-        margin-bottom: 20px;
-    }
-
-    .delete-header h1 {
-        margin: 0;
-        color: #2c3e50;
-        font-size: 1.8rem;
-    }
-
-    .delete-content {
-        margin-bottom: 30px;
-    }
-
-    .delete-message {
+    .eliminar-header p {
         font-size: 1.1rem;
-        color: #2c3e50;
-        margin-bottom: 25px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .transaccion-info {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f2f6;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #2d3436;
+    }
+
+    .info-value {
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+
+    .amount-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .amount-value.ingreso {
+        color: #00b894;
+    }
+
+    .amount-value.gasto {
+        color: #e17055;
+    }
+
+    .amount-value.transferencia {
+        color: #74b9ff;
+    }
+
+    .tipo-badge {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .tipo-badge.ingreso {
+        background: #00b894;
+    }
+
+    .tipo-badge.gasto {
+        background: #e17055;
+    }
+
+    .tipo-badge.transferencia {
+        background: #74b9ff;
+    }
+
+    .categoria-badge {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .warning-alert {
+        background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        color: white;
+        box-shadow: 0 5px 15px rgba(253, 203, 110, 0.3);
+    }
+
+    .warning-alert h6 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .warning-alert ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .warning-alert li {
+        margin-bottom: 8px;
         line-height: 1.5;
     }
 
-    .transaction-preview {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        border-left: 4px solid #e74c3c;
-    }
-
-    .preview-header {
+    .action-buttons {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 15px;
+        gap: 20px;
     }
 
-    .preview-icon {
-        font-size: 1.5rem;
-        width: 40px;
+    .btn-cancel {
+        background: linear-gradient(135deg, #636e72 0%, #2d3436 100%);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(99, 110, 114, 0.3);
+        border: none;
+        flex: 1;
         text-align: center;
     }
 
-    .preview-info {
-        flex: 1;
-        text-align: left;
-    }
-
-    .preview-info h3 {
-        margin: 0 0 5px 0;
-        color: #2c3e50;
-        font-size: 1.1rem;
-    }
-
-    .preview-info p {
-        margin: 0;
-        color: #7f8c8d;
-        font-size: 0.9rem;
-    }
-
-    .preview-amount {
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-
-    .preview-amount.positive {
-        color: #27ae60;
-    }
-
-    .preview-amount.negative {
-        color: #e74c3c;
-    }
-
-    .warning-message {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-
-    .warning-message p {
-        margin: 0;
-        color: #856404;
-        font-size: 0.95rem;
-    }
-
-    .delete-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-    }
-
-    .btn-delete,
-    .btn-cancel {
-        padding: 12px 25px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-size: 1rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn-delete {
-        background: #e74c3c;
-        color: white;
-    }
-
-    .btn-delete:hover {
-        background: #c0392b;
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-cancel {
-        background: #95a5a6;
-        color: white;
-    }
-
     .btn-cancel:hover {
-        background: #7f8c8d;
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
         color: white;
         text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 110, 114, 0.4);
+    }
+
+    .btn-eliminar {
+        background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(225, 112, 85, 0.3);
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .btn-eliminar:hover {
+        background: linear-gradient(135deg, #d63031 0%, #e17055 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(225, 112, 85, 0.4);
+    }
+
+    .btn i {
+        margin-right: 8px;
     }
 
     @media (max-width: 768px) {
-        .delete-container {
-            margin: 20px auto;
+        .eliminar-container {
+            padding: 15px;
         }
 
-        .delete-card {
-            padding: 25px;
+        .eliminar-header {
+            padding: 20px;
         }
 
-        .preview-header {
+        .eliminar-header h4 {
+            font-size: 1.6rem;
+        }
+
+        .action-buttons {
             flex-direction: column;
-            text-align: center;
         }
 
-        .preview-info {
-            text-align: center;
-        }
-
-        .delete-actions {
-            flex-direction: column;
+        .btn-cancel, .btn-eliminar {
+            width: 100%;
         }
     }
 </style>
+
+<div class="eliminar-container">
+    <!-- Header -->
+    <div class="eliminar-header">
+        <h4>
+            <i class="fas fa-trash-alt me-2"></i>
+            Eliminar Transacción
+        </h4>
+        <p>Confirma que deseas eliminar esta transacción permanentemente</p>
+    </div>
+
+    <!-- Información de la transacción -->
+    <div class="transaccion-info">
+        <div class="info-row">
+            <span class="info-label">Descripción:</span>
+            <span class="info-value">{{ transaccion.descripcion }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Monto:</span>
+            <span class="amount-value {{ transaccion.tipo }}">${{ transaccion.monto|floatformat:2 }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tipo:</span>
+            <span class="tipo-badge {{ transaccion.tipo }}">
+                {% if transaccion.tipo == 'ingreso' %}Ingreso
+                {% elif transaccion.tipo == 'gasto' %}Gasto
+                {% else %}Transferencia{% endif %}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Categoría:</span>
+            <span class="categoria-badge" style="background-color: {{ transaccion.categoria.color }};">
+                {{ transaccion.categoria.nombre }}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Cuenta:</span>
+            <span class="info-value">{{ transaccion.cuenta.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Fecha:</span>
+            <span class="info-value">{{ transaccion.fecha|date:"d/m/Y" }}</span>
+        </div>
+        {% if transaccion.tags.all %}
+        <div class="info-row">
+            <span class="info-label">Etiquetas:</span>
+            <span class="info-value">
+                {% for tag in transaccion.tags.all %}
+                <span class="badge bg-secondary me-1">{{ tag.nombre }}</span>
+                {% endfor %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Advertencia -->
+    <div class="warning-alert">
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>¡Atención!</h6>
+        <ul>
+            <li>Esta acción no se puede deshacer</li>
+            <li>La transacción será eliminada permanentemente</li>
+            <li>Los saldos de las cuentas se actualizarán automáticamente</li>
+            <li>Si es una transferencia, también se eliminará la transacción correspondiente</li>
+        </ul>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="action-buttons">
+        <a href="{% url 'transacciones_lista' %}" class="btn-cancel">
+            <i class="fas fa-times"></i>Cancelar
+        </a>
+        <form method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-eliminar">
+                <i class="fas fa-trash-alt"></i>Eliminar Transacción
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %} 

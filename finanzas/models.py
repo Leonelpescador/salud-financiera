@@ -335,3 +335,39 @@ class ConfiguracionUsuario(models.Model):
     
     def __str__(self):
         return f"Configuración de {self.usuario.username}"
+
+class CorteMes(models.Model):
+    """Modelo para registrar los cortes mensuales de finanzas"""
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cortes_mes')
+    fecha_corte = models.DateField()  # Fecha del corte (último día del mes)
+    mes_cortado = models.IntegerField()  # Mes que se cortó (1-12)
+    año_cortado = models.IntegerField()  # Año que se cortó
+    
+    # Totales del mes
+    total_ingresos = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_gastos = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    balance_mes = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Saldos de cuentas al momento del corte
+    saldos_cuentas = models.JSONField(default=dict)  # {cuenta_id: saldo}
+    
+    # Configuración
+    mantener_saldos = models.BooleanField(default=True)  # Si se mantienen los saldos a favor
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['usuario', 'mes_cortado', 'año_cortado']
+        ordering = ['-fecha_corte']
+    
+    def __str__(self):
+        return f"Corte {self.mes_cortado}/{self.año_cortado} - {self.usuario.username}"
+    
+    @property
+    def mes_nombre(self):
+        """Retorna el nombre del mes"""
+        meses = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        }
+        return meses.get(self.mes_cortado, 'Desconocido')

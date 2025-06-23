@@ -1,0 +1,404 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Historial de Cortes de Mes{% endblock %}
+
+{% block content %}
+<style>
+    .historial-cortes-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .historial-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .historial-header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .btn-nuevo-corte {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-nuevo-corte:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .cortes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .corte-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .corte-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .corte-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        text-align: center;
+    }
+
+    .corte-header h5 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .corte-body {
+        padding: 25px;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .stat-value.ingresos {
+        color: #00b894;
+    }
+
+    .stat-value.gastos {
+        color: #e17055;
+    }
+
+    .stat-value.balance {
+        color: #2d3436;
+    }
+
+    .stat-value.balance.positive {
+        color: #00b894;
+    }
+
+    .stat-value.balance.negative {
+        color: #e17055;
+    }
+
+    .corte-info {
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .info-item i {
+        width: 16px;
+        color: #636e72;
+    }
+
+    .btn-ver-detalle {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        display: block;
+        text-align: center;
+        width: 100%;
+    }
+
+    .btn-ver-detalle:hover {
+        background: linear-gradient(135deg, #5a6fd8, #6a4190);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .pagination-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-top: 30px;
+    }
+
+    .pagination {
+        justify-content: center;
+        margin: 0;
+    }
+
+    .page-link {
+        border: none;
+        color: #667eea;
+        padding: 12px 16px;
+        margin: 0 5px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #bdc3c7;
+        margin-bottom: 30px;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        color: #7f8c8d;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        color: #95a5a6;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+
+    .btn-primer-corte {
+        background: linear-gradient(135deg, #00b894, #00a085);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .btn-primer-corte:hover {
+        background: linear-gradient(135deg, #00a085, #00b894);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 184, 148, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .historial-cortes-container {
+            padding: 15px;
+        }
+
+        .historial-header {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .historial-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .cortes-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .btn-nuevo-corte {
+            margin-top: 15px;
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="historial-cortes-container">
+    <!-- Header -->
+    <div class="historial-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-calendar-times me-2"></i>
+                Historial de Cortes de Mes
+            </h2>
+            <a href="{% url 'corte_mes_confirmar' %}" class="btn-nuevo-corte">
+                <i class="fas fa-plus me-2"></i>Nuevo Corte de Mes
+            </a>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <!-- Grid de cortes -->
+    <div class="cortes-grid">
+        {% for corte in page_obj %}
+        <div class="corte-card">
+            <div class="corte-header">
+                <h5>
+                    <i class="fas fa-calendar me-2"></i>
+                    {{ corte.mes_nombre }} {{ corte.año_cortado }}
+                </h5>
+            </div>
+            <div class="corte-body">
+                <!-- Estadísticas -->
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Ingresos</div>
+                        <div class="stat-value ingresos">${{ corte.total_ingresos|floatformat:0 }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Gastos</div>
+                        <div class="stat-value gastos">${{ corte.total_gastos|floatformat:0 }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Balance</div>
+                        <div class="stat-value balance {% if corte.balance_mes >= 0 %}positive{% else %}negative{% endif %}">
+                            ${{ corte.balance_mes|floatformat:0 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información adicional -->
+                <div class="corte-info">
+                    <div class="info-item">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Corte realizado: {{ corte.fecha_corte|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Registrado: {{ corte.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+                
+                <!-- Botón ver detalle -->
+                <a href="{% url 'corte_mes_detalle' corte.pk %}" class="btn-ver-detalle">
+                    <i class="fas fa-eye me-2"></i>Ver Detalle
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination-container">
+        <nav aria-label="Paginación de cortes de mes">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-chevron-left me-1"></i>Anterior
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        Siguiente<i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h4>No hay cortes de mes registrados</h4>
+        <p>Realiza tu primer corte de mes para comenzar a llevar un historial completo de tus finanzas mensuales.</p>
+        <a href="{% url 'corte_mes_confirmar' %}" class="btn-primer-corte">
+            <i class="fas fa-plus me-2"></i>Realizar Primer Corte
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

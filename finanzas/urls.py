@@ -46,4 +46,10 @@ urlpatterns = [
     path('metas/<int:pk>/editar/', views.meta_editar, name='meta_editar'),
     path('metas/<int:pk>/eliminar/', views.meta_eliminar, name='meta_eliminar'),
     path('metas/<int:pk>/actualizar-progreso/', views.meta_actualizar_progreso, name='meta_actualizar_progreso'),
+    
+    # Corte de Mes
+    path('corte-mes/', views.cortes_mes_lista, name='cortes_mes_lista'),
+    path('corte-mes/confirmar/', views.corte_mes_confirmar, name='corte_mes_confirmar'),
+    path('corte-mes/ejecutar/', views.corte_mes_ejecutar, name='corte_mes_ejecutar'),
+    path('corte-mes/<int:pk>/', views.corte_mes_detalle, name='corte_mes_detalle'),
 ]

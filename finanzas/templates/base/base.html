@@ -236,6 +236,12 @@
                             Etiquetas
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{% url 'cortes_mes_lista' %}" class="nav-link {% if 'corte_mes' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">📅</span>
+                            Cortes de Mes
+                        </a>
+                    </li>
                 </div>
 
                 <!-- Planificación y Metas -->
@@ -251,52 +257,6 @@
                         <a href="{% url 'metas_lista' %}" class="nav-link {% if 'meta' in request.resolver_match.url_name %}active{% endif %}">
                             <span class="nav-icon">🎯</span>
                             Metas
-                        </a>
-                    </li>
-                </div>
-
-                <!-- Análisis e Inteligencia -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Análisis e Inteligencia</div>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">📈</span>
-                            Reportes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">📊</span>
-                            Gráficos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">🔍</span>
-                            Análisis
-                        </a>
-                    </li>
-                </div>
-
-                <!-- Educación y Motivación -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Educación y Motivación</div>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">📚</span>
-                            Consejos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">🎓</span>
-                            Educación
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">🏆</span>
-                            Logros
                         </a>
                     </li>
                 </div>

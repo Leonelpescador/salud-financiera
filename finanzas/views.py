@@ -5,11 +5,13 @@ from django.contrib import messages
 from django.db.models import Sum, Q
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta
+from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes
 from .forms import TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm, PresupuestoForm, MetaForm
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.utils import timezone
+from calendar import monthrange
+import json
 
 def login(request):
     if request.method == 'POST':
@@ -200,7 +202,7 @@ def transaccion_eliminar(request, pk):
     context = {
         'transaccion': transaccion,
     }
-    return render(request, 'transacciones/confirmar_eliminar.html', context)
+    return render(request, 'transacciones/eliminar.html', context)
 
 # Vistas para Categorías
 @login_required(login_url='/finanzas/')
@@ -569,4 +571,207 @@ def tag_eliminar(request, pk):
         'tag': tag
     }
     return render(request, 'tags/eliminar.html', context)
+
+@login_required
+def corte_mes_confirmar(request):
+    """Vista para confirmar el corte de mes"""
+    # Obtener el mes actual
+    hoy = date.today()
+    mes_actual = hoy.month
+    año_actual = hoy.year
+    
+    # Verificar si ya se hizo el corte para este mes
+    corte_existente = CorteMes.objects.filter(
+        usuario=request.user,
+        mes_cortado=mes_actual,
+        año_cortado=año_actual
+    ).first()
+    
+    if corte_existente:
+        messages.warning(request, f'Ya se realizó el corte para {corte_existente.mes_nombre} {año_actual}.')
+        return redirect('dashboard')
+    
+    # Calcular el último día del mes
+    ultimo_dia = monthrange(año_actual, mes_actual)[1]
+    fecha_fin_mes = date(año_actual, mes_actual, ultimo_dia)
+    
+    # Calcular estadísticas del mes
+    inicio_mes = date(año_actual, mes_actual, 1)
+    
+    ingresos_mes = Transaccion.objects.filter(
+        usuario=request.user,
+        tipo='ingreso',
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    
+    gastos_mes = Transaccion.objects.filter(
+        usuario=request.user,
+        tipo='gasto',
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    
+    balance_mes = ingresos_mes - gastos_mes
+    
+    # Obtener saldos actuales de las cuentas
+    cuentas_activas = Cuenta.objects.filter(usuario=request.user, activa=True)
+    saldos_cuentas = {}
+    
+    for cuenta in cuentas_activas:
+        saldos_cuentas[cuenta.id] = {
+            'nombre': cuenta.nombre,
+            'saldo_actual': float(cuenta.saldo_actual),
+            'tipo': cuenta.tipo_cuenta
+        }
+    
+    # Transacciones del mes
+    transacciones_mes = Transaccion.objects.filter(
+        usuario=request.user,
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).count()
+    
+    context = {
+        'mes_actual': mes_actual,
+        'año_actual': año_actual,
+        'mes_nombre': CorteMes(mes_cortado=mes_actual).mes_nombre,
+        'fecha_fin_mes': fecha_fin_mes,
+        'ingresos_mes': ingresos_mes,
+        'gastos_mes': gastos_mes,
+        'balance_mes': balance_mes,
+        'saldos_cuentas': saldos_cuentas,
+        'transacciones_mes': transacciones_mes,
+        'cuentas_activas': cuentas_activas,
+    }
+    
+    return render(request, 'corte_mes/confirmar.html', context)
+
+@login_required
+def corte_mes_ejecutar(request):
+    """Vista para ejecutar el corte de mes"""
+    if request.method != 'POST':
+        return redirect('corte_mes_confirmar')
+    
+    # Obtener el mes actual
+    hoy = date.today()
+    mes_actual = hoy.month
+    año_actual = hoy.year
+    
+    # Verificar si ya se hizo el corte para este mes
+    corte_existente = CorteMes.objects.filter(
+        usuario=request.user,
+        mes_cortado=mes_actual,
+        año_actual=año_actual
+    ).first()
+    
+    if corte_existente:
+        messages.warning(request, f'Ya se realizó el corte para {corte_existente.mes_nombre} {año_actual}.')
+        return redirect('dashboard')
+    
+    # Calcular el último día del mes
+    ultimo_dia = monthrange(año_actual, mes_actual)[1]
+    fecha_fin_mes = date(año_actual, mes_actual, ultimo_dia)
+    
+    # Calcular estadísticas del mes
+    inicio_mes = date(año_actual, mes_actual, 1)
+    
+    ingresos_mes = Transaccion.objects.filter(
+        usuario=request.user,
+        tipo='ingreso',
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    
+    gastos_mes = Transaccion.objects.filter(
+        usuario=request.user,
+        tipo='gasto',
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    
+    balance_mes = ingresos_mes - gastos_mes
+    
+    # Obtener saldos actuales de las cuentas
+    cuentas_activas = Cuenta.objects.filter(usuario=request.user, activa=True)
+    saldos_cuentas = {}
+    
+    for cuenta in cuentas_activas:
+        saldos_cuentas[cuenta.id] = float(cuenta.saldo_actual)
+    
+    # Crear el registro del corte
+    corte_mes = CorteMes.objects.create(
+        usuario=request.user,
+        fecha_corte=fecha_fin_mes,
+        mes_cortado=mes_actual,
+        año_cortado=año_actual,
+        total_ingresos=ingresos_mes,
+        total_gastos=gastos_mes,
+        balance_mes=balance_mes,
+        saldos_cuentas=saldos_cuentas,
+        mantener_saldos=True
+    )
+    
+    # Opcional: Archivar transacciones del mes (mover a una tabla de histórico)
+    # Por ahora solo registramos el corte sin eliminar transacciones
+    
+    messages.success(
+        request, 
+        f'Corte de mes realizado exitosamente para {corte_mes.mes_nombre} {año_actual}. '
+        f'Balance: ${balance_mes:,.2f}'
+    )
+    
+    return redirect('dashboard')
+
+@login_required
+def cortes_mes_lista(request):
+    """Vista para listar todos los cortes de mes"""
+    cortes = CorteMes.objects.filter(usuario=request.user).order_by('-fecha_corte')
+    
+    # Paginación
+    paginator = Paginator(cortes, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'total_cortes': cortes.count(),
+    }
+    
+    return render(request, 'corte_mes/lista.html', context)
+
+@login_required
+def corte_mes_detalle(request, pk):
+    """Vista para mostrar el detalle de un corte de mes"""
+    corte = get_object_or_404(CorteMes, pk=pk, usuario=request.user)
+    
+    # Obtener las transacciones del mes cortado
+    inicio_mes = date(corte.año_cortado, corte.mes_cortado, 1)
+    ultimo_dia = monthrange(corte.año_cortado, corte.mes_cortado)[1]
+    fecha_fin_mes = date(corte.año_cortado, corte.mes_cortado, ultimo_dia)
+    
+    transacciones = Transaccion.objects.filter(
+        usuario=request.user,
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).select_related('categoria', 'cuenta').order_by('-fecha')
+    
+    # Gastos por categoría
+    gastos_por_categoria = Transaccion.objects.filter(
+        usuario=request.user,
+        tipo='gasto',
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes
+    ).values('categoria__nombre', 'categoria__color').annotate(
+        total=Sum('monto')
+    ).order_by('-total')
+    
+    context = {
+        'corte': corte,
+        'transacciones': transacciones,
+        'gastos_por_categoria': gastos_por_categoria,
+        'total_transacciones': transacciones.count(),
+    }
+    
+    return render(request, 'corte_mes/detalle.html', context)
 
