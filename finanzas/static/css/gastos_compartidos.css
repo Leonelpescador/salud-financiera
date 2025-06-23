@@ -1,0 +1,113 @@
+/* ====== Gastos Compartidos - Estilos ====== */
+
+.gastos-shared-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 12px 12px 0 0;
+    padding: 24px 32px 16px 32px;
+    margin-bottom: 0;
+}
+
+.gastos-shared-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+    margin-bottom: 32px;
+    overflow: hidden;
+    border: none;
+}
+
+.gastos-shared-card .card-header {
+    background: none;
+    border-bottom: 1px solid #f0f0f0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #764ba2;
+}
+
+.gastos-shared-card .card-body {
+    padding: 24px 32px;
+}
+
+.gastos-shared-card .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #f0f0f0;
+    color: #888;
+    font-size: 0.95rem;
+}
+
+.gastos-shared-badge {
+    display: inline-block;
+    padding: 0.35em 0.8em;
+    font-size: 0.95em;
+    font-weight: 600;
+    border-radius: 1em;
+    background: #e9ecef;
+    color: #764ba2;
+    margin-right: 0.5em;
+}
+
+.gastos-shared-table th, .gastos-shared-table td {
+    vertical-align: middle !important;
+}
+
+.gastos-shared-table th {
+    background: #f8f9fa;
+    color: #764ba2;
+    font-weight: 700;
+    border-bottom: 2px solid #764ba2;
+}
+
+.gastos-shared-table tr:hover {
+    background: #f3f0fa;
+}
+
+.gastos-shared-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 18px;
+    transition: background 0.2s, color 0.2s;
+    border: none;
+    background: #764ba2;
+    color: #fff;
+}
+.gastos-shared-btn:hover {
+    background: #667eea;
+    color: #fff;
+}
+
+.gastos-shared-progress {
+    background: #e9ecef;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+}
+.gastos-shared-progress-bar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    height: 100%;
+    border-radius: 8px;
+}
+
+.gastos-shared-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #764ba2;
+    margin-right: 10px;
+}
+
+.gastos-shared-empty {
+    text-align: center;
+    color: #aaa;
+    padding: 40px 0;
+}
+
+@media (max-width: 768px) {
+    .gastos-shared-card .card-body {
+        padding: 16px 8px;
+    }
+    .gastos-shared-header {
+        padding: 16px 8px 8px 8px;
+    }
+} 

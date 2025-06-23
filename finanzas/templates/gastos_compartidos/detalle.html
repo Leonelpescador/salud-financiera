@@ -1,0 +1,213 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+{% endblock %}
+
+{% block title %}Detalle del Gasto Compartido{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-eye text-primary"></i> Detalle del Gasto Compartido
+            </h1>
+            <p class="text-muted">Información completa del gasto compartido</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'gasto_compartido_editar' gasto.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Gasto -->
+        <div class="col-lg-8">
+            <div class="card gastos-shared-card shadow mb-4">
+                <div class="card-header py-3" style="background-color: {{ gasto.grupo.color }}; color: white;">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-receipt"></i> {{ gasto.titulo }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if gasto.descripcion %}
+                        <p class="text-muted mb-3">{{ gasto.descripcion }}</p>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-success">${{ gasto.monto_total|floatformat:2 }}</h4>
+                                    <small class="text-muted">Monto Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-primary">${{ gasto.monto_por_persona|floatformat:2 }}</h4>
+                                    <small class="text-muted">Por Persona</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Grupo:</strong></td>
+                                    <td>
+                                        <span class="badge" style="background-color: {{ gasto.grupo.color }}; color: white;">
+                                            {{ gasto.grupo.icono }} {{ gasto.grupo.nombre }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tipo:</strong></td>
+                                    <td><span class="badge bg-info">{{ gasto.get_tipo_display }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Estado:</strong></td>
+                                    <td>
+                                        {% if gasto.estado == 'pagado' %}
+                                            <span class="badge bg-success">Pagado</span>
+                                        {% elif gasto.estado == 'pendiente' %}
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        {% elif gasto.estado == 'vencido' %}
+                                            <span class="badge bg-danger">Vencido</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ gasto.get_estado_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha:</strong></td>
+                                    <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Vencimiento:</strong></td>
+                                    <td>
+                                        {% if gasto.fecha_vencimiento %}
+                                            {% if gasto.esta_vencido %}
+                                                <span class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> {{ gasto.fecha_vencimiento|date:"d/m/Y" }} (Vencido)
+                                                </span>
+                                            {% else %}
+                                                <span class="text-warning">
+                                                    {{ gasto.fecha_vencimiento|date:"d/m/Y" }} ({{ gasto.dias_restantes }} días)
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Sin vencimiento</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pagado por:</strong></td>
+                                    <td>
+                                        {% if gasto.pagado_por %}
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> {{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No pagado</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Cuenta:</strong></td>
+                                    <td>
+                                        {% if gasto.cuenta_pago %}
+                                            {{ gasto.cuenta_pago.nombre }}
+                                        {% else %}
+                                            <span class="text-muted">No especificada</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Creado:</strong></td>
+                                    <td>{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if gasto.imagen_recibo %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-image"></i> Recibo</h6>
+                            <img src="{{ gasto.imagen_recibo.url }}" class="img-fluid rounded" style="max-height: 300px;" alt="Recibo">
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagos de Miembros -->
+        <div class="col-lg-4">
+            <div class="card gastos-shared-card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users"></i> Pagos de Miembros
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if pagos %}
+                        {% for pago in pagos %}
+                        <div class="border-bottom pb-2 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ pago.miembro.get_full_name|default:pago.miembro.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        ${{ pago.monto_pagado|floatformat:2 }} / ${{ pago.monto_debido|floatformat:2 }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    {% if pago.estado == 'pagado' %}
+                                        <span class="badge bg-success">Pagado</span>
+                                    {% elif pago.estado == 'parcial' %}
+                                        <span class="badge bg-warning">Parcial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Pendiente</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ pago.porcentaje_pagado|floatformat:0 }}%</small>
+                                </div>
+                            </div>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ pago.porcentaje_pagado }}%"></div>
+                            </div>
+                            {% if pago.miembro == request.user and pago.estado != 'pagado' %}
+                                <div class="mt-2">
+                                    <a href="{% url 'pago_gasto_compartido_editar' pago.pk %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Pagar
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-users fa-2x text-gray-300 mb-2"></i>
+                            <p class="text-muted">No hay pagos registrados</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

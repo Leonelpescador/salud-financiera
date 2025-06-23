@@ -219,6 +219,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{% url 'dashboard_gastos_compartidos' %}" class="nav-link {% if 'gastos_compartidos' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">👥</span>
+                            Gastos Compartidos
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{% url 'categorias_lista' %}" class="nav-link {% if 'categoria' in request.resolver_match.url_name %}active{% endif %}">
                             <span class="nav-icon">📂</span>
                             Categorías

@@ -7,11 +7,12 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes
+from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes, GrupoGastosCompartidos, GastoCompartido, PagoGastoCompartido
 from .forms import (
     TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm,
     PresupuestoForm, MetaForm, UsuarioCrearForm, UsuarioEditarForm, 
-    ConfiguracionUsuarioForm, ConfiguracionSistemaForm, RegistroPublicoForm
+    ConfiguracionUsuarioForm, ConfiguracionSistemaForm, RegistroPublicoForm,
+    GrupoGastosCompartidosForm, GastoCompartidoForm, PagoGastoCompartidoForm
 )
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -1159,4 +1160,270 @@ def configuracion_personal(request):
         'titulo': 'Mi Configuración',
     }
     return render(request, 'configuracion/configuracion_personal.html', context)
+
+# Vistas para Gastos Compartidos
+@login_required
+def grupos_gastos_compartidos_lista(request):
+    """Lista de grupos de gastos compartidos del usuario"""
+    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True).order_by('nombre')
+    
+    context = {
+        'grupos': grupos,
+    }
+    return render(request, 'gastos_compartidos/grupos_lista.html', context)
+
+@login_required
+def grupo_gastos_compartidos_crear(request):
+    """Crear un nuevo grupo de gastos compartidos"""
+    if request.method == 'POST':
+        form = GrupoGastosCompartidosForm(request.POST, user=request.user)
+        if form.is_valid():
+            grupo = form.save()
+            # Agregar al creador como miembro
+            grupo.miembros.add(request.user)
+            messages.success(request, 'Grupo de gastos compartidos creado exitosamente.')
+            return redirect('grupos_gastos_compartidos_lista')
+    else:
+        form = GrupoGastosCompartidosForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'titulo': 'Nuevo Grupo de Gastos Compartidos',
+    }
+    return render(request, 'gastos_compartidos/grupo_form.html', context)
+
+@login_required
+def grupo_gastos_compartidos_editar(request, pk):
+    """Editar un grupo de gastos compartidos"""
+    grupo = get_object_or_404(GrupoGastosCompartidos, pk=pk, miembros=request.user)
+    
+    if request.method == 'POST':
+        form = GrupoGastosCompartidosForm(request.POST, instance=grupo, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Grupo actualizado exitosamente.')
+            return redirect('grupos_gastos_compartidos_lista')
+    else:
+        form = GrupoGastosCompartidosForm(instance=grupo, user=request.user)
+    
+    context = {
+        'form': form,
+        'grupo': grupo,
+        'titulo': 'Editar Grupo de Gastos Compartidos',
+    }
+    return render(request, 'gastos_compartidos/grupo_form.html', context)
+
+@login_required
+def grupo_gastos_compartidos_eliminar(request, pk):
+    """Eliminar un grupo de gastos compartidos"""
+    grupo = get_object_or_404(GrupoGastosCompartidos, pk=pk, creador=request.user)
+    
+    if request.method == 'POST':
+        grupo.activo = False
+        grupo.save()
+        messages.success(request, 'Grupo eliminado exitosamente.')
+        return redirect('grupos_gastos_compartidos_lista')
+    
+    context = {
+        'grupo': grupo,
+    }
+    return render(request, 'gastos_compartidos/grupo_eliminar.html', context)
+
+@login_required
+def gastos_compartidos_lista(request):
+    """Lista de gastos compartidos del usuario"""
+    form = FiltroGastosCompartidosForm(request.GET, user=request.user)
+    
+    # Obtener gastos de grupos donde el usuario es miembro
+    gastos = GastoCompartido.objects.filter(grupo__miembros=request.user).select_related('grupo', 'pagado_por')
+    
+    # Aplicar filtros
+    if form.is_valid():
+        if form.cleaned_data.get('fecha_desde'):
+            gastos = gastos.filter(fecha__gte=form.cleaned_data['fecha_desde'])
+        if form.cleaned_data.get('fecha_hasta'):
+            gastos = gastos.filter(fecha__lte=form.cleaned_data['fecha_hasta'])
+        if form.cleaned_data.get('tipo'):
+            gastos = gastos.filter(tipo=form.cleaned_data['tipo'])
+        if form.cleaned_data.get('estado'):
+            gastos = gastos.filter(estado=form.cleaned_data['estado'])
+        if form.cleaned_data.get('grupo'):
+            gastos = gastos.filter(grupo=form.cleaned_data['grupo'])
+        if form.cleaned_data.get('monto_minimo'):
+            gastos = gastos.filter(monto_total__gte=form.cleaned_data['monto_minimo'])
+        if form.cleaned_data.get('monto_maximo'):
+            gastos = gastos.filter(monto_total__lte=form.cleaned_data['monto_maximo'])
+    
+    # Paginación
+    paginator = Paginator(gastos, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'form': form,
+        'total_gastos': gastos.count(),
+    }
+    return render(request, 'gastos_compartidos/lista.html', context)
+
+@login_required
+def gasto_compartido_crear(request):
+    """Crear un nuevo gasto compartido"""
+    # Obtener grupos donde el usuario es miembro
+    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
+    
+    if not grupos.exists():
+        messages.error(request, 'Debe crear un grupo de gastos compartidos antes de agregar gastos.')
+        return redirect('grupos_gastos_compartidos_lista')
+    
+    if request.method == 'POST':
+        grupo_id = request.POST.get('grupo')
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user)
+        
+        form = GastoCompartidoForm(request.POST, request.FILES, user=request.user, grupo=grupo)
+        if form.is_valid():
+            gasto = form.save(commit=False)
+            gasto.grupo = grupo
+            gasto.save()
+            
+            # Crear registros de pago para cada miembro
+            for miembro in grupo.miembros.all():
+                PagoGastoCompartido.objects.create(
+                    gasto_compartido=gasto,
+                    miembro=miembro,
+                    monto_debido=gasto.monto_por_persona
+                )
+            
+            messages.success(request, 'Gasto compartido creado exitosamente.')
+            return redirect('gastos_compartidos_lista')
+    else:
+        form = GastoCompartidoForm(user=request.user, grupo=grupos.first())
+    
+    context = {
+        'form': form,
+        'grupos': grupos,
+        'titulo': 'Nuevo Gasto Compartido',
+    }
+    return render(request, 'gastos_compartidos/form.html', context)
+
+@login_required
+def gasto_compartido_editar(request, pk):
+    """Editar un gasto compartido"""
+    gasto = get_object_or_404(GastoCompartido, pk=pk, grupo__miembros=request.user)
+    
+    if request.method == 'POST':
+        form = GastoCompartidoForm(request.POST, request.FILES, instance=gasto, user=request.user, grupo=gasto.grupo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Gasto compartido actualizado exitosamente.')
+            return redirect('gastos_compartidos_lista')
+    else:
+        form = GastoCompartidoForm(instance=gasto, user=request.user, grupo=gasto.grupo)
+    
+    context = {
+        'form': form,
+        'gasto': gasto,
+        'titulo': 'Editar Gasto Compartido',
+    }
+    return render(request, 'gastos_compartidos/form.html', context)
+
+@login_required
+def gasto_compartido_eliminar(request, pk):
+    """Eliminar un gasto compartido"""
+    gasto = get_object_or_404(GastoCompartido, pk=pk, grupo__miembros=request.user)
+    
+    if request.method == 'POST':
+        gasto.delete()
+        messages.success(request, 'Gasto compartido eliminado exitosamente.')
+        return redirect('gastos_compartidos_lista')
+    
+    context = {
+        'gasto': gasto,
+    }
+    return render(request, 'gastos_compartidos/eliminar.html', context)
+
+@login_required
+def gasto_compartido_detalle(request, pk):
+    """Ver detalles de un gasto compartido"""
+    gasto = get_object_or_404(GastoCompartido, pk=pk, grupo__miembros=request.user)
+    pagos = PagoGastoCompartido.objects.filter(gasto_compartido=gasto).select_related('miembro')
+    
+    context = {
+        'gasto': gasto,
+        'pagos': pagos,
+    }
+    return render(request, 'gastos_compartidos/detalle.html', context)
+
+@login_required
+def pago_gasto_compartido_editar(request, pk):
+    """Editar el pago de un miembro para un gasto compartido"""
+    pago = get_object_or_404(PagoGastoCompartido, pk=pk, miembro=request.user)
+    
+    if request.method == 'POST':
+        form = PagoGastoCompartidoForm(request.POST, instance=pago)
+        if form.is_valid():
+            pago = form.save(commit=False)
+            pago.actualizar_estado()
+            pago.save()
+            messages.success(request, 'Pago actualizado exitosamente.')
+            return redirect('gasto_compartido_detalle', pk=pago.gasto_compartido.pk)
+    else:
+        form = PagoGastoCompartidoForm(instance=pago)
+    
+    context = {
+        'form': form,
+        'pago': pago,
+        'titulo': 'Editar Pago',
+    }
+    return render(request, 'gastos_compartidos/pago_form.html', context)
+
+@login_required
+def dashboard_gastos_compartidos(request):
+    """Dashboard específico para gastos compartidos"""
+    # Obtener grupos del usuario
+    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
+    
+    # Estadísticas generales
+    total_gastos = GastoCompartido.objects.filter(grupo__miembros=request.user).count()
+    gastos_pendientes = GastoCompartido.objects.filter(
+        grupo__miembros=request.user, 
+        estado='pendiente'
+    ).count()
+    
+    # Gastos vencidos
+    from datetime import date
+    gastos_vencidos = GastoCompartido.objects.filter(
+        grupo__miembros=request.user,
+        fecha_vencimiento__lt=date.today(),
+        estado='pendiente'
+    ).count()
+    
+    # Total adeudado por el usuario
+    pagos_pendientes = PagoGastoCompartido.objects.filter(
+        miembro=request.user,
+        estado__in=['pendiente', 'parcial']
+    )
+    total_adeudado = sum(pago.monto_pendiente for pago in pagos_pendientes)
+    
+    # Gastos recientes
+    gastos_recientes = GastoCompartido.objects.filter(
+        grupo__miembros=request.user
+    ).select_related('grupo').order_by('-fecha')[:10]
+    
+    # Pagos pendientes del usuario
+    pagos_pendientes_usuario = PagoGastoCompartido.objects.filter(
+        miembro=request.user,
+        estado__in=['pendiente', 'parcial']
+    ).select_related('gasto_compartido', 'gasto_compartido__grupo').order_by('gasto_compartido__fecha_vencimiento')[:10]
+    
+    context = {
+        'grupos': grupos,
+        'total_gastos': total_gastos,
+        'gastos_pendientes': gastos_pendientes,
+        'gastos_vencidos': gastos_vencidos,
+        'total_adeudado': total_adeudado,
+        'gastos_recientes': gastos_recientes,
+        'pagos_pendientes_usuario': pagos_pendientes_usuario,
+    }
+    return render(request, 'gastos_compartidos/dashboard.html', context)
 

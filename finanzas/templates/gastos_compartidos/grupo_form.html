@@ -1,0 +1,129 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+{% endblock %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-layer-group text-primary"></i> {{ titulo }}
+            </h1>
+            <p class="text-muted">Configura los detalles del grupo de gastos compartidos</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card gastos-shared-card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit"></i> Información del Grupo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                        <i class="fas fa-tag"></i> Nombre del Grupo *
+                                    </label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.nombre.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Ej: Casa Principal, Departamento Centro, Compartido con Amigos
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.icono.id_for_label }}" class="form-label">
+                                        <i class="fas fa-smile"></i> Icono
+                                    </label>
+                                    {{ form.icono }}
+                                    {% if form.icono.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.icono.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left"></i> Descripción
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.descripcion.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Describe el propósito del grupo y qué tipo de gastos se compartirán
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">
+                                <i class="fas fa-palette"></i> Color del Grupo
+                            </label>
+                            <div class="d-flex align-items-center">
+                                {{ form.color }}
+                                <span class="ms-2">Color de identificación para el grupo</span>
+                            </div>
+                            {% if form.color.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.color.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Nota:</strong> Después de crear el grupo, podrás agregar miembros 
+                            y comenzar a registrar gastos compartidos.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Grupo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

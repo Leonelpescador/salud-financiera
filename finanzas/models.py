@@ -397,3 +397,172 @@ class CorteMes(models.Model):
             9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
         }
         return meses.get(self.mes_cortado, 'Desconocido')
+
+class GrupoGastosCompartidos(models.Model):
+    """Modelo para grupos de gastos compartidos (ej: casa, departamento, etc.)"""
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    icono = models.CharField(max_length=50, default='🏠')
+    color = models.CharField(max_length=7, default='#3498db')
+    
+    # Usuarios que pertenecen al grupo
+    miembros = models.ManyToManyField(User, related_name='grupos_gastos_compartidos')
+    
+    # Usuario que creó el grupo (administrador)
+    creador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='grupos_creados')
+    
+    # Configuración del grupo
+    activo = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return f"{self.nombre} (Creado por {self.creador.username})"
+    
+    @property
+    def total_gastos_mes_actual(self):
+        """Calcula el total de gastos compartidos del mes actual"""
+        from datetime import date
+        hoy = date.today()
+        inicio_mes = hoy.replace(day=1)
+        
+        return GastoCompartido.objects.filter(
+            grupo=self,
+            fecha__gte=inicio_mes
+        ).aggregate(total=models.Sum('monto_total'))['total'] or Decimal('0')
+    
+    @property
+    def cantidad_miembros(self):
+        """Retorna la cantidad de miembros en el grupo"""
+        return self.miembros.count()
+
+class GastoCompartido(models.Model):
+    """Modelo para gastos compartidos entre usuarios"""
+    TIPO_CHOICES = [
+        ('alquiler', 'Alquiler'),
+        ('servicios', 'Servicios (Gas, Agua, Luz)'),
+        ('internet', 'Internet/TV'),
+        ('limpieza', 'Limpieza'),
+        ('comida', 'Comida/Comestibles'),
+        ('transporte', 'Transporte'),
+        ('mantenimiento', 'Mantenimiento'),
+        ('otros', 'Otros'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('pagado', 'Pagado'),
+        ('vencido', 'Vencido'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    # Información básica del gasto
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, null=True)
+    monto_total = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    fecha = models.DateField()
+    fecha_vencimiento = models.DateField(null=True, blank=True)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='otros')
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='pendiente')
+    
+    # Relaciones
+    grupo = models.ForeignKey(GrupoGastosCompartidos, on_delete=models.CASCADE, related_name='gastos_compartidos')
+    pagado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gastos_pagados', null=True, blank=True)
+    cuenta_pago = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='gastos_compartidos_pagados', null=True, blank=True)
+    
+    # Archivos adjuntos
+    imagen_recibo = models.ImageField(upload_to='gastos_compartidos/', null=True, blank=True)
+    
+    # Metadatos
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-fecha', '-fecha_creacion']
+    
+    def __str__(self):
+        return f"{self.titulo} - ${self.monto_total} ({self.grupo.nombre})"
+    
+    @property
+    def monto_por_persona(self):
+        """Calcula el monto que debe pagar cada persona"""
+        cantidad_miembros = self.grupo.cantidad_miembros
+        if cantidad_miembros > 0:
+            return self.monto_total / cantidad_miembros
+        return self.monto_total
+    
+    @property
+    def esta_vencido(self):
+        """Verifica si el gasto está vencido"""
+        if self.fecha_vencimiento:
+            from datetime import date
+            return date.today() > self.fecha_vencimiento and self.estado == 'pendiente'
+        return False
+    
+    @property
+    def dias_restantes(self):
+        """Calcula los días restantes para el vencimiento"""
+        if self.fecha_vencimiento:
+            from datetime import date
+            dias = (self.fecha_vencimiento - date.today()).days
+            return max(0, dias)
+        return None
+
+class PagoGastoCompartido(models.Model):
+    """Modelo para registrar los pagos individuales de cada miembro"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('pagado', 'Pagado'),
+        ('parcial', 'Pago Parcial'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    gasto_compartido = models.ForeignKey(GastoCompartido, on_delete=models.CASCADE, related_name='pagos_miembros')
+    miembro = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pagos_gastos_compartidos')
+    
+    # Monto que debe pagar este miembro
+    monto_debido = models.DecimalField(max_digits=12, decimal_places=2)
+    monto_pagado = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fecha_pago = models.DateField(null=True, blank=True)
+    
+    # Estado del pago
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='pendiente')
+    
+    # Notas adicionales
+    notas = models.TextField(blank=True, null=True)
+    
+    # Metadatos
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['gasto_compartido', 'miembro']
+        ordering = ['-fecha_creacion']
+    
+    def __str__(self):
+        return f"{self.miembro.username} - ${self.monto_pagado}/{self.monto_debido} ({self.gasto_compartido.titulo})"
+    
+    @property
+    def monto_pendiente(self):
+        """Calcula el monto pendiente de pago"""
+        return self.monto_debido - self.monto_pagado
+    
+    @property
+    def porcentaje_pagado(self):
+        """Calcula el porcentaje pagado"""
+        if self.monto_debido > 0:
+            return (self.monto_pagado / self.monto_debido) * 100
+        return 0
+    
+    def actualizar_estado(self):
+        """Actualiza el estado basado en el monto pagado"""
+        if self.monto_pagado >= self.monto_debido:
+            self.estado = 'pagado'
+        elif self.monto_pagado > 0:
+            self.estado = 'parcial'
+        else:
+            self.estado = 'pendiente'
+        self.save()

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta
+from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, GrupoGastosCompartidos, GastoCompartido, PagoGastoCompartido
 from django.utils import timezone
 from datetime import date
 from django.core.exceptions import ValidationError
@@ -338,4 +338,123 @@ class RegistroPublicoForm(UserCreationForm):
         username = self.cleaned_data.get('username')
         if User.objects.filter(username=username).exists():
             raise forms.ValidationError('Este nombre de usuario ya está en uso.')
-        return username 
+        return username
+
+class GrupoGastosCompartidosForm(forms.ModelForm):
+    class Meta:
+        model = GrupoGastosCompartidos
+        fields = ['nombre', 'descripcion', 'icono', 'color']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del grupo (ej: Casa, Departamento)'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del grupo'}),
+            'icono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '🏠'}),
+            'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.instance.creador = user
+
+class GastoCompartidoForm(forms.ModelForm):
+    class Meta:
+        model = GastoCompartido
+        fields = ['titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título del gasto compartido'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del gasto'}),
+            'monto_total': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': 'Monto total'}),
+            'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_vencimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'pagado_por': forms.Select(attrs={'class': 'form-control'}),
+            'cuenta_pago': forms.Select(attrs={'class': 'form-control'}),
+            'imagen_recibo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        grupo = kwargs.pop('grupo', None)
+        super().__init__(*args, **kwargs)
+        
+        if user and grupo:
+            # Filtrar miembros del grupo para el campo pagado_por
+            self.fields['pagado_por'].queryset = grupo.miembros.all()
+            # Filtrar cuentas del usuario que pagó
+            if self.instance.pk and self.instance.pagado_por:
+                self.fields['cuenta_pago'].queryset = Cuenta.objects.filter(usuario=self.instance.pagado_por, activa=True)
+            else:
+                self.fields['cuenta_pago'].queryset = Cuenta.objects.none()
+            
+            # Establecer fecha por defecto
+            if not self.instance.pk:
+                self.fields['fecha'].initial = date.today()
+
+class PagoGastoCompartidoForm(forms.ModelForm):
+    class Meta:
+        model = PagoGastoCompartido
+        fields = ['monto_pagado', 'fecha_pago', 'estado', 'notas']
+        widgets = {
+            'monto_pagado': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': 'Monto pagado'}),
+            'fecha_pago': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Notas adicionales'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        pago = kwargs.get('instance')
+        super().__init__(*args, **kwargs)
+        
+        if pago:
+            # Establecer el monto máximo que puede pagar
+            self.fields['monto_pagado'].widget.attrs['max'] = pago.monto_debido
+            # Establecer fecha por defecto
+            if not pago.fecha_pago:
+                self.fields['fecha_pago'].initial = date.today()
+    
+    def clean_monto_pagado(self):
+        monto_pagado = self.cleaned_data.get('monto_pagado')
+        if self.instance and monto_pagado > self.instance.monto_debido:
+            raise forms.ValidationError(f"No puede pagar más de ${self.instance.monto_debido}")
+        return monto_pagado
+
+class FiltroGastosCompartidosForm(forms.Form):
+    fecha_desde = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    fecha_hasta = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    tipo = forms.ChoiceField(
+        choices=[('', 'Todos')] + GastoCompartido.TIPO_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    estado = forms.ChoiceField(
+        choices=[('', 'Todos')] + GastoCompartido.ESTADO_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    grupo = forms.ModelChoiceField(
+        queryset=GrupoGastosCompartidos.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    monto_minimo = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Monto mínimo'})
+    )
+    monto_maximo = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Monto máximo'})
+    )
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['grupo'].queryset = GrupoGastosCompartidos.objects.filter(miembros=user, activo=True) 

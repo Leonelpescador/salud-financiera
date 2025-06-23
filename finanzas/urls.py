@@ -54,6 +54,19 @@ urlpatterns = [
     path('cortes-mes/', views.cortes_mes_lista, name='cortes_mes_lista'),
     path('corte-mes/<int:pk>/detalle/', views.corte_mes_detalle, name='corte_mes_detalle'),
     
+    # Gastos Compartidos
+    path('gastos-compartidos/', views.dashboard_gastos_compartidos, name='dashboard_gastos_compartidos'),
+    path('gastos-compartidos/grupos/', views.grupos_gastos_compartidos_lista, name='grupos_gastos_compartidos_lista'),
+    path('gastos-compartidos/grupos/crear/', views.grupo_gastos_compartidos_crear, name='grupo_gastos_compartidos_crear'),
+    path('gastos-compartidos/grupos/<int:pk>/editar/', views.grupo_gastos_compartidos_editar, name='grupo_gastos_compartidos_editar'),
+    path('gastos-compartidos/grupos/<int:pk>/eliminar/', views.grupo_gastos_compartidos_eliminar, name='grupo_gastos_compartidos_eliminar'),
+    path('gastos-compartidos/lista/', views.gastos_compartidos_lista, name='gastos_compartidos_lista'),
+    path('gastos-compartidos/crear/', views.gasto_compartido_crear, name='gasto_compartido_crear'),
+    path('gastos-compartidos/<int:pk>/editar/', views.gasto_compartido_editar, name='gasto_compartido_editar'),
+    path('gastos-compartidos/<int:pk>/eliminar/', views.gasto_compartido_eliminar, name='gasto_compartido_eliminar'),
+    path('gastos-compartidos/<int:pk>/detalle/', views.gasto_compartido_detalle, name='gasto_compartido_detalle'),
+    path('gastos-compartidos/pago/<int:pk>/editar/', views.pago_gasto_compartido_editar, name='pago_gasto_compartido_editar'),
+    
     # Configuración del Sistema
     path('configuracion/', views.configuracion, name='configuracion'),
     path('configuracion/usuarios-pendientes/', views.usuarios_pendientes, name='usuarios_pendientes'),

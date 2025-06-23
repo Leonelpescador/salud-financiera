@@ -1,0 +1,324 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Gastos Compartidos{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid gastos-shared-header">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-users text-primary"></i> Gastos Compartidos
+            </h1>
+            <p class="text-muted">Gestiona los gastos compartidos con tus compañeros</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-outline-primary">
+                <i class="fas fa-layer-group"></i> Grupos
+            </a>
+            <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{% url 'gasto_compartido_crear' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Gasto
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card gastos-shared-card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Gastos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_gastos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card gastos-shared-card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pendientes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ gastos_pendientes }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card gastos-shared-card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Vencidos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ gastos_vencidos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card gastos-shared-card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Adeudado
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_adeudado|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Grupos -->
+        <div class="col-lg-4 mb-4">
+            <div class="card gastos-shared-card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-layer-group"></i> Mis Grupos
+                    </h6>
+                    <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if grupos %}
+                        {% for grupo in grupos %}
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <div class="flex-shrink-0 me-3">
+                                <span class="fs-4">{{ grupo.icono }}</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ grupo.nombre }}</h6>
+                                <small class="text-muted">{{ grupo.cantidad_miembros }} miembros</small>
+                                <div class="mt-1">
+                                    <small class="text-muted">Total mes: ${{ grupo.total_gastos_mes_actual|floatformat:2 }}</small>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <a href="{% url 'gasto_compartido_crear' %}?grupo={{ grupo.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-muted">No tienes grupos de gastos compartidos</p>
+                            <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-primary">
+                                Crear Primer Grupo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Gastos Recientes -->
+        <div class="col-lg-8 mb-4">
+            <div class="card gastos-shared-card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-receipt"></i> Gastos Recientes
+                    </h6>
+                    <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                </div>
+                <div class="card-body">
+                    {% if gastos_recientes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover gastos-shared-table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Grupo</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for gasto in gastos_recientes %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ gasto.titulo }}</strong>
+                                            <br><small class="text-muted">{{ gasto.get_tipo_display }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge" style="background-color: {{ gasto.grupo.color }}; color: white;">
+                                                {{ gasto.grupo.nombre }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>${{ gasto.monto_total|floatformat:2 }}</strong>
+                                            <br><small class="text-muted">${{ gasto.monto_por_persona|floatformat:2 }} c/u</small>
+                                        </td>
+                                        <td>
+                                            {% if gasto.estado == 'pagado' %}
+                                                <span class="badge bg-success">Pagado</span>
+                                            {% elif gasto.estado == 'pendiente' %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% elif gasto.estado == 'vencido' %}
+                                                <span class="badge bg-danger">Vencido</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ gasto.get_estado_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ gasto.fecha|date:"d/m/Y" }}
+                                            {% if gasto.fecha_vencimiento %}
+                                                <br><small class="text-muted">Vence: {{ gasto.fecha_vencimiento|date:"d/m/Y" }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" class="btn btn-outline-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'gasto_compartido_editar' gasto.pk %}" class="btn btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="gastos-shared-empty text-center py-4">
+                            <i class="fas fa-receipt fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-muted">No hay gastos compartidos registrados</p>
+                            <a href="{% url 'gasto_compartido_crear' %}" class="btn btn-primary">
+                                Crear Primer Gasto
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagos Pendientes -->
+    {% if pagos_pendientes_usuario %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-clock"></i> Mis Pagos Pendientes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Gasto</th>
+                                    <th>Grupo</th>
+                                    <th>Monto Debido</th>
+                                    <th>Monto Pagado</th>
+                                    <th>Estado</th>
+                                    <th>Vencimiento</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pago in pagos_pendientes_usuario %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ pago.gasto_compartido.titulo }}</strong>
+                                        <br><small class="text-muted">{{ pago.gasto_compartido.get_tipo_display }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background-color: {{ pago.gasto_compartido.grupo.color }}; color: white;">
+                                            {{ pago.gasto_compartido.grupo.nombre }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>${{ pago.monto_debido|floatformat:2 }}</strong>
+                                    </td>
+                                    <td>
+                                        ${{ pago.monto_pagado|floatformat:2 }}
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ pago.porcentaje_pagado }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if pago.estado == 'pagado' %}
+                                            <span class="badge bg-success">Pagado</span>
+                                        {% elif pago.estado == 'parcial' %}
+                                            <span class="badge bg-warning">Parcial</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pago.gasto_compartido.fecha_vencimiento %}
+                                            {% if pago.gasto_compartido.esta_vencido %}
+                                                <span class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Vencido
+                                                </span>
+                                            {% else %}
+                                                <span class="text-warning">
+                                                    {{ pago.gasto_compartido.dias_restantes }} días
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Sin vencimiento</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'pago_gasto_compartido_editar' pago.pk %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Pagar
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

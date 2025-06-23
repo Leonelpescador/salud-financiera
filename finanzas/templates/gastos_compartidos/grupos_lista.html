@@ -1,0 +1,123 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Grupos de Gastos Compartidos{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-layer-group text-primary"></i> Grupos de Gastos Compartidos
+            </h1>
+            <p class="text-muted">Gestiona los grupos para compartir gastos</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Grupo
+            </a>
+        </div>
+    </div>
+
+    <!-- Grupos -->
+    <div class="row">
+        {% if grupos %}
+            {% for grupo in grupos %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card gastos-shared-card shadow h-100">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center" 
+                         style="background-color: {{ grupo.color }}; color: white;">
+                        <h6 class="m-0 font-weight-bold">
+                            <span class="me-2">{{ grupo.icono }}</span>
+                            {{ grupo.nombre }}
+                        </h6>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'gasto_compartido_crear' %}?grupo={{ grupo.id }}">
+                                        <i class="fas fa-plus text-success"></i> Agregar Gasto
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'grupo_gastos_compartidos_editar' grupo.pk %}">
+                                        <i class="fas fa-edit text-warning"></i> Editar
+                                    </a>
+                                </li>
+                                {% if grupo.creador == request.user %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'grupo_gastos_compartidos_eliminar' grupo.pk %}">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if grupo.descripcion %}
+                            <p class="text-muted mb-3">{{ grupo.descripcion }}</p>
+                        {% endif %}
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h5 class="text-primary">{{ grupo.cantidad_miembros }}</h5>
+                                    <small class="text-muted">Miembros</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h5 class="text-success">${{ grupo.total_gastos_mes_actual|floatformat:2 }}</h5>
+                                <small class="text-muted">Total Mes</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'gastos_compartidos_lista' %}?grupo={{ grupo.id }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list"></i> Ver Gastos
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <i class="fas fa-user"></i> Creado por {{ grupo.creador.get_full_name|default:grupo.creador.username }}
+                            <br>
+                            <i class="fas fa-calendar"></i> {{ grupo.fecha_creacion|date:"d/m/Y" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card gastos-shared-card shadow">
+                    <div class="card-body gastos-shared-empty text-center py-5">
+                        <i class="fas fa-users fa-4x text-gray-300 mb-4"></i>
+                        <h4 class="text-gray-600 mb-3">No tienes grupos de gastos compartidos</h4>
+                        <p class="text-muted mb-4">
+                            Crea un grupo para comenzar a compartir gastos con tus compañeros de casa, 
+                            departamento o cualquier otro grupo.
+                        </p>
+                        <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Crear Primer Grupo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
