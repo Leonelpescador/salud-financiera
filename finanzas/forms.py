@@ -72,16 +72,20 @@ class CategoriaForm(forms.ModelForm):
 class CuentaForm(forms.ModelForm):
     class Meta:
         model = Cuenta
-        fields = ['nombre', 'tipo_cuenta', 'saldo_inicial', 'icono', 'color', 'fecha_cierre', 'fecha_vencimiento', 'limite_credito']
+        fields = ['nombre', 'tipo_cuenta', 'moneda', 'saldo_inicial', 'icono', 'color', 'descripcion', 'institucion_financiera', 'activa', 'fecha_cierre', 'fecha_vencimiento', 'limite_credito']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la cuenta'}),
             'tipo_cuenta': forms.Select(attrs={'class': 'form-control'}),
+            'moneda': forms.Select(attrs={'class': 'form-control'}),
             'saldo_inicial': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'icono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '💳'}),
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción de la cuenta (opcional)'}),
+            'institucion_financiera': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Banco o institución financiera'}),
+            'activa': forms.CheckboxInput(attrs={'class': 'form-control'}),
             'fecha_cierre': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_vencimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'limite_credito': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'limite_credito': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Límite de crédito'}),
         }
     
     def __init__(self, *args, **kwargs):

@@ -29,10 +29,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.tipo.id_for_label }}">Tipo de Cuenta *</label>
-                        {{ form.tipo }}
-                        {% if form.tipo.errors %}
-                            <div class="error-message">{{ form.tipo.errors.0 }}</div>
+                        <label for="{{ form.tipo_cuenta.id_for_label }}">Tipo de Cuenta *</label>
+                        {{ form.tipo_cuenta }}
+                        {% if form.tipo_cuenta.errors %}
+                            <div class="error-message">{{ form.tipo_cuenta.errors.0 }}</div>
                         {% endif %}
                     </div>
 
@@ -43,6 +43,15 @@
                             <div class="error-message">{{ form.moneda.errors.0 }}</div>
                         {% endif %}
                     </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.institucion_financiera.id_for_label }}">Institución Financiera</label>
+                        {{ form.institucion_financiera }}
+                        {% if form.institucion_financiera.errors %}
+                            <div class="error-message">{{ form.institucion_financiera.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Banco o institución donde está la cuenta (opcional)</small>
+                    </div>
                 </div>
 
                 <!-- Saldo y Estado -->
@@ -50,10 +59,10 @@
                     <h3>Saldo y Estado</h3>
                     
                     <div class="form-group">
-                        <label for="{{ form.saldo.id_for_label }}">Saldo Inicial *</label>
-                        {{ form.saldo }}
-                        {% if form.saldo.errors %}
-                            <div class="error-message">{{ form.saldo.errors.0 }}</div>
+                        <label for="{{ form.saldo_inicial.id_for_label }}">Saldo Inicial *</label>
+                        {{ form.saldo_inicial }}
+                        {% if form.saldo_inicial.errors %}
+                            <div class="error-message">{{ form.saldo_inicial.errors.0 }}</div>
                         {% endif %}
                         <small class="help-text">Saldo actual de la cuenta</small>
                     </div>
@@ -109,14 +118,37 @@
                         {% endif %}
                         <small class="help-text">Información adicional sobre la cuenta (opcional)</small>
                     </div>
+                </div>
+
+                <!-- Campos específicos para tarjetas de crédito -->
+                <div class="form-section credit-card-section" id="credit-card-fields" style="display: none;">
+                    <h3>Información de Tarjeta de Crédito</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.fecha_cierre.id_for_label }}">Fecha de Cierre</label>
+                        {{ form.fecha_cierre }}
+                        {% if form.fecha_cierre.errors %}
+                            <div class="error-message">{{ form.fecha_cierre.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Día del mes en que cierra la tarjeta</small>
+                    </div>
 
                     <div class="form-group">
-                        <label for="{{ form.institucion_financiera.id_for_label }}">Institución Financiera</label>
-                        {{ form.institucion_financiera }}
-                        {% if form.institucion_financiera.errors %}
-                            <div class="error-message">{{ form.institucion_financiera.errors.0 }}</div>
+                        <label for="{{ form.fecha_vencimiento.id_for_label }}">Fecha de Vencimiento</label>
+                        {{ form.fecha_vencimiento }}
+                        {% if form.fecha_vencimiento.errors %}
+                            <div class="error-message">{{ form.fecha_vencimiento.errors.0 }}</div>
                         {% endif %}
-                        <small class="help-text">Banco o institución donde está la cuenta</small>
+                        <small class="help-text">Fecha de vencimiento de la tarjeta</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.limite_credito.id_for_label }}">Límite de Crédito</label>
+                        {{ form.limite_credito }}
+                        {% if form.limite_credito.errors %}
+                            <div class="error-message">{{ form.limite_credito.errors.0 }}</div>
+                        {% endif %}
+                        <small class="help-text">Límite de crédito disponible</small>
                     </div>
                 </div>
             </div>
@@ -341,6 +373,15 @@
             flex-direction: column;
         }
     }
+
+    .credit-card-section {
+        border-left-color: #e74c3c;
+        background: #fdf2f2;
+    }
+
+    .credit-card-section h3 {
+        color: #c0392b;
+    }
 </style>
 
 <script>
@@ -349,13 +390,31 @@
         document.getElementById('color-preview').style.backgroundColor = this.value;
     });
 
-    // Inicializar preview del color
+    // Mostrar/ocultar campos de tarjeta de crédito según el tipo de cuenta
+    function toggleCreditCardFields() {
+        const tipoCuenta = document.getElementById('{{ form.tipo_cuenta.id_for_label }}').value;
+        const creditCardSection = document.getElementById('credit-card-fields');
+        
+        if (tipoCuenta === 'tarjeta_credito') {
+            creditCardSection.style.display = 'block';
+        } else {
+            creditCardSection.style.display = 'none';
+        }
+    }
+
+    // Inicializar preview del color y campos de tarjeta de crédito
     document.addEventListener('DOMContentLoaded', function() {
         const colorInput = document.getElementById('{{ form.color.id_for_label }}');
         const colorPreview = document.getElementById('color-preview');
         if (colorInput.value) {
             colorPreview.style.backgroundColor = colorInput.value;
         }
+        
+        // Inicializar campos de tarjeta de crédito
+        toggleCreditCardFields();
+        
+        // Escuchar cambios en el tipo de cuenta
+        document.getElementById('{{ form.tipo_cuenta.id_for_label }}').addEventListener('change', toggleCreditCardFields);
     });
 </script>
 {% endblock %} 

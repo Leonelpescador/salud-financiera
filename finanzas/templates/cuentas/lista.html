@@ -40,16 +40,22 @@
                 <div class="account-details">
                     <div class="detail-item">
                         <span class="detail-label">Saldo:</span>
-                        <span class="detail-value balance">${{ cuenta.saldo|floatformat:2 }}</span>
+                        <span class="detail-value balance">{{ cuenta.moneda }} {{ cuenta.saldo|floatformat:2 }}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Moneda:</span>
-                        <span class="detail-value">{{ cuenta.moneda }}</span>
+                        <span class="detail-value">{{ cuenta.get_moneda_display }}</span>
                     </div>
                     {% if cuenta.descripcion %}
                     <div class="detail-item">
                         <span class="detail-label">Descripción:</span>
                         <span class="detail-value">{{ cuenta.descripcion }}</span>
+                    </div>
+                    {% endif %}
+                    {% if cuenta.institucion_financiera %}
+                    <div class="detail-item">
+                        <span class="detail-label">Institución:</span>
+                        <span class="detail-value">{{ cuenta.institucion_financiera }}</span>
                     </div>
                     {% endif %}
                 </div>

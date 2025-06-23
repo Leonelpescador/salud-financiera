@@ -36,12 +36,28 @@ class Cuenta(models.Model):
         ('otro', 'Otro'),
     ]
     
+    MONEDA_CHOICES = [
+        ('ARS', 'Peso Argentino'),
+        ('USD', 'Dólar Estadounidense'),
+        ('EUR', 'Euro'),
+        ('BRL', 'Real Brasileño'),
+        ('CLP', 'Peso Chileno'),
+        ('COP', 'Peso Colombiano'),
+        ('MXN', 'Peso Mexicano'),
+        ('PEN', 'Sol Peruano'),
+        ('UYU', 'Peso Uruguayo'),
+        ('VES', 'Bolívar Venezolano'),
+    ]
+    
     nombre = models.CharField(max_length=100)
     tipo_cuenta = models.CharField(max_length=20, choices=TIPO_CUENTA_CHOICES, default='efectivo')
+    moneda = models.CharField(max_length=3, choices=MONEDA_CHOICES, default='ARS')
     saldo_inicial = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     saldo_actual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     icono = models.CharField(max_length=50, default='💳')
     color = models.CharField(max_length=7, default='#2ecc71')
+    descripcion = models.TextField(blank=True, null=True)
+    institucion_financiera = models.CharField(max_length=100, blank=True, null=True)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cuentas')
     activa = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -56,6 +72,16 @@ class Cuenta(models.Model):
     
     def __str__(self):
         return f"{self.nombre} ({self.usuario.username})"
+    
+    @property
+    def saldo(self):
+        """Propiedad para compatibilidad con las plantillas"""
+        return self.saldo_actual
+    
+    @property
+    def tipo(self):
+        """Propiedad para compatibilidad con las plantillas"""
+        return self.tipo_cuenta
     
     def actualizar_saldo(self):
         """Calcula el saldo actual basado en las transacciones"""

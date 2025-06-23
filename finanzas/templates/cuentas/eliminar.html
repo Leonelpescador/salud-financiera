@@ -22,7 +22,10 @@
                     </div>
                     <div class="preview-info">
                         <h3>{{ cuenta.nombre }}</h3>
-                        <p>{{ cuenta.get_tipo_display }} - Saldo: ${{ cuenta.saldo|floatformat:2 }}</p>
+                        <p>{{ cuenta.get_tipo_display }} - Saldo: {{ cuenta.moneda }} {{ cuenta.saldo|floatformat:2 }}</p>
+                        {% if cuenta.institucion_financiera %}
+                        <p class="institution">Institución: {{ cuenta.institucion_financiera }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -128,6 +131,12 @@
         margin: 0;
         color: #7f8c8d;
         font-size: 0.9rem;
+    }
+
+    .preview-info .institution {
+        font-size: 0.8rem;
+        color: #95a5a6;
+        margin-top: 3px;
     }
 
     .warning-message {
