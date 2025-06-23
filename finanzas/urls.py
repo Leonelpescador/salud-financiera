@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # Autenticación
     path('', views.login, name='login'),
+    path('registro/', views.registro_publico, name='registro_publico'),
     path('logout/', views.logout_view, name='logout'),
     
     # Dashboard
@@ -55,6 +56,7 @@ urlpatterns = [
     
     # Configuración del Sistema
     path('configuracion/', views.configuracion, name='configuracion'),
+    path('configuracion/usuarios-pendientes/', views.usuarios_pendientes, name='usuarios_pendientes'),
     path('configuracion/guardar/', views.configuracion_guardar, name='configuracion_guardar'),
     path('mi-configuracion/', views.configuracion_personal, name='configuracion_personal'),
     

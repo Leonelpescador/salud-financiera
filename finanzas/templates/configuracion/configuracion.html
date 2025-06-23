@@ -29,9 +29,16 @@
             <div id="usuarios" class="tab-pane active">
                 <div class="section-header">
                     <h2>👥 Gestión de Usuarios</h2>
-                    <a href="{% url 'usuario_crear' %}" class="btn-primary">
-                        <span>➕</span> Nuevo Usuario
-                    </a>
+                    <div class="header-actions">
+                        {% if usuarios_pendientes > 0 %}
+                            <a href="{% url 'usuarios_pendientes' %}" class="btn-warning">
+                                <span>⏳</span> Usuarios Pendientes ({{ usuarios_pendientes }})
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'usuario_crear' %}" class="btn-primary">
+                            <span>➕</span> Nuevo Usuario
+                        </a>
+                    </div>
                 </div>
 
                 <div class="users-grid">
@@ -332,11 +339,37 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
     }
 
     .section-header h2 {
         margin: 0;
         color: #2c3e50;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .header-actions .btn-warning {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3);
+    }
+
+    .header-actions .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        text-decoration: none;
+        color: white;
     }
 
     .users-grid {

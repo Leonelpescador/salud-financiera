@@ -291,4 +291,51 @@ class ConfiguracionSistemaForm(forms.Form):
     recordatorios_pago = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-control'})
-    ) 
+    )
+
+class RegistroPublicoForm(UserCreationForm):
+    """Formulario para registro público de usuarios (marcados como inactivos)"""
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Personalizar mensajes de ayuda
+        self.fields['username'].help_text = 'Requerido. 150 caracteres o menos. Solo letras, dígitos y @/./+/-/_'
+        self.fields['password1'].help_text = 'Tu contraseña debe contener al menos 8 caracteres.'
+        self.fields['password2'].help_text = 'Ingresa la misma contraseña que antes, para verificación.'
+        
+        # Ocultar mensajes de ayuda por defecto
+        for field in self.fields.values():
+            field.help_text = ''
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Marcar como inactivo por defecto
+        user.is_active = False
+        user.is_staff = False
+        user.is_superuser = False
+        
+        if commit:
+            user.save()
+        return user
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Este correo electrónico ya está registrado.')
+        return email
+    
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('Este nombre de usuario ya está en uso.')
+        return username 

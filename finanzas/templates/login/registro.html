@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Salud Financiera</title>
+    <title>Registro - Salud Financiera</title>
     <style>
         * {
             margin: 0;
@@ -39,12 +39,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.8) 0%, rgba(52, 152, 219, 0.8) 100%);
             z-index: -1;
         }
 
         /* Contenedor principal */
-        .login-container {
+        .registro-container {
             position: relative;
             display: flex;
             justify-content: center;
@@ -53,15 +53,15 @@
             padding: 20px;
         }
 
-        /* Tarjeta de login */
-        .login-card {
+        /* Tarjeta de registro */
+        .registro-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 25px;
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
@@ -69,7 +69,7 @@
         }
 
         /* Efecto de brillo en la tarjeta */
-        .login-card::before {
+        .registro-card::before {
             content: '';
             position: absolute;
             top: 0;
@@ -80,7 +80,7 @@
             transition: left 0.5s;
         }
 
-        .login-card:hover::before {
+        .registro-card:hover::before {
             left: 100%;
         }
 
@@ -94,18 +94,18 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            border: 4px solid #667eea;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border: 4px solid #2ecc71;
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .avatar:hover {
             transform: scale(1.1);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 15px 40px rgba(46, 204, 113, 0.4);
         }
 
         /* Título */
-        .login-title {
+        .registro-title {
             color: #2d3436;
             font-size: 2.2rem;
             font-weight: 700;
@@ -113,16 +113,28 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .login-subtitle {
+        .registro-subtitle {
             color: #7f8c8d;
             font-size: 1rem;
             margin-bottom: 30px;
             font-weight: 400;
         }
 
+        /* Aviso de activación */
+        .aviso-activacion {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
         /* Formulario */
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             position: relative;
         }
 
@@ -139,9 +151,9 @@
 
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2ecc71;
             background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
             transform: translateY(-2px);
         }
 
@@ -149,11 +161,11 @@
             color: #95a5a6;
         }
 
-        /* Botón de login */
-        .login-btn {
+        /* Botón de registro */
+        .registro-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
             color: white;
             border: none;
             border-radius: 15px;
@@ -161,12 +173,12 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.3);
             position: relative;
             overflow: hidden;
         }
 
-        .login-btn::before {
+        .registro-btn::before {
             content: '';
             position: absolute;
             top: 0;
@@ -177,16 +189,16 @@
             transition: left 0.5s;
         }
 
-        .login-btn:hover {
+        .registro-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 12px 35px rgba(46, 204, 113, 0.4);
         }
 
-        .login-btn:hover::before {
+        .registro-btn:hover::before {
             left: 100%;
         }
 
-        .login-btn:active {
+        .registro-btn:active {
             transform: translateY(-1px);
         }
 
@@ -225,7 +237,7 @@
         }
 
         .form-input:focus + .input-icon {
-            color: #667eea;
+            color: #2ecc71;
         }
 
         .form-group.has-icon .form-input {
@@ -263,14 +275,32 @@
             }
         }
 
+        /* Enlace de login */
+        .login-link {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .login-link a {
+            color: #2ecc71;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #27ae60;
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
-            .login-card {
+            .registro-card {
                 padding: 30px 20px;
                 margin: 20px;
             }
 
-            .login-title {
+            .registro-title {
                 font-size: 1.8rem;
             }
 
@@ -280,26 +310,8 @@
             }
         }
 
-        /* Enlace de registro */
-        .login-link {
-            margin-top: 25px;
-            text-align: center;
-        }
-
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-
-        .login-link a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
         /* Animación de entrada */
-        .login-card {
+        .registro-card {
             animation: fadeInUp 0.8s ease;
         }
 
@@ -311,6 +323,19 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        /* Campos de contraseña */
+        .password-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .password-fields {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -329,16 +354,22 @@
     <div class="floating-particles" id="particles"></div>
 
     <!-- Contenedor principal -->
-    <div class="login-container">
-        <div class="login-card">
+    <div class="registro-container">
+        <div class="registro-card">
             <!-- Avatar -->
             <div class="avatar-container">
                 <img src="{% static 'image/default_profile.jpg' %}" alt="Avatar" class="avatar">
             </div>
 
             <!-- Título -->
-            <h1 class="login-title">💰 Salud Financiera</h1>
-            <p class="login-subtitle">Gestiona tu dinero de forma inteligente</p>
+            <h1 class="registro-title">💰 Salud Financiera</h1>
+            <p class="registro-subtitle">Únete a nuestra comunidad financiera</p>
+
+            <!-- Aviso de activación -->
+            <div class="aviso-activacion">
+                <i class="fas fa-info-circle me-2"></i>
+                Tu cuenta será revisada por un administrador antes de activarse
+            </div>
 
             <!-- Mensajes de error -->
             {% if messages %}
@@ -353,23 +384,50 @@
             <!-- Formulario -->
             <form method="post">
                 {% csrf_token %}
+                
+                <!-- Información personal -->
                 <div class="form-group has-icon">
-                    <input type="text" name="username" placeholder="Usuario" required class="form-input">
+                    <input type="text" name="first_name" placeholder="Nombre" required class="form-input">
                     <i class="fas fa-user input-icon"></i>
                 </div>
+                
                 <div class="form-group has-icon">
-                    <input type="password" name="password" placeholder="Contraseña" required class="form-input">
-                    <i class="fas fa-lock input-icon"></i>
+                    <input type="text" name="last_name" placeholder="Apellido" required class="form-input">
+                    <i class="fas fa-user input-icon"></i>
                 </div>
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt me-2"></i>
-                    Iniciar Sesión
+                
+                <div class="form-group has-icon">
+                    <input type="email" name="email" placeholder="Correo electrónico" required class="form-input">
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
+                
+                <!-- Usuario y contraseña -->
+                <div class="form-group has-icon">
+                    <input type="text" name="username" placeholder="Nombre de usuario" required class="form-input">
+                    <i class="fas fa-at input-icon"></i>
+                </div>
+                
+                <div class="password-fields">
+                    <div class="form-group has-icon">
+                        <input type="password" name="password1" placeholder="Contraseña" required class="form-input">
+                        <i class="fas fa-lock input-icon"></i>
+                    </div>
+                    
+                    <div class="form-group has-icon">
+                        <input type="password" name="password2" placeholder="Confirmar contraseña" required class="form-input">
+                        <i class="fas fa-lock input-icon"></i>
+                    </div>
+                </div>
+                
+                <button type="submit" class="registro-btn">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Crear Cuenta
                 </button>
             </form>
             
-            <!-- Enlace para registro -->
+            <!-- Enlace para login -->
             <div class="login-link">
-                <p>¿No tienes una cuenta? <a href="{% url 'registro_publico' %}">Regístrate aquí</a></p>
+                <p>¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
             </div>
         </div>
     </div>
@@ -414,7 +472,7 @@
             createParticles();
             
             // Efecto de typing en el título
-            const title = document.querySelector('.login-title');
+            const title = document.querySelector('.registro-title');
             const originalText = title.textContent;
             setTimeout(() => {
                 typeWriter(title, originalText, 150);
@@ -429,6 +487,24 @@
         document.querySelector('.avatar').addEventListener('mouseleave', function() {
             this.style.transform = 'scale(1) rotate(0deg)';
         });
+
+        // Validación de contraseñas
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password1 = document.querySelector('input[name="password1"]').value;
+            const password2 = document.querySelector('input[name="password2"]').value;
+            
+            if (password1 !== password2) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+            
+            if (password1.length < 8) {
+                e.preventDefault();
+                alert('La contraseña debe tener al menos 8 caracteres');
+                return false;
+            }
+        });
     </script>
 </body>
-</html>
+</html> 

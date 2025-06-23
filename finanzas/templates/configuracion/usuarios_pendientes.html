@@ -1,0 +1,171 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Usuarios Pendientes - Salud Financiera{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-clock me-2"></i>
+                            Usuarios Pendientes de Activación
+                        </h4>
+                        <span class="badge bg-warning text-dark fs-6">{{ total_pendientes }} pendientes</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if usuarios_pendientes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-user me-1"></i> Usuario</th>
+                                        <th><i class="fas fa-envelope me-1"></i> Email</th>
+                                        <th><i class="fas fa-id-card me-1"></i> Nombre Completo</th>
+                                        <th><i class="fas fa-calendar me-1"></i> Fecha de Registro</th>
+                                        <th><i class="fas fa-clock me-1"></i> Estado</th>
+                                        <th><i class="fas fa-cogs me-1"></i> Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for usuario in usuarios_pendientes %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm me-3">
+                                                    <img src="{% static 'image/default_profile.jpg' %}" 
+                                                         alt="Avatar" 
+                                                         class="rounded-circle" 
+                                                         width="40" 
+                                                         height="40">
+                                                </div>
+                                                <div>
+                                                    <strong>{{ usuario.username }}</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">{{ usuario.email|default:"No especificado" }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ usuario.first_name|default:"-" }} {{ usuario.last_name|default:"-" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ usuario.date_joined|date:"d/m/Y H:i" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Pendiente
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'usuario_activar' usuario.pk %}" 
+                                                   class="btn btn-success btn-sm"
+                                                   title="Activar usuario"
+                                                   onclick="return confirm('¿Estás seguro de que quieres activar este usuario?')">
+                                                    <i class="fas fa-check"></i>
+                                                    Activar
+                                                </a>
+                                                <a href="{% url 'usuario_eliminar' usuario.pk %}" 
+                                                   class="btn btn-danger btn-sm"
+                                                   title="Eliminar usuario">
+                                                    <i class="fas fa-trash"></i>
+                                                    Eliminar
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                            </div>
+                            <h4 class="text-muted">¡Excelente!</h4>
+                            <p class="text-muted">No hay usuarios pendientes de activación.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'configuracion' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Volver a Configuración
+                        </a>
+                        {% if usuarios_pendientes %}
+                            <div class="text-muted">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Los usuarios marcados como "Pendiente" necesitan ser activados por un administrador.
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-sm img {
+        object-fit: cover;
+        border: 2px solid #e9ecef;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .btn-group .btn {
+        margin-right: 5px;
+    }
+    
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+    }
+</style>
+{% endblock %} 

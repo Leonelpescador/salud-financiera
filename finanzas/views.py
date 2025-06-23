@@ -11,7 +11,7 @@ from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, P
 from .forms import (
     TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm,
     PresupuestoForm, MetaForm, UsuarioCrearForm, UsuarioEditarForm, 
-    ConfiguracionUsuarioForm, ConfiguracionSistemaForm
+    ConfiguracionUsuarioForm, ConfiguracionSistemaForm, RegistroPublicoForm
 )
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -39,12 +39,43 @@ def login(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            auth_login(request, user)
-            return redirect('dashboard')
+            if user.is_active:
+                auth_login(request, user)
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Tu cuenta está pendiente de activación. Un administrador la revisará pronto.')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
     
     return render(request, 'login/login.html')
+
+def registro_publico(request):
+    """Vista para registro público de usuarios (marcados como inactivos)"""
+    if request.method == 'POST':
+        form = RegistroPublicoForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Crear configuración por defecto para el usuario
+            ConfiguracionUsuario.objects.create(
+                usuario=user,
+                moneda_principal='ARS',
+                zona_horaria='America/Argentina/Buenos_Aires',
+                notificaciones_activas=True,
+                recordatorios_pago=True
+            )
+            
+            messages.success(request, 'Tu cuenta ha sido creada exitosamente. Un administrador la revisará y activará pronto.')
+            return redirect('login')
+        else:
+            # Mostrar errores específicos del formulario
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = RegistroPublicoForm()
+    
+    return render(request, 'login/registro.html', {'form': form})
 
 @login_required
 def dashboard(request):
@@ -905,6 +936,7 @@ def configuracion(request):
     
     # Estadísticas del sistema
     total_usuarios = User.objects.count()
+    usuarios_pendientes = User.objects.filter(is_active=False).count()
     total_transacciones = Transaccion.objects.count()
     total_cuentas = Cuenta.objects.count()
     total_categorias = Categoria.objects.count()
@@ -913,11 +945,24 @@ def configuracion(request):
         'usuarios': usuarios,
         'config': config,
         'total_usuarios': total_usuarios,
+        'usuarios_pendientes': usuarios_pendientes,
         'total_transacciones': total_transacciones,
         'total_cuentas': total_cuentas,
         'total_categorias': total_categorias,
     }
     return render(request, 'configuracion/configuracion.html', context)
+
+@login_required
+@staff_required
+def usuarios_pendientes(request):
+    """Vista para listar usuarios pendientes de activación"""
+    usuarios_pendientes = User.objects.filter(is_active=False).order_by('date_joined')
+    
+    context = {
+        'usuarios_pendientes': usuarios_pendientes,
+        'total_pendientes': usuarios_pendientes.count(),
+    }
+    return render(request, 'configuracion/usuarios_pendientes.html', context)
 
 @login_required
 @staff_required
