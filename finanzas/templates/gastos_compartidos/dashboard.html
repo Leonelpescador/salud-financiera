@@ -4,11 +4,184 @@
 {% block title %}Dashboard - Gastos Compartidos{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+<style>
+/* ====== Gastos Compartidos - Estilos ====== */
+
+.gastos-shared-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 12px 12px 0 0;
+    padding: 24px 32px 16px 32px;
+    margin-bottom: 0;
+}
+
+.gastos-shared-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
+    margin-bottom: 32px;
+    overflow: hidden;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.gastos-shared-card:hover {
+    transform: translateY(-2px);
+}
+
+.gastos-shared-card .card-header {
+    border-radius: 15px 15px 0 0;
+    padding: 16px 32px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.gastos-shared-card .card-body {
+    padding: 24px 32px;
+}
+
+.gastos-shared-card .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #f0f0f0;
+    color: #888;
+    font-size: 0.95rem;
+}
+
+.gastos-shared-btn, .btn-primary {
+    background: #3498db;
+    color: #fff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-weight: 500;
+    border: none;
+    transition: background 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+.gastos-shared-btn:hover, .btn-primary:hover {
+    background: #2980b9;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: #fff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    border: none;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.3s;
+    display: inline-block;
+}
+.btn-secondary:hover {
+    background: #7f8c8d;
+    color: #fff;
+}
+
+.gastos-shared-badge, .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: #ecf0f1;
+    color: #764ba2;
+    margin-right: 0.5em;
+}
+
+.gastos-shared-table th, .gastos-shared-table td {
+    vertical-align: middle !important;
+}
+
+.gastos-shared-table th {
+    background: #f8f9fa;
+    color: #764ba2;
+    font-weight: 700;
+    border-bottom: 2px solid #764ba2;
+}
+
+.gastos-shared-table tr:hover {
+    background: #f3f0fa;
+}
+
+.gastos-shared-progress {
+    background: #e9ecef;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+}
+.gastos-shared-progress-bar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    height: 100%;
+    border-radius: 8px;
+}
+
+.gastos-shared-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #764ba2;
+    margin-right: 10px;
+}
+
+.gastos-shared-empty {
+    text-align: center;
+    color: #aaa;
+    padding: 40px 0;
+}
+
+/* Header institucional morado para tarjetas */
+.gastos-shared-card .card-header.bg-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    border-bottom: 1px solid #764ba2;
+}
+
+/* Header de eliminación (rojo) */
+.gastos-shared-card .card-header.bg-danger {
+    background: #e74c3c !important;
+    color: #fff !important;
+    border-bottom: 1px solid #e74c3c;
+}
+
+/* Header con color de grupo (se mantiene inline en la plantilla, pero aseguramos contraste) */
+.gastos-shared-card .card-header[style*="background-color"] {
+    color: #fff !important;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Márgenes y paddings consistentes */
+.gastos-shared-card {
+    margin-bottom: 32px;
+}
+.gastos-shared-card .card-header {
+    border-radius: 12px 12px 0 0;
+    padding: 16px 32px;
+}
+.gastos-shared-card .card-body {
+    padding: 24px 32px;
+}
+
+@media (max-width: 768px) {
+    .gastos-shared-card .card-header {
+        padding: 12px 8px;
+    }
+    .gastos-shared-card .card-body {
+        padding: 16px 8px;
+    }
+    .gastos-shared-btn, .btn-primary, .btn-secondary {
+        padding: 10px 16px;
+        font-size: 1rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid gastos-shared-header">
+<div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -29,84 +202,42 @@
             </a>
         </div>
     </div>
-
     <!-- Estadísticas -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card gastos-shared-card border-left-primary shadow h-100 py-2">
+        <div class="col-md-3 mb-3">
+            <div class="card gastos-shared-card shadow text-center">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Gastos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_gastos }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Gastos</div>
+                    <div class="h4 mb-0 font-weight-bold text-gray-800">{{ total_gastos }}</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card gastos-shared-card border-left-warning shadow h-100 py-2">
+        <div class="col-md-3 mb-3">
+            <div class="card gastos-shared-card shadow text-center">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pendientes
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ gastos_pendientes }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendientes</div>
+                    <div class="h4 mb-0 font-weight-bold text-gray-800">{{ gastos_pendientes }}</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card gastos-shared-card border-left-danger shadow h-100 py-2">
+        <div class="col-md-3 mb-3">
+            <div class="card gastos-shared-card shadow text-center">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Vencidos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ gastos_vencidos }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Vencidos</div>
+                    <div class="h4 mb-0 font-weight-bold text-gray-800">{{ gastos_vencidos }}</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card gastos-shared-card border-left-success shadow h-100 py-2">
+        <div class="col-md-3 mb-3">
+            <div class="card gastos-shared-card shadow text-center">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Total Adeudado
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_adeudado|floatformat:2 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Adeudado</div>
+                    <div class="h4 mb-0 font-weight-bold text-gray-800">${{ total_adeudado|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="row">
-        <!-- Grupos -->
         <div class="col-lg-4 mb-4">
             <div class="card gastos-shared-card shadow">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -150,8 +281,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Gastos Recientes -->
         <div class="col-lg-8 mb-4">
             <div class="card gastos-shared-card shadow">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -235,90 +364,5 @@
             </div>
         </div>
     </div>
-
-    <!-- Pagos Pendientes -->
-    {% if pagos_pendientes_usuario %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-warning">
-                        <i class="fas fa-clock"></i> Mis Pagos Pendientes
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Gasto</th>
-                                    <th>Grupo</th>
-                                    <th>Monto Debido</th>
-                                    <th>Monto Pagado</th>
-                                    <th>Estado</th>
-                                    <th>Vencimiento</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for pago in pagos_pendientes_usuario %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ pago.gasto_compartido.titulo }}</strong>
-                                        <br><small class="text-muted">{{ pago.gasto_compartido.get_tipo_display }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background-color: {{ pago.gasto_compartido.grupo.color }}; color: white;">
-                                            {{ pago.gasto_compartido.grupo.nombre }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <strong>${{ pago.monto_debido|floatformat:2 }}</strong>
-                                    </td>
-                                    <td>
-                                        ${{ pago.monto_pagado|floatformat:2 }}
-                                        <div class="progress mt-1" style="height: 5px;">
-                                            <div class="progress-bar" role="progressbar" style="width: {{ pago.porcentaje_pagado }}%"></div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if pago.estado == 'pagado' %}
-                                            <span class="badge bg-success">Pagado</span>
-                                        {% elif pago.estado == 'parcial' %}
-                                            <span class="badge bg-warning">Parcial</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Pendiente</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if pago.gasto_compartido.fecha_vencimiento %}
-                                            {% if pago.gasto_compartido.esta_vencido %}
-                                                <span class="text-danger">
-                                                    <i class="fas fa-exclamation-triangle"></i> Vencido
-                                                </span>
-                                            {% else %}
-                                                <span class="text-warning">
-                                                    {{ pago.gasto_compartido.dias_restantes }} días
-                                                </span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="text-muted">Sin vencimiento</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'pago_gasto_compartido_editar' pago.pk %}" class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i> Pagar
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %} 

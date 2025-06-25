@@ -85,4 +85,9 @@ urlpatterns = [
     path('sistema/limpiar/', views.limpiar_datos, name='limpiar_datos'),
     path('sistema/exportar/', views.exportar_datos, name='exportar_datos'),
     path('sistema/importar/', views.importar_datos, name='importar_datos'),
+    
+    # Notificaciones
+    path('notificaciones/', views.lista_notificaciones, name='lista_notificaciones'),
+    path('notificaciones/leer/<int:pk>/', views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
+    path('notificaciones/leer_todas/', views.marcar_todas_notificaciones_leidas, name='marcar_todas_notificaciones_leidas'),
 ]

@@ -1,0 +1,65 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mis Notificaciones</h2>
+    {% if notificaciones %}
+        <div class="list-group">
+            {% for notificacion in notificaciones %}
+            <a href="{% if notificacion.url_destino %}{{ notificacion.url_destino }}{% else %}#{% endif %}"
+               class="list-group-item list-group-item-action {% if not notificacion.leida %}list-group-item-info{% endif %}"
+               data-notif-id="{{ notificacion.pk }}" {% if not notificacion.leida %}onclick="marcarComoLeida(this, {{ notificacion.pk }})"{% endif %}>
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ notificacion.mensaje }}</h5>
+                    <small>{{ notificacion.fecha_creacion|date:"d M, H:i" }}</small>
+                </div>
+                {% if not notificacion.leida %}<small class="text-primary">Nueva</small>{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="marcarTodasComoLeidas()">Marcar todas como leídas</button>
+        </div>
+    {% else %}
+        <p>No tienes notificaciones.</p>
+    {% endif %}
+</div>
+
+<script>
+    function marcarComoLeida(element, notifId) {
+        fetch(`/notificaciones/leer/${notifId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                element.classList.remove('list-group-item-info');
+                element.removeAttribute('onclick');
+            }
+        });
+    }
+
+    function marcarTodasComoLeidas() {
+        fetch('{% url "marcar_todas_notificaciones_leidas" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.querySelectorAll('.list-group-item-info').forEach(item => {
+                    item.classList.remove('list-group-item-info');
+                    item.removeAttribute('onclick');
+                });
+            }
+        });
+    }
+</script>
+{% endblock %} 

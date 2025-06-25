@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from django.utils import timezone
 
 class Categoria(models.Model):
     TIPO_CHOICES = [
@@ -566,3 +567,18 @@ class PagoGastoCompartido(models.Model):
         else:
             self.estado = 'pendiente'
         self.save()
+
+class Notificacion(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
+    mensaje = models.CharField(max_length=255)
+    url_destino = models.URLField(blank=True, null=True, help_text="URL a la que redirige la notificación al hacer clic.")
+    leida = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = "Notificación"
+        verbose_name_plural = "Notificaciones"
+
+    def __str__(self):
+        return f"Notificación para {self.usuario.username}: {self.mensaje[:50]}..."

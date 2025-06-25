@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Salud Financiera{% endblock %}</title>
+    {% block extra_head %}{% endblock %}
     <style>
         * {
             margin: 0;
@@ -296,6 +297,21 @@
                         </a>
                     </li>
                 </div>
+
+                <!-- Notificaciones -->
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge bg-danger" id="notif-count">{{ notificaciones_no_leidas_count }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" style="max-height: 300px; overflow-y: auto;">
+                            <li><a class="dropdown-item" href="{% url 'lista_notificaciones' %}">Ver todas las notificaciones</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="marcar-todas-leidas">Marcar todas como leídas</a></li>
+                        </ul>
+                    </li>
+                {% endif %}
             </ul>
         </nav>
 
@@ -335,6 +351,55 @@
                     }
                 });
             });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Función para marcar una notificación individual como leída
+            document.querySelectorAll('.marcar-leida').forEach(item => {
+                item.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const notifId = this.dataset.notifId;
+                    fetch(`/notificaciones/leer/${notifId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            this.closest('.dropdown-item').classList.remove('unread');
+                            updateNotificationCount();
+                        }
+                    });
+                });
+            });
+
+            // Función para marcar todas como leídas
+            const marcarTodasLeidasBtn = document.getElementById('marcar-todas-leidas');
+            if (marcarTodasLeidasBtn) {
+                marcarTodasLeidasBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    fetch('{% url "marcar_todas_notificaciones_leidas" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            document.getElementById('notif-count').innerText = '0';
+                        }
+                    });
+                });
+            }
+
+            function updateNotificationCount() {
+                // Aquí podrías hacer una petición AJAX para actualizar el contador si implementas una API
+            }
         });
     </script>
 </body>

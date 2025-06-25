@@ -10,19 +10,24 @@
 
 .gastos-shared-card {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
     margin-bottom: 32px;
     overflow: hidden;
     border: none;
+    transition: transform 0.2s;
+}
+
+.gastos-shared-card:hover {
+    transform: translateY(-2px);
 }
 
 .gastos-shared-card .card-header {
-    background: none;
-    border-bottom: 1px solid #f0f0f0;
-    font-weight: 600;
+    border-radius: 15px 15px 0 0;
+    padding: 16px 32px;
+    font-weight: 700;
     font-size: 1.1rem;
-    color: #764ba2;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .gastos-shared-card .card-body {
@@ -36,13 +41,45 @@
     font-size: 0.95rem;
 }
 
-.gastos-shared-badge {
+.gastos-shared-btn, .btn-primary {
+    background: #3498db;
+    color: #fff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-weight: 500;
+    border: none;
+    transition: background 0.3s;
+    text-decoration: none;
     display: inline-block;
-    padding: 0.35em 0.8em;
-    font-size: 0.95em;
-    font-weight: 600;
-    border-radius: 1em;
-    background: #e9ecef;
+}
+.gastos-shared-btn:hover, .btn-primary:hover {
+    background: #2980b9;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: #fff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    border: none;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.3s;
+    display: inline-block;
+}
+.btn-secondary:hover {
+    background: #7f8c8d;
+    color: #fff;
+}
+
+.gastos-shared-badge, .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: #ecf0f1;
     color: #764ba2;
     margin-right: 0.5em;
 }
@@ -60,20 +97,6 @@
 
 .gastos-shared-table tr:hover {
     background: #f3f0fa;
-}
-
-.gastos-shared-btn {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 8px 18px;
-    transition: background 0.2s, color 0.2s;
-    border: none;
-    background: #764ba2;
-    color: #fff;
-}
-.gastos-shared-btn:hover {
-    background: #667eea;
-    color: #fff;
 }
 
 .gastos-shared-progress {
@@ -103,11 +126,47 @@
     padding: 40px 0;
 }
 
+/* Header institucional morado para tarjetas */
+.gastos-shared-card .card-header.bg-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    border-bottom: 1px solid #764ba2;
+}
+
+/* Header de eliminación (rojo) */
+.gastos-shared-card .card-header.bg-danger {
+    background: #e74c3c !important;
+    color: #fff !important;
+    border-bottom: 1px solid #e74c3c;
+}
+
+/* Header con color de grupo (se mantiene inline en la plantilla, pero aseguramos contraste) */
+.gastos-shared-card .card-header[style*="background-color"] {
+    color: #fff !important;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Márgenes y paddings consistentes */
+.gastos-shared-card {
+    margin-bottom: 32px;
+}
+.gastos-shared-card .card-header {
+    border-radius: 12px 12px 0 0;
+    padding: 16px 32px;
+}
+.gastos-shared-card .card-body {
+    padding: 24px 32px;
+}
+
 @media (max-width: 768px) {
+    .gastos-shared-card .card-header {
+        padding: 12px 8px;
+    }
     .gastos-shared-card .card-body {
         padding: 16px 8px;
     }
-    .gastos-shared-header {
-        padding: 16px 8px 8px 8px;
+    .gastos-shared-btn, .btn-primary, .btn-secondary {
+        padding: 10px 16px;
+        font-size: 1rem;
     }
 } 

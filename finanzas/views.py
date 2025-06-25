@@ -7,7 +7,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes, GrupoGastosCompartidos, GastoCompartido, PagoGastoCompartido
+from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes, GrupoGastosCompartidos, GastoCompartido, PagoGastoCompartido, Notificacion
 from .forms import (
     TransaccionForm, CategoriaForm, CuentaForm, TagForm, FiltroTransaccionesForm,
     PresupuestoForm, MetaForm, UsuarioCrearForm, UsuarioEditarForm, 
@@ -20,6 +20,8 @@ from django.utils import timezone
 from calendar import monthrange
 import json
 from functools import wraps
+from django.views.decorators.http import require_POST
+from django.urls import reverse
 
 # Decorador personalizado para verificar permisos de staff
 def staff_required(view_func):
@@ -1269,23 +1271,18 @@ def gastos_compartidos_lista(request):
 @login_required
 def gasto_compartido_crear(request):
     """Crear un nuevo gasto compartido"""
-    # Obtener grupos donde el usuario es miembro
     grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
-    
     if not grupos.exists():
         messages.error(request, 'Debe crear un grupo de gastos compartidos antes de agregar gastos.')
         return redirect('grupos_gastos_compartidos_lista')
-    
     if request.method == 'POST':
         grupo_id = request.POST.get('grupo')
         grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user)
-        
         form = GastoCompartidoForm(request.POST, request.FILES, user=request.user, grupo=grupo)
         if form.is_valid():
             gasto = form.save(commit=False)
             gasto.grupo = grupo
             gasto.save()
-            
             # Crear registros de pago para cada miembro
             for miembro in grupo.miembros.all():
                 PagoGastoCompartido.objects.create(
@@ -1293,12 +1290,19 @@ def gasto_compartido_crear(request):
                     miembro=miembro,
                     monto_debido=gasto.monto_por_persona
                 )
-            
+            # Crear notificaciones para los miembros (excepto el creador)
+            url_gasto = reverse('gasto_compartido_detalle', args=[gasto.pk])
+            for miembro in grupo.miembros.all():
+                if miembro != request.user:
+                    Notificacion.objects.create(
+                        usuario=miembro,
+                        mensaje=f"{request.user.username} ha añadido un nuevo gasto en '{grupo.nombre}': {gasto.titulo}.",
+                        url_destino=url_gasto
+                    )
             messages.success(request, 'Gasto compartido creado exitosamente.')
             return redirect('gastos_compartidos_lista')
     else:
         form = GastoCompartidoForm(user=request.user, grupo=grupos.first())
-    
     context = {
         'form': form,
         'grupos': grupos,
@@ -1426,4 +1430,26 @@ def dashboard_gastos_compartidos(request):
         'pagos_pendientes_usuario': pagos_pendientes_usuario,
     }
     return render(request, 'gastos_compartidos/dashboard.html', context)
+
+@login_required
+def lista_notificaciones(request):
+    notificaciones = Notificacion.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+    return render(request, 'notificaciones/lista.html', {'notificaciones': notificaciones})
+
+@login_required
+@require_POST
+def marcar_notificacion_leida(request, pk):
+    try:
+        notificacion = Notificacion.objects.get(pk=pk, usuario=request.user)
+        notificacion.leida = True
+        notificacion.save()
+        return JsonResponse({'status': 'success'})
+    except Notificacion.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Notificación no encontrada o no pertenece al usuario'}, status=404)
+
+@login_required
+@require_POST
+def marcar_todas_notificaciones_leidas(request):
+    Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)
+    return JsonResponse({'status': 'success'})
 
