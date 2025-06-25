@@ -1,0 +1,350 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Saldos del Grupo - {{ grupo.nombre }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .saldos-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .saldos-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .saldos-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .saldos-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .saldos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .saldo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .saldo-card.positivo {
+            border-left-color: #28a745;
+        }
+        
+        .saldo-card.negativo {
+            border-left-color: #dc3545;
+        }
+        
+        .saldo-card.neutral {
+            border-left-color: #6c757d;
+        }
+        
+        .saldo-nombre {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .saldo-valor {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .saldo-valor.positivo {
+            color: #28a745;
+        }
+        
+        .saldo-valor.negativo {
+            color: #dc3545;
+        }
+        
+        .saldo-valor.neutral {
+            color: #6c757d;
+        }
+        
+        .saldo-descripcion {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .deudas-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .deudas-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        }
+        
+        .deudas-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .deuda-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .deuda-info {
+            flex: 1;
+        }
+        
+        .deuda-personas {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .deuda-monto {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        
+        .deuda-accion {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .deuda-accion:hover {
+            background: #c82333;
+        }
+        
+        .resumen-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .resumen-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        }
+        
+        .resumen-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .resumen-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .resumen-stat {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .resumen-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resumen-stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .btn-volver:hover {
+            background: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .saldos-container {
+                padding: 1rem;
+            }
+            
+            .saldos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .deuda-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .resumen-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="saldos-container">
+    <!-- Botón Volver -->
+    <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </a>
+    
+    <!-- Header -->
+    <div class="saldos-header">
+        <h1><i class="fas fa-calculator"></i> Saldos del Grupo</h1>
+        <p>{{ grupo.nombre }} - {{ grupo.cantidad_miembros }} miembros</p>
+    </div>
+    
+    <!-- Saldos por Miembro -->
+    <div class="saldos-grid">
+        {% for nombre, saldo in saldos.items %}
+        <div class="saldo-card {% if saldo > 0 %}positivo{% elif saldo < 0 %}negativo{% else %}neutral{% endif %}">
+            <div class="saldo-nombre">{{ nombre }}</div>
+            <div class="saldo-valor {% if saldo > 0 %}positivo{% elif saldo < 0 %}negativo{% else %}neutral{% endif %}">
+                ${{ saldo|floatformat:2 }}
+            </div>
+            <div class="saldo-descripcion">
+                {% if saldo > 0 %}
+                    <i class="fas fa-arrow-up"></i> Tiene saldo a favor
+                {% elif saldo < 0 %}
+                    <i class="fas fa-arrow-down"></i> Debe dinero
+                {% else %}
+                    <i class="fas fa-equals"></i> Saldo equilibrado
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Deudas Pendientes -->
+    {% if deudas %}
+    <div class="deudas-section">
+        <div class="deudas-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Deudas Pendientes</h3>
+        </div>
+        {% for deuda in deudas %}
+        <div class="deuda-item">
+            <div class="deuda-info">
+                <div class="deuda-personas">
+                    <i class="fas fa-arrow-right"></i> {{ deuda.deudor }} debe pagar a {{ deuda.acreedor }}
+                </div>
+            </div>
+            <div class="deuda-monto">${{ deuda.monto|floatformat:2 }}</div>
+            <button class="deuda-accion" onclick="marcarComoPagado('{{ deuda.deudor }}', '{{ deuda.acreedor }}', {{ deuda.monto }})">
+                <i class="fas fa-check"></i> Marcar como Pagado
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="deudas-section">
+        <div class="deudas-header">
+            <h3><i class="fas fa-check-circle"></i> Estado de Deudas</h3>
+        </div>
+        <div style="text-align: center; padding: 2rem; color: #28a745;">
+            <i class="fas fa-thumbs-up" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h4>¡Excelente!</h4>
+            <p>No hay deudas pendientes en este grupo. Todos los saldos están equilibrados.</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Resumen del Grupo -->
+    <div class="resumen-section">
+        <div class="resumen-header">
+            <h3><i class="fas fa-chart-pie"></i> Resumen del Grupo</h3>
+        </div>
+        <div class="resumen-stats">
+            <div class="resumen-stat">
+                <div class="resumen-stat-value">{{ grupo.cantidad_miembros }}</div>
+                <div class="resumen-stat-label">Miembros</div>
+            </div>
+            <div class="resumen-stat">
+                <div class="resumen-stat-value">{{ grupo.gastocompartido_set.count }}</div>
+                <div class="resumen-stat-label">Total Gastos</div>
+            </div>
+            <div class="resumen-stat">
+                <div class="resumen-stat-value">${{ grupo.total_gastos_mes_actual|floatformat:2 }}</div>
+                <div class="resumen-stat-label">Gastos del Mes</div>
+            </div>
+            <div class="resumen-stat">
+                <div class="resumen-stat-value">{{ deudas|length }}</div>
+                <div class="resumen-stat-label">Deudas Pendientes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function marcarComoPagado(deudor, acreedor, monto) {
+    if (confirm(`¿Confirmar que ${deudor} ha pagado $${monto} a ${acreedor}?`)) {
+        // Aquí implementarías la lógica para marcar como pagado
+        alert('Función de marcado como pagado en desarrollo');
+    }
+}
+
+// Actualizar la página cada 30 segundos para mantener los saldos actualizados
+setInterval(function() {
+    // Solo actualizar si la página está visible
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %} 

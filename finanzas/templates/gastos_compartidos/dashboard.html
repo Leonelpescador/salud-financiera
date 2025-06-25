@@ -1,237 +1,894 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Gastos Compartidos{% endblock %}
+{% block title %} Gastos Compartidos{% endblock %}
+
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
     <style>
-        .stats-summary-card {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: stretch;
+        /* Estilos para el dashboard mejorado */
+        .dashboard-section {
             background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
-            padding: 0;
             overflow: hidden;
         }
-        .stats-summary-item {
-            flex: 1;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            border-right: 1px solid #f0f0f0;
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
         }
-        .stats-summary-item:last-child {
-            border-right: none;
-        }
-        .stats-label {
-            font-size: 0.95rem;
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
             font-weight: 600;
-            color: #764ba2;
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
             margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
-        .stats-value {
-            font-size: 1.7rem;
+        
+        .stat-value {
+            font-size: 2rem;
             font-weight: bold;
-            color: #222;
+            margin-bottom: 0.25rem;
         }
-        .stats-icon {
-            font-size: 1.3rem;
-            margin-bottom: 0.3rem;
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
-        @media (max-width: 768px) {
-            .stats-summary-card {
-                flex-direction: column;
-            }
-            .stats-summary-item {
-                border-right: none;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            .stats-summary-item:last-child {
-                border-bottom: none;
-            }
+        
+        .grupo-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
-        .dashboard-btn-group {
+        
+        .grupo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .grupo-header {
             display: flex;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .grupo-nombre {
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .grupo-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .grupo-actions {
+            display: flex;
             gap: 0.5rem;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+        }
+        
+        .gasto-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .gasto-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .gasto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .gasto-titulo {
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .gasto-estado {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .estado-pagado { background: #d4edda; color: #155724; }
+        .estado-pendiente { background: #fff3cd; color: #856404; }
+        .estado-vencido { background: #f8d7da; color: #721c24; }
+        
+        .gasto-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .gasto-detail {
+            font-size: 0.85rem;
+        }
+        
+        .gasto-detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .gasto-detail-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #666;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .empty-description {
+            margin-bottom: 2rem;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .close {
+            color: white;
+            float: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            opacity: 0.7;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .gasto-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
         }
     </style>
 {% endblock %}
+
 {% block content %}
-<div class="gastos-container">
-    <!-- Header -->
-    <div class="page-header">
-        <h1><i class="fas fa-users text-primary"></i> Gastos Compartidos</h1>
-        <div class="dashboard-btn-group">
-            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn-secondary">
-                <i class="fas fa-layer-group"></i> Grupos
-            </a>
-            <a href="{% url 'gastos_compartidos_lista' %}" class="btn-secondary">
-                <i class="fas fa-list"></i> Ver Todos
-            </a>
-            <a href="{% url 'gasto_compartido_crear' %}" class="btn-primary">
-                <i class="fas fa-plus"></i> Nuevo Gasto
-            </a>
+<div class="container-fluid">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-users"></i>Gastos Compartidos</h2>
+            <div>
+                <button class="btn-action btn-primary" onclick="openModal('crearGrupoModal')">
+                    <i class="fas fa-plus"></i> Nuevo Grupo
+                </button>
+                <button class="btn-action btn-success" onclick="openModal('crearGastoModal')">
+                    <i class="fas fa-plus"></i> Nuevo Gasto
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Estadísticas Unificadas -->
-    <div class="stats-summary-card">
-        <div class="stats-summary-item">
-            <div class="stats-icon"><i class="fas fa-coins"></i></div>
-            <div class="stats-label">Total Gastos</div>
-            <div class="stats-value">{{ total_gastos }}</div>
+    <!-- Estadísticas -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-bar"></i> Resumen General</h2>
         </div>
-        <div class="stats-summary-item">
-            <div class="stats-icon"><i class="fas fa-hourglass-half"></i></div>
-            <div class="stats-label">Pendientes</div>
-            <div class="stats-value">{{ gastos_pendientes }}</div>
-        </div>
-        <div class="stats-summary-item">
-            <div class="stats-icon"><i class="fas fa-exclamation-circle"></i></div>
-            <div class="stats-label">Vencidos</div>
-            <div class="stats-value">{{ gastos_vencidos }}</div>
-        </div>
-        <div class="stats-summary-item">
-            <div class="stats-icon"><i class="fas fa-wallet"></i></div>
-            <div class="stats-label">Total Adeudado</div>
-            <div class="stats-value">${{ total_adeudado|floatformat:2 }}</div>
+        <div class="section-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-value">{{ total_gastos }}</div>
+                    <div class="stat-label">Total Gastos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-value">{{ gastos_pendientes }}</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div class="stat-value">{{ gastos_vencidos }}</div>
+                    <div class="stat-label">Vencidos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-value">${{ total_adeudado|floatformat:2 }}</div>
+                    <div class="stat-label">Total Adeudado</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-layer-group"></i> Mis Grupos</h3>
-                    <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn-primary btn-sm">
-                        <i class="fas fa-plus"></i>
-                    </a>
+        <!-- Sección de Grupos -->
+        <div class="col-lg-6">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-layer-group"></i> Mis Grupos</h2>
                 </div>
-                <div class="card-body">
+                <div class="section-content">
                     {% if grupos %}
                         {% for grupo in grupos %}
-                        <div class="grupo-item">
-                            <div class="flex-shrink-0 me-3">
-                                <span class="fs-4">{{ grupo.icono }}</span>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">{{ grupo.nombre }}</h6>
-                                <small class="text-muted">{{ grupo.cantidad_miembros }} miembros</small>
-                                <div class="mt-1">
-                                    <small class="text-muted">Total mes: ${{ grupo.total_gastos_mes_actual|floatformat:2 }}</small>
+                        <div class="grupo-card">
+                            <div class="grupo-header">
+                                <h4 class="grupo-nombre">{{ grupo.nombre }}</h4>
+                                <div class="grupo-actions">
+                                    <button class="btn-action btn-secondary" onclick="verSaldosGrupo({{ grupo.id }})">
+                                        <i class="fas fa-calculator"></i> Saldos
+                                    </button>
+                                    <button class="btn-action btn-warning" onclick="gestionarMiembros({{ grupo.id }})">
+                                        <i class="fas fa-users"></i> Miembros
+                                    </button>
                                 </div>
                             </div>
-                            <div class="flex-shrink-0">
-                                <a href="{% url 'gasto_compartido_crear' %}?grupo={{ grupo.id }}" class="btn-secondary btn-sm">
-                                    <i class="fas fa-plus"></i>
-                                </a>
+                            <div class="grupo-info">
+                                <span><i class="fas fa-users"></i> {{ grupo.cantidad_miembros }} miembros</span>
+                                <span><i class="fas fa-calendar"></i> Total mes: ${{ grupo.total_gastos_mes_actual|floatformat:2 }}</span>
+                            </div>
+                            <div class="grupo-actions">
+                                <button class="btn-action btn-primary" onclick="crearGastoEnGrupo({{ grupo.id }})">
+                                    <i class="fas fa-plus"></i> Agregar Gasto
+                                </button>
+                                <button class="btn-action btn-secondary" onclick="editarGrupo({{ grupo.id }})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn-action btn-danger" onclick="eliminarGrupo({{ grupo.id }})">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
                         <div class="empty-state">
                             <div class="empty-icon">👥</div>
-                            <h3>No tienes grupos</h3>
-                            <p class="text-muted mb-4">No tienes grupos de gastos compartidos</p>
-                            <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn-primary">
-                                Crear Primer Grupo
-                            </a>
+                            <div class="empty-title">No tienes grupos</div>
+                            <div class="empty-description">Crea tu primer grupo para comenzar a compartir gastos</div>
+                            <button class="btn-action btn-primary" onclick="openModal('crearGrupoModal')">
+                                <i class="fas fa-plus"></i> Crear Primer Grupo
+                            </button>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-receipt"></i> Gastos Recientes</h3>
-                    <a href="{% url 'gastos_compartidos_lista' %}" class="btn-secondary btn-sm">Ver Todos</a>
+
+        <!-- Sección de Gastos Recientes -->
+        <div class="col-lg-6">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-receipt"></i> Gastos Recientes</h2>
                 </div>
-                <div class="card-body">
+                <div class="section-content">
                     {% if gastos_recientes %}
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Título</th>
-                                        <th>Grupo</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Fecha</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for gasto in gastos_recientes %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ gasto.titulo }}</strong>
-                                            <br><small class="text-muted">{{ gasto.get_tipo_display }}</small>
-                                        </td>
-                                        <td>
-                                            <span class="badge" style="background-color: {{ gasto.grupo.color }}; color: white;">
-                                                {{ gasto.grupo.nombre }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong>${{ gasto.monto_total|floatformat:2 }}</strong>
-                                            <br><small class="text-muted">${{ gasto.monto_por_persona|floatformat:2 }} c/u</small>
-                                        </td>
-                                        <td>
-                                            {% if gasto.estado == 'pagado' %}
-                                                <span class="badge bg-success">Pagado</span>
-                                            {% elif gasto.estado == 'pendiente' %}
-                                                <span class="badge bg-warning">Pendiente</span>
-                                            {% elif gasto.estado == 'vencido' %}
-                                                <span class="badge bg-danger">Vencido</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">{{ gasto.get_estado_display }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {{ gasto.fecha|date:"d/m/Y" }}
-                                            {% if gasto.fecha_vencimiento %}
-                                                <br><small class="text-muted">Vence: {{ gasto.fecha_vencimiento|date:"d/m/Y" }}</small>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" class="btn-primary btn-sm">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{% url 'gasto_compartido_editar' gasto.pk %}" class="btn-warning btn-sm">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        {% for gasto in gastos_recientes %}
+                        <div class="gasto-item">
+                            <div class="gasto-header">
+                                <h5 class="gasto-titulo">{{ gasto.titulo }}</h5>
+                                <span class="gasto-estado estado-{{ gasto.estado }}">
+                                    {% if gasto.estado == 'pagado' %}Pagado
+                                    {% elif gasto.estado == 'pendiente' %}Pendiente
+                                    {% elif gasto.estado == 'vencido' %}Vencido
+                                    {% else %}{{ gasto.get_estado_display }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="gasto-details">
+                                <div class="gasto-detail">
+                                    <div class="gasto-detail-label">Grupo:</div>
+                                    <div class="gasto-detail-value">{{ gasto.grupo.nombre }}</div>
+                                </div>
+                                <div class="gasto-detail">
+                                    <div class="gasto-detail-label">Monto Total:</div>
+                                    <div class="gasto-detail-value">${{ gasto.monto_total|floatformat:2 }}</div>
+                                </div>
+                                <div class="gasto-detail">
+                                    <div class="gasto-detail-label">Por Persona:</div>
+                                    <div class="gasto-detail-value">${{ gasto.monto_por_persona|floatformat:2 }}</div>
+                                </div>
+                                <div class="gasto-detail">
+                                    <div class="gasto-detail-label">Fecha:</div>
+                                    <div class="gasto-detail-value">{{ gasto.fecha|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="grupo-actions">
+                                <button class="btn-action btn-primary" onclick="verDetalleGasto({{ gasto.id }})">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </button>
+                                <button class="btn-action btn-warning" onclick="editarGasto({{ gasto.id }})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn-action btn-danger" onclick="eliminarGasto({{ gasto.id }})">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
                         </div>
+                        {% endfor %}
                     {% else %}
                         <div class="empty-state">
                             <div class="empty-icon">📋</div>
-                            <h3>No hay gastos compartidos</h3>
-                            <p class="text-muted mb-4">No hay gastos compartidos registrados</p>
-                            <a href="{% url 'gasto_compartido_crear' %}" class="btn-primary">
-                                Crear Primer Gasto
-                            </a>
+                            <div class="empty-title">No hay gastos compartidos</div>
+                            <div class="empty-description">Crea tu primer gasto compartido</div>
+                            <button class="btn-action btn-primary" onclick="openModal('crearGastoModal')">
+                                <i class="fas fa-plus"></i> Crear Primer Gasto
+                            </button>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Sección de Pagos Pendientes -->
+    <div class="col-12">
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2><i class="fas fa-clock"></i> Mis Pagos Pendientes</h2>
+            </div>
+            <div class="section-content">
+                {% if pagos_pendientes_usuario %}
+                    {% for pago in pagos_pendientes_usuario %}
+                    <div class="gasto-item">
+                        <div class="gasto-header">
+                            <h5 class="gasto-titulo">{{ pago.gasto_compartido.titulo }}</h5>
+                            <span class="gasto-estado estado-pendiente">Pendiente</span>
+                        </div>
+                        <div class="gasto-details">
+                            <div class="gasto-detail">
+                                <div class="gasto-detail-label">Grupo:</div>
+                                <div class="gasto-detail-value">{{ pago.gasto_compartido.grupo.nombre }}</div>
+                            </div>
+                            <div class="gasto-detail">
+                                <div class="gasto-detail-label">Monto Pendiente:</div>
+                                <div class="gasto-detail-value">${{ pago.monto_pendiente|floatformat:2 }}</div>
+                            </div>
+                            <div class="gasto-detail">
+                                <div class="gasto-detail-label">Vence:</div>
+                                <div class="gasto-detail-value">{{ pago.gasto_compartido.fecha_vencimiento|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                        <div class="grupo-actions">
+                            <button class="btn-action btn-success" onclick="registrarPago({{ pago.id }})">
+                                <i class="fas fa-check"></i> Marcar como Pagado
+                            </button>
+                            <button class="btn-action btn-warning" onclick="editarPago({{ pago.id }})">
+                                <i class="fas fa-edit"></i> Editar Pago
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <div class="empty-title">¡Excelente!</div>
+                        <div class="empty-description">No tienes pagos pendientes</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal para Crear Grupo -->
+<div id="crearGrupoModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-layer-group"></i> Crear Nuevo Grupo</h3>
+            <span class="close" onclick="closeModal('crearGrupoModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formCrearGrupo">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Grupo</label>
+                    <input type="text" class="form-control" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color del Grupo</label>
+                    <input type="color" class="form-control" name="color" value="#667eea">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action btn-secondary" onclick="closeModal('crearGrupoModal')">Cancelar</button>
+            <button class="btn-action btn-primary" onclick="guardarGrupo()">Crear Grupo</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Gasto -->
+<div id="crearGastoModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> Crear Nuevo Gasto</h3>
+            <span class="close" onclick="closeModal('crearGastoModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formCrearGasto">
+                <div class="form-group">
+                    <label class="form-label">Grupo</label>
+                    <select class="form-control" name="grupo" required>
+                        <option value="">Seleccionar grupo...</option>
+                        {% for grupo in grupos %}
+                        <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Título del Gasto</label>
+                    <input type="text" class="form-control" name="titulo" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monto Total</label>
+                    <input type="number" class="form-control" name="monto_total" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" class="form-control" name="fecha" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-control" name="fecha_vencimiento">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pagado por</label>
+                    <select class="form-control" name="pagado_por">
+                        <option value="">Nadie (pendiente)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action btn-secondary" onclick="closeModal('crearGastoModal')">Cancelar</button>
+            <button class="btn-action btn-primary" onclick="guardarGasto()">Crear Gasto</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Pago -->
+<div id="editarPagoModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Editar Pago</h3>
+            <span class="close" onclick="closeModal('editarPagoModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarPago">
+                <input type="hidden" name="pago_id" id="pago_id">
+                <div class="form-group">
+                    <label class="form-label">Monto Pagado</label>
+                    <input type="number" class="form-control" name="monto_pagado" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select class="form-control" name="estado" required>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="parcial">Parcial</option>
+                        <option value="pagado">Pagado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Comentario</label>
+                    <textarea class="form-control" name="comentario" rows="3"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action btn-secondary" onclick="closeModal('editarPagoModal')">Cancelar</button>
+            <button class="btn-action btn-primary" onclick="guardarPago()">Guardar Pago</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Funciones para manejar modales
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Funciones para acciones de grupos
+function crearGastoEnGrupo(grupoId) {
+    document.querySelector('#crearGastoModal select[name="grupo"]').value = grupoId;
+    openModal('crearGastoModal');
+}
+
+function editarGrupo(grupoId) {
+    // Redirigir a la página de edición
+    window.location.href = `/finanzas/grupos/${grupoId}/editar/`;
+}
+
+function eliminarGrupo(grupoId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este grupo?')) {
+        // Implementar eliminación
+        window.location.href = `/finanzas/grupos/${grupoId}/eliminar/`;
+    }
+}
+
+function verSaldosGrupo(grupoId) {
+    window.location.href = `/finanzas/grupos/${grupoId}/saldos/`;
+}
+
+function gestionarMiembros(grupoId) {
+    window.location.href = `/finanzas/grupos/${grupoId}/miembros/`;
+}
+
+// Funciones para acciones de gastos
+function verDetalleGasto(gastoId) {
+    window.location.href = `/finanzas/gastos/${gastoId}/detalle/`;
+}
+
+function editarGasto(gastoId) {
+    window.location.href = `/finanzas/gastos/${gastoId}/editar/`;
+}
+
+function eliminarGasto(gastoId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este gasto?')) {
+        window.location.href = `/finanzas/gastos/${gastoId}/eliminar/`;
+    }
+}
+
+// Funciones para pagos
+function registrarPago(pagoId) {
+    document.getElementById('pago_id').value = pagoId;
+    openModal('editarPagoModal');
+}
+
+function editarPago(pagoId) {
+    document.getElementById('pago_id').value = pagoId;
+    openModal('editarPagoModal');
+}
+
+// Funciones para guardar formularios
+function guardarGrupo() {
+    const form = document.getElementById('formCrearGrupo');
+    const formData = new FormData(form);
+    
+    fetch('/finanzas/api/grupo/crear/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('crearGrupoModal');
+            location.reload();
+        } else {
+            alert('Error al crear el grupo: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear el grupo');
+    });
+}
+
+function guardarGasto() {
+    const form = document.getElementById('formCrearGasto');
+    const formData = new FormData(form);
+    
+    fetch('/finanzas/api/gasto/crear/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('crearGastoModal');
+            location.reload();
+        } else {
+            alert('Error al crear el gasto: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear el gasto');
+    });
+}
+
+function guardarPago() {
+    const form = document.getElementById('formEditarPago');
+    const formData = new FormData(form);
+    
+    fetch('/finanzas/api/pago/editar/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('editarPagoModal');
+            location.reload();
+        } else {
+            alert('Error al guardar el pago: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar el pago');
+    });
+}
+
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Actualizar miembros del grupo cuando se selecciona un grupo
+document.querySelector('#crearGastoModal select[name="grupo"]').addEventListener('change', function() {
+    const grupoId = this.value;
+    const pagadoPorSelect = document.querySelector('#crearGastoModal select[name="pagado_por"]');
+    
+    if (grupoId) {
+        fetch(`/finanzas/api/grupo/${grupoId}/miembros/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pagadoPorSelect.innerHTML = '<option value="">Nadie (pendiente)</option>';
+                data.miembros.forEach(miembro => {
+                    pagadoPorSelect.innerHTML += `<option value="${miembro.id}">${miembro.nombre}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar miembros:', error);
+        });
+    } else {
+        pagadoPorSelect.innerHTML = '<option value="">Nadie (pendiente)</option>';
+    }
+});
+</script>
 {% endblock %} 

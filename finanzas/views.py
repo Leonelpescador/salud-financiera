@@ -1969,3 +1969,153 @@ def eliminar_gasto_alternativo(request, pk):
     }
     return render(request, 'gastos_compartidos/eliminar_gasto.html', context)
 
+# APIs para Gastos Compartidos
+@login_required
+def api_grupo_miembros(request, grupo_id):
+    """API para obtener los miembros de un grupo"""
+    try:
+        grupo = get_object_or_404(GrupoGastosCompartidos, id=grupo_id, miembros=request.user, activo=True)
+        miembros = []
+        for miembro in grupo.miembros.all():
+            miembros.append({
+                'id': miembro.id,
+                'nombre': miembro.get_full_name() or miembro.username,
+                'username': miembro.username
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'miembros': miembros
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@login_required
+@require_POST
+def api_crear_grupo(request):
+    """API para crear un grupo desde el modal"""
+    try:
+        nombre = request.POST.get('nombre')
+        descripcion = request.POST.get('descripcion', '')
+        color = request.POST.get('color', '#667eea')
+        
+        if not nombre:
+            return JsonResponse({
+                'success': False,
+                'error': 'El nombre del grupo es requerido'
+            }, status=400)
+        
+        grupo = GrupoGastosCompartidos.objects.create(
+            nombre=nombre,
+            descripcion=descripcion,
+            color=color,
+            creador=request.user
+        )
+        grupo.miembros.add(request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'grupo_id': grupo.id,
+            'message': 'Grupo creado exitosamente'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@login_required
+@require_POST
+def api_crear_gasto(request):
+    """API para crear un gasto desde el modal"""
+    try:
+        grupo_id = request.POST.get('grupo')
+        titulo = request.POST.get('titulo')
+        descripcion = request.POST.get('descripcion', '')
+        monto_total = request.POST.get('monto_total')
+        fecha = request.POST.get('fecha')
+        fecha_vencimiento = request.POST.get('fecha_vencimiento')
+        pagado_por_id = request.POST.get('pagado_por')
+        
+        if not all([grupo_id, titulo, monto_total, fecha]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Todos los campos obligatorios deben estar completos'
+            }, status=400)
+        
+        grupo = get_object_or_404(GrupoGastosCompartidos, id=grupo_id, miembros=request.user, activo=True)
+        pagado_por = None
+        if pagado_por_id:
+            pagado_por = get_object_or_404(User, id=pagado_por_id)
+        
+        gasto = GastoCompartido.objects.create(
+            grupo=grupo,
+            titulo=titulo,
+            descripcion=descripcion,
+            monto_total=monto_total,
+            fecha=fecha,
+            fecha_vencimiento=fecha_vencimiento,
+            pagado_por=pagado_por
+        )
+        
+        # Crear registros de pago para cada miembro
+        for miembro in grupo.miembros.all():
+            monto_debido_miembro = gasto.monto_por_persona
+            monto_pagado_miembro = Decimal('0')
+            
+            if pagado_por and miembro == pagado_por:
+                monto_pagado_miembro = monto_debido_miembro
+            
+            PagoGastoCompartido.objects.create(
+                gasto_compartido=gasto,
+                miembro=miembro,
+                monto_debido=monto_debido_miembro,
+                monto_pagado=monto_pagado_miembro
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'gasto_id': gasto.id,
+            'message': 'Gasto creado exitosamente'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@login_required
+@require_POST
+def api_editar_pago(request):
+    """API para editar un pago desde el modal"""
+    try:
+        pago_id = request.POST.get('pago_id')
+        monto_pagado = request.POST.get('monto_pagado')
+        estado = request.POST.get('estado')
+        comentario = request.POST.get('comentario', '')
+        
+        if not all([pago_id, monto_pagado, estado]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Todos los campos obligatorios deben estar completos'
+            }, status=400)
+        
+        pago = get_object_or_404(PagoGastoCompartido, id=pago_id, miembro=request.user)
+        pago.monto_pagado = monto_pagado
+        pago.estado = estado
+        pago.comentario = comentario
+        pago.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Pago actualizado exitosamente'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+

@@ -56,7 +56,30 @@ urlpatterns = [
     
     # Gastos Compartidos (unificada)
     path('gastos-compartidos/', views.dashboard_gastos_compartidos, name='dashboard_gastos_compartidos'),
-    # (El resto de rutas de gastos compartidos se eliminan o comentan)
+    
+    # Grupos de Gastos Compartidos
+    path('grupos/', views.grupos_gastos_compartidos_lista, name='grupos_gastos_compartidos_lista'),
+    path('grupos/crear/', views.grupo_gastos_compartidos_crear, name='grupo_gastos_compartidos_crear'),
+    path('grupos/<int:pk>/editar/', views.grupo_gastos_compartidos_editar, name='grupo_gastos_compartidos_editar'),
+    path('grupos/<int:pk>/eliminar/', views.grupo_gastos_compartidos_eliminar, name='grupo_gastos_compartidos_eliminar'),
+    path('grupos/<int:pk>/saldos/', views.saldos_grupo, name='saldos_grupo'),
+    path('grupos/<int:pk>/miembros/', views.miembros_grupo, name='miembros_grupo'),
+    
+    # Gastos Compartidos
+    path('gastos/', views.gastos_compartidos_lista, name='gastos_compartidos_lista'),
+    path('gastos/crear/', views.gasto_compartido_crear, name='gasto_compartido_crear'),
+    path('gastos/<int:pk>/editar/', views.gasto_compartido_editar, name='gasto_compartido_editar'),
+    path('gastos/<int:pk>/eliminar/', views.gasto_compartido_eliminar, name='gasto_compartido_eliminar'),
+    path('gastos/<int:pk>/detalle/', views.gasto_compartido_detalle, name='gasto_compartido_detalle'),
+    
+    # Pagos de Gastos Compartidos
+    path('pagos/<int:pk>/editar/', views.pago_gasto_compartido_editar, name='pago_gasto_compartido_editar'),
+    
+    # APIs para Gastos Compartidos
+    path('api/grupo/<int:grupo_id>/miembros/', views.api_grupo_miembros, name='api_grupo_miembros'),
+    path('api/grupo/<int:grupo_id>/crear/', views.api_crear_grupo, name='api_crear_grupo'),
+    path('api/gasto/crear/', views.api_crear_gasto, name='api_crear_gasto'),
+    path('api/pago/editar/', views.api_editar_pago, name='api_editar_pago'),
     
     # Configuración del Sistema
     path('configuracion/', views.configuracion, name='configuracion'),
