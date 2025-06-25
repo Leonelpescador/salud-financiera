@@ -1404,43 +1404,225 @@ def pago_gasto_compartido_editar(request, pk):
 
 @login_required
 def dashboard_gastos_compartidos(request):
-    """Dashboard específico para gastos compartidos"""
-    # Obtener grupos del usuario
-    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
+    """Vista unificada para toda la gestión de gastos compartidos"""
+    from decimal import Decimal
+    from datetime import date
     
-    # Estadísticas generales
+    # Acciones posibles: crear/editar/eliminar grupo, gasto, pago, miembros, ver detalles, etc.
+    accion = request.GET.get('accion') or request.POST.get('accion')
+    grupo_id = request.GET.get('grupo_id') or request.POST.get('grupo_id')
+    gasto_id = request.GET.get('gasto_id') or request.POST.get('gasto_id')
+    pago_id = request.GET.get('pago_id') or request.POST.get('pago_id')
+    miembro_id = request.GET.get('miembro_id') or request.POST.get('miembro_id')
+    contexto_extra = {}
+
+    # --- Gestión de Grupos ---
+    if accion == 'crear_grupo':
+        if request.method == 'POST':
+            form = GrupoGastosCompartidosForm(request.POST, user=request.user)
+            if form.is_valid():
+                grupo = form.save()
+                messages.success(request, 'Grupo creado exitosamente.')
+                return redirect('dashboard_gastos_compartidos')
+        else:
+            form = GrupoGastosCompartidosForm(user=request.user)
+        contexto_extra['form_grupo'] = form
+        contexto_extra['modal'] = 'grupo'
+
+    elif accion == 'editar_grupo' and grupo_id:
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, creador=request.user)
+        if request.method == 'POST':
+            form = GrupoGastosCompartidosForm(request.POST, instance=grupo, user=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Grupo actualizado exitosamente.')
+                return redirect('dashboard_gastos_compartidos')
+        else:
+            form = GrupoGastosCompartidosForm(instance=grupo, user=request.user)
+        contexto_extra['form_grupo'] = form
+        contexto_extra['grupo_editar'] = grupo
+        contexto_extra['modal'] = 'grupo'
+
+    elif accion == 'eliminar_grupo' and grupo_id:
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, creador=request.user)
+        if request.method == 'POST':
+            grupo.activo = False
+            grupo.save()
+            messages.success(request, 'Grupo eliminado exitosamente.')
+            return redirect('dashboard_gastos_compartidos')
+        contexto_extra['grupo_eliminar'] = grupo
+        contexto_extra['modal'] = 'eliminar_grupo'
+
+    # --- Gestión de Gastos ---
+    elif accion == 'crear_gasto':
+        grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
+        if request.method == 'POST':
+            grupo = get_object_or_404(GrupoGastosCompartidos, pk=request.POST.get('grupo'), miembros=request.user)
+            form = GastoCompartidoForm(request.POST, request.FILES, user=request.user, grupo=grupo)
+            if form.is_valid():
+                gasto = form.save(commit=False)
+                gasto.grupo = grupo
+                gasto.save()
+                # Crear pagos para cada miembro
+                pagado_por_usuario = gasto.pagado_por
+                for miembro in grupo.miembros.all():
+                    monto_debido_miembro = gasto.monto_por_persona
+                    monto_pagado_miembro = Decimal('0')
+                    if pagado_por_usuario and miembro == pagado_por_usuario:
+                        monto_pagado_miembro = monto_debido_miembro
+                    PagoGastoCompartido.objects.create(
+                        gasto_compartido=gasto,
+                        miembro=miembro,
+                        monto_debido=monto_debido_miembro,
+                        monto_pagado=monto_pagado_miembro
+                    )
+                messages.success(request, 'Gasto creado exitosamente.')
+                return redirect('dashboard_gastos_compartidos')
+        else:
+            grupo_pre = request.GET.get('grupo')
+            if grupo_pre:
+                grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_pre, miembros=request.user, activo=True)
+                form = GastoCompartidoForm(user=request.user, grupo=grupo)
+            else:
+                form = GastoCompartidoForm(user=request.user, grupo=grupos.first())
+        contexto_extra['form_gasto'] = form
+        contexto_extra['grupos'] = grupos
+        contexto_extra['modal'] = 'gasto'
+
+    elif accion == 'editar_gasto' and gasto_id:
+        gasto = get_object_or_404(GastoCompartido, pk=gasto_id, grupo__miembros=request.user)
+        if request.method == 'POST':
+            form = GastoCompartidoForm(request.POST, request.FILES, instance=gasto, user=request.user, grupo=gasto.grupo)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Gasto actualizado exitosamente.')
+                return redirect('dashboard_gastos_compartidos')
+        else:
+            form = GastoCompartidoForm(instance=gasto, user=request.user, grupo=gasto.grupo)
+        contexto_extra['form_gasto'] = form
+        contexto_extra['gasto_editar'] = gasto
+        contexto_extra['modal'] = 'gasto'
+
+    elif accion == 'eliminar_gasto' and gasto_id:
+        gasto = get_object_or_404(GastoCompartido, pk=gasto_id, grupo__miembros=request.user)
+        if request.method == 'POST':
+            gasto.delete()
+            messages.success(request, 'Gasto eliminado exitosamente.')
+            return redirect('dashboard_gastos_compartidos')
+        contexto_extra['gasto_eliminar'] = gasto
+        contexto_extra['modal'] = 'eliminar_gasto'
+
+    # --- Gestión de Pagos ---
+    elif accion == 'editar_pago' and pago_id:
+        pago = get_object_or_404(PagoGastoCompartido, pk=pago_id, miembro=request.user)
+        if request.method == 'POST':
+            form = PagoGastoCompartidoForm(request.POST, instance=pago)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Pago actualizado exitosamente.')
+                return redirect('dashboard_gastos_compartidos')
+        else:
+            form = PagoGastoCompartidoForm(instance=pago)
+        contexto_extra['form_pago'] = form
+        contexto_extra['pago_editar'] = pago
+        contexto_extra['modal'] = 'pago'
+
+    # --- Gestión de Miembros ---
+    elif accion == 'gestionar_miembros' and grupo_id:
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, creador=request.user, activo=True)
+        if request.method == 'POST':
+            accion_miembro = request.POST.get('accion_miembro')
+            usuario_id = request.POST.get('usuario_id')
+            if accion_miembro == 'agregar' and usuario_id:
+                try:
+                    usuario = User.objects.get(id=usuario_id, is_active=True)
+                    if usuario not in grupo.miembros.all():
+                        grupo.miembros.add(usuario)
+                        messages.success(request, f'Usuario {usuario.username} agregado al grupo exitosamente.')
+                    else:
+                        messages.warning(request, f'El usuario {usuario.username} ya es miembro del grupo.')
+                except User.DoesNotExist:
+                    messages.error(request, 'Usuario no encontrado.')
+            elif accion_miembro == 'remover' and usuario_id:
+                try:
+                    usuario = User.objects.get(id=usuario_id)
+                    if usuario == request.user:
+                        messages.error(request, 'No puedes removerte a ti mismo del grupo.')
+                    else:
+                        grupo.miembros.remove(usuario)
+                        messages.success(request, f'Usuario {usuario.username} removido del grupo exitosamente.')
+                except User.DoesNotExist:
+                    messages.error(request, 'Usuario no encontrado.')
+            return redirect('dashboard_gastos_compartidos')
+        usuarios_disponibles = User.objects.filter(is_active=True).exclude(id__in=grupo.miembros.values_list('id', flat=True)).exclude(id=request.user.id)
+        contexto_extra['grupo_miembros'] = grupo
+        contexto_extra['miembros'] = grupo.miembros.all()
+        contexto_extra['usuarios_disponibles'] = usuarios_disponibles
+        contexto_extra['modal'] = 'miembros'
+
+    # --- Saldos de Grupo ---
+    elif accion == 'saldos_grupo' and grupo_id:
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user, activo=True)
+        saldos = {}
+        deudas = []
+        gastos_grupo = GastoCompartido.objects.filter(grupo=grupo)
+        for miembro in grupo.miembros.all():
+            saldo = Decimal('0')
+            pagos_realizados = PagoGastoCompartido.objects.filter(
+                gasto_compartido__grupo=grupo,
+                miembro=miembro,
+                estado='pagado'
+            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0')
+            gastos_debidos = PagoGastoCompartido.objects.filter(
+                gasto_compartido__grupo=grupo,
+                miembro=miembro
+            ).aggregate(total=Sum('monto_debido'))['total'] or Decimal('0')
+            saldo = pagos_realizados - gastos_debidos
+            saldos[miembro.get_full_name() or miembro.username] = saldo
+        miembros_list = list(saldos.items())
+        for i, (deudor, saldo_deudor) in enumerate(miembros_list):
+            if saldo_deudor < 0:
+                for j, (acreedor, saldo_acreedor) in enumerate(miembros_list):
+                    if i != j and saldo_acreedor > 0:
+                        monto_transferir = min(abs(saldo_deudor), saldo_acreedor)
+                        if monto_transferir > 0:
+                            deudas.append({
+                                'deudor': deudor,
+                                'acreedor': acreedor,
+                                'monto': monto_transferir
+                            })
+                            saldos[deudor] += monto_transferir
+                            saldos[acreedor] -= monto_transferir
+        contexto_extra['grupo_saldos'] = grupo
+        contexto_extra['saldos'] = saldos
+        contexto_extra['deudas'] = deudas
+        contexto_extra['modal'] = 'saldos'
+
+    # --- Estadísticas y dashboard principal ---
+    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
     total_gastos = GastoCompartido.objects.filter(grupo__miembros=request.user).count()
     gastos_pendientes = GastoCompartido.objects.filter(
         grupo__miembros=request.user, 
         estado='pendiente'
     ).count()
-    
-    # Gastos vencidos
-    from datetime import date
     gastos_vencidos = GastoCompartido.objects.filter(
         grupo__miembros=request.user,
         fecha_vencimiento__lt=date.today(),
         estado='pendiente'
     ).count()
-    
-    # Total adeudado por el usuario
     pagos_pendientes = PagoGastoCompartido.objects.filter(
         miembro=request.user,
         estado__in=['pendiente', 'parcial']
     )
     total_adeudado = sum(pago.monto_pendiente for pago in pagos_pendientes)
-    
-    # Gastos recientes
     gastos_recientes = GastoCompartido.objects.filter(
         grupo__miembros=request.user
     ).select_related('grupo').order_by('-fecha')[:10]
-    
-    # Pagos pendientes del usuario
     pagos_pendientes_usuario = PagoGastoCompartido.objects.filter(
         miembro=request.user,
         estado__in=['pendiente', 'parcial']
     ).select_related('gasto_compartido', 'gasto_compartido__grupo').order_by('gasto_compartido__fecha_vencimiento')[:10]
-    
+
     context = {
         'grupos': grupos,
         'total_gastos': total_gastos,
@@ -1450,6 +1632,7 @@ def dashboard_gastos_compartidos(request):
         'gastos_recientes': gastos_recientes,
         'pagos_pendientes_usuario': pagos_pendientes_usuario,
     }
+    context.update(contexto_extra)
     return render(request, 'gastos_compartidos/dashboard.html', context)
 
 @login_required

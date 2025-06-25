@@ -54,28 +54,9 @@ urlpatterns = [
     path('cortes-mes/', views.cortes_mes_lista, name='cortes_mes_lista'),
     path('corte-mes/<int:pk>/detalle/', views.corte_mes_detalle, name='corte_mes_detalle'),
     
-    # Gastos Compartidos
+    # Gastos Compartidos (unificada)
     path('gastos-compartidos/', views.dashboard_gastos_compartidos, name='dashboard_gastos_compartidos'),
-    path('gastos-compartidos/grupos/', views.grupos_gastos_compartidos_lista, name='grupos_gastos_compartidos_lista'),
-    path('gastos-compartidos/grupos/crear/', views.grupo_gastos_compartidos_crear, name='grupo_gastos_compartidos_crear'),
-    path('gastos-compartidos/grupos/<int:pk>/editar/', views.grupo_gastos_compartidos_editar, name='grupo_gastos_compartidos_editar'),
-    path('gastos-compartidos/grupos/<int:pk>/eliminar/', views.grupo_gastos_compartidos_eliminar, name='grupo_gastos_compartidos_eliminar'),
-    path('gastos-compartidos/lista/', views.gastos_compartidos_lista, name='gastos_compartidos_lista'),
-    path('gastos-compartidos/crear/', views.gasto_compartido_crear, name='gasto_compartido_crear'),
-    path('gastos-compartidos/<int:pk>/editar/', views.gasto_compartido_editar, name='gasto_compartido_editar'),
-    path('gastos-compartidos/<int:pk>/eliminar/', views.gasto_compartido_eliminar, name='gasto_compartido_eliminar'),
-    path('gastos-compartidos/<int:pk>/detalle/', views.gasto_compartido_detalle, name='gasto_compartido_detalle'),
-    path('gastos-compartidos/pago/<int:pk>/editar/', views.pago_gasto_compartido_editar, name='pago_gasto_compartido_editar'),
-    
-    # URLs adicionales para gastos compartidos
-    path('gastos-compartidos/grupos/<int:pk>/saldos/', views.saldos_grupo, name='saldos_grupo'),
-    path('gastos-compartidos/grupos/<int:pk>/miembros/', views.miembros_grupo, name='miembros_grupo'),
-    path('gastos-compartidos/<int:pk>/detalles/', views.detalles_gasto, name='detalles_gasto'),
-    path('gastos-compartidos/grupos/<int:pk>/confirmar-eliminar/', views.grupo_confirm_delete, name='grupo_confirm_delete'),
-    path('gastos-compartidos/lista-alternativa/', views.gastos_compartidos_lista_alternativa, name='gastos_compartidos_lista_alternativa'),
-    path('gastos-compartidos/crear-editar/', views.crear_editar_gasto_alternativo, name='crear_editar_gasto_alternativo'),
-    path('gastos-compartidos/crear-editar/<int:pk>/', views.crear_editar_gasto_alternativo, name='crear_editar_gasto_alternativo_editar'),
-    path('gastos-compartidos/<int:pk>/eliminar-alternativo/', views.eliminar_gasto_alternativo, name='eliminar_gasto_alternativo'),
+    # (El resto de rutas de gastos compartidos se eliminan o comentan)
     
     # Configuración del Sistema
     path('configuracion/', views.configuracion, name='configuracion'),
