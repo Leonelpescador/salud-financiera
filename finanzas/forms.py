@@ -423,10 +423,27 @@ class GastoCompartidoForm(forms.ModelForm):
         cleaned_data = super().clean()
         pagado_por = cleaned_data.get('pagado_por')
         cuenta_pago = cleaned_data.get('cuenta_pago')
+        fecha = cleaned_data.get('fecha')
+        fecha_vencimiento = cleaned_data.get('fecha_vencimiento')
+        monto_total = cleaned_data.get('monto_total')
         
         # Validar que la cuenta de pago pertenezca al usuario que pagó
         if pagado_por and cuenta_pago and cuenta_pago.usuario != pagado_por:
             raise forms.ValidationError("La cuenta de pago debe pertenecer al usuario que pagó el gasto.")
+        
+        # Validar que la fecha de vencimiento sea posterior a la fecha del gasto
+        if fecha and fecha_vencimiento and fecha_vencimiento <= fecha:
+            raise forms.ValidationError("La fecha de vencimiento debe ser posterior a la fecha del gasto.")
+        
+        # Validar que la fecha de vencimiento no sea futura si el gasto ya está pagado
+        if fecha_vencimiento and fecha_vencimiento > date.today():
+            estado = cleaned_data.get('estado')
+            if estado == 'pagado':
+                raise forms.ValidationError("Un gasto pagado no puede tener fecha de vencimiento futura.")
+        
+        # Validar que el monto total sea razonable
+        if monto_total and monto_total > Decimal('999999.99'):
+            raise forms.ValidationError("El monto total no puede exceder $999,999.99")
         
         return cleaned_data
 
@@ -456,7 +473,26 @@ class PagoGastoCompartidoForm(forms.ModelForm):
         monto_pagado = self.cleaned_data.get('monto_pagado')
         if self.instance and monto_pagado > self.instance.monto_debido:
             raise forms.ValidationError(f"No puede pagar más de ${self.instance.monto_debido}")
+        if monto_pagado < 0:
+            raise forms.ValidationError("El monto pagado no puede ser negativo")
         return monto_pagado
+    
+    def clean_fecha_pago(self):
+        fecha_pago = self.cleaned_data.get('fecha_pago')
+        if fecha_pago and fecha_pago > date.today():
+            raise forms.ValidationError("La fecha de pago no puede ser futura")
+        return fecha_pago
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        monto_pagado = cleaned_data.get('monto_pagado')
+        fecha_pago = cleaned_data.get('fecha_pago')
+        
+        # Si se especifica un monto pagado, la fecha de pago es obligatoria
+        if monto_pagado and monto_pagado > 0 and not fecha_pago:
+            raise forms.ValidationError("Debe especificar la fecha de pago cuando registra un monto pagado")
+        
+        return cleaned_data
 
 class FiltroGastosCompartidosForm(forms.Form):
     fecha_desde = forms.DateField(

@@ -2,418 +2,135 @@
 {% load static %}
 
 {% block extra_head %}
-<style>
-/* ====== Gastos Compartidos - Estilos ====== */
-
-.gastos-shared-header {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    border-radius: 12px 12px 0 0;
-    padding: 24px 32px 16px 32px;
-    margin-bottom: 0;
-}
-
-.gastos-shared-card {
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
-    margin-bottom: 32px;
-    overflow: hidden;
-    border: none;
-    transition: transform 0.2s;
-}
-
-.gastos-shared-card:hover {
-    transform: translateY(-2px);
-}
-
-.gastos-shared-card .card-header {
-    border-radius: 15px 15px 0 0;
-    padding: 16px 32px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-.gastos-shared-card .card-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #f0f0f0;
-    color: #888;
-    font-size: 0.95rem;
-}
-
-.gastos-shared-btn, .btn-primary {
-    background: #3498db;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    font-weight: 500;
-    border: none;
-    transition: background 0.3s;
-    text-decoration: none;
-    display: inline-block;
-}
-.gastos-shared-btn:hover, .btn-primary:hover {
-    background: #2980b9;
-    color: #fff;
-}
-
-.btn-secondary {
-    background: #95a5a6;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    border: none;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.3s;
-    display: inline-block;
-}
-.btn-secondary:hover {
-    background: #7f8c8d;
-    color: #fff;
-}
-
-.gastos-shared-badge, .badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    background: #ecf0f1;
-    color: #764ba2;
-    margin-right: 0.5em;
-}
-
-.gastos-shared-table th, .gastos-shared-table td {
-    vertical-align: middle !important;
-}
-
-.gastos-shared-table th {
-    background: #f8f9fa;
-    color: #764ba2;
-    font-weight: 700;
-    border-bottom: 2px solid #764ba2;
-}
-
-.gastos-shared-table tr:hover {
-    background: #f3f0fa;
-}
-
-.gastos-shared-progress {
-    background: #e9ecef;
-    border-radius: 8px;
-    height: 10px;
-    overflow: hidden;
-}
-.gastos-shared-progress-bar {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    height: 100%;
-    border-radius: 8px;
-}
-
-.gastos-shared-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #764ba2;
-    margin-right: 10px;
-}
-
-.gastos-shared-empty {
-    text-align: center;
-    color: #aaa;
-    padding: 40px 0;
-}
-
-/* Header institucional morado para tarjetas */
-.gastos-shared-card .card-header.bg-primary {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-    border-bottom: 1px solid #764ba2;
-}
-
-/* Header de eliminación (rojo) */
-.gastos-shared-card .card-header.bg-danger {
-    background: #e74c3c !important;
-    color: #fff !important;
-    border-bottom: 1px solid #e74c3c;
-}
-
-/* Header con color de grupo (se mantiene inline en la plantilla, pero aseguramos contraste) */
-.gastos-shared-card .card-header[style*="background-color"] {
-    color: #fff !important;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-/* Márgenes y paddings consistentes */
-.gastos-shared-card {
-    margin-bottom: 32px;
-}
-.gastos-shared-card .card-header {
-    border-radius: 12px 12px 0 0;
-    padding: 16px 32px;
-}
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-@media (max-width: 768px) {
-    .gastos-shared-card .card-header {
-        padding: 12px 8px;
-    }
-    .gastos-shared-card .card-body {
-        padding: 16px 8px;
-    }
-    .gastos-shared-btn, .btn-primary, .btn-secondary {
-        padding: 10px 16px;
-        font-size: 1rem;
-    }
-}
-</style>
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
 {% endblock %}
 
 {% block title %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="gastos-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-receipt text-primary"></i> {{ titulo }}
-            </h1>
-            <p class="text-muted">Registra un nuevo gasto compartido</p>
-        </div>
-        <div class="btn-group">
-            <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left"></i> Volver
-            </a>
-        </div>
+    <div class="page-header">
+        <h1><i class="fas fa-receipt text-primary"></i> {{ titulo }}</h1>
+        <a href="{% url 'gastos_compartidos_lista' %}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
     </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card gastos-shared-card shadow mb-4">
-                <div class="card-header py-3 bg-primary text-white">
-                    <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-edit"></i> Información del Gasto Compartido
-                    </h6>
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-receipt"></i> Información del Gasto</h2>
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
-                        <!-- Selección de Grupo (solo en creación) -->
-                        {% if not gasto %}
-                        <div class="mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-layer-group"></i> Grupo *
-                            </label>
-                            <select name="grupo" class="form-control" required>
-                                <option value="">Selecciona un grupo</option>
-                                {% for grupo in grupos %}
-                                    <option value="{{ grupo.id }}" 
-                                            {% if request.GET.grupo == grupo.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ grupo.icono }} {{ grupo.nombre }} ({{ grupo.cantidad_miembros }} miembros)
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">
-                                Selecciona el grupo con el que compartirás este gasto
+                        <div class="form-grid">
+                            <!-- Información Básica -->
+                            <div class="form-section">
+                                <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.titulo.id_for_label }}">Título del Gasto *</label>
+                                    {{ form.titulo }}
+                                    {% if form.titulo.errors %}
+                                        <div class="text-danger">{{ form.titulo.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                                    {{ form.descripcion }}
+                                    {% if form.descripcion.errors %}
+                                        <div class="text-danger">{{ form.descripcion.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.tipo.id_for_label }}">Tipo de Gasto *</label>
+                                    {{ form.tipo }}
+                                    {% if form.tipo.errors %}
+                                        <div class="text-danger">{{ form.tipo.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Información Financiera -->
+                            <div class="form-section">
+                                <h3><i class="fas fa-dollar-sign"></i> Información Financiera</h3>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.monto_total.id_for_label }}">Monto Total *</label>
+                                    {{ form.monto_total }}
+                                    {% if form.monto_total.errors %}
+                                        <div class="text-danger">{{ form.monto_total.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.fecha.id_for_label }}">Fecha del Gasto *</label>
+                                    {{ form.fecha }}
+                                    {% if form.fecha.errors %}
+                                        <div class="text-danger">{{ form.fecha.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.fecha_vencimiento.id_for_label }}">Fecha de Vencimiento</label>
+                                    {{ form.fecha_vencimiento }}
+                                    {% if form.fecha_vencimiento.errors %}
+                                        <div class="text-danger">{{ form.fecha_vencimiento.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del Grupo -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-users"></i> Información del Grupo</h3>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.grupo.id_for_label }}">Grupo *</label>
+                                {{ form.grupo }}
+                                {% if form.grupo.errors %}
+                                    <div class="text-danger">{{ form.grupo.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.pagado_por.id_for_label }}">Pagado por</label>
+                                {{ form.pagado_por }}
+                                {% if form.pagado_por.errors %}
+                                    <div class="text-danger">{{ form.pagado_por.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Deja vacío si nadie ha pagado aún</small>
+                            </div>
+                        </div>
+
+                        <!-- Archivos Adjuntos -->
+                        {% if form.comprobante %}
+                        <div class="form-section">
+                            <h3><i class="fas fa-paperclip"></i> Archivos Adjuntos</h3>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.comprobante.id_for_label }}">Comprobante</label>
+                                {{ form.comprobante }}
+                                {% if form.comprobante.errors %}
+                                    <div class="text-danger">{{ form.comprobante.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Sube una imagen o PDF del comprobante</small>
                             </div>
                         </div>
                         {% endif %}
 
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="{{ form.titulo.id_for_label }}" class="form-label">
-                                        <i class="fas fa-tag"></i> Título del Gasto *
-                                    </label>
-                                    {{ form.titulo }}
-                                    {% if form.titulo.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.titulo.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="{{ form.tipo.id_for_label }}" class="form-label">
-                                        <i class="fas fa-list"></i> Tipo *
-                                    </label>
-                                    {{ form.tipo }}
-                                    {% if form.tipo.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.tipo.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                                <i class="fas fa-align-left"></i> Descripción
-                            </label>
-                            {{ form.descripcion }}
-                            {% if form.descripcion.errors %}
-                                <div class="text-danger mt-1">
-                                    {% for error in form.descripcion.errors %}
-                                        <small>{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.monto_total.id_for_label }}" class="form-label">
-                                        <i class="fas fa-dollar-sign"></i> Monto Total *
-                                    </label>
-                                    {{ form.monto_total }}
-                                    {% if form.monto_total.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.monto_total.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-text">
-                                        El monto se dividirá automáticamente entre todos los miembros del grupo
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.fecha.id_for_label }}" class="form-label">
-                                        <i class="fas fa-calendar"></i> Fecha *
-                                    </label>
-                                    {{ form.fecha }}
-                                    {% if form.fecha.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.fecha.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
-                                        <i class="fas fa-clock"></i> Fecha de Vencimiento
-                                    </label>
-                                    {{ form.fecha_vencimiento }}
-                                    {% if form.fecha_vencimiento.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.fecha_vencimiento.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-text">
-                                        Fecha límite para pagar este gasto (opcional)
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.estado.id_for_label }}" class="form-label">
-                                        <i class="fas fa-check-circle"></i> Estado
-                                    </label>
-                                    {{ form.estado }}
-                                    {% if form.estado.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.estado.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.pagado_por.id_for_label }}" class="form-label">
-                                        <i class="fas fa-user"></i> Pagado Por
-                                    </label>
-                                    {{ form.pagado_por }}
-                                    {% if form.pagado_por.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.pagado_por.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-text">
-                                        Quién pagó inicialmente este gasto (opcional)
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.cuenta_pago.id_for_label }}" class="form-label">
-                                        <i class="fas fa-credit-card"></i> Cuenta de Pago
-                                    </label>
-                                    {{ form.cuenta_pago }}
-                                    {% if form.cuenta_pago.errors %}
-                                        <div class="text-danger mt-1">
-                                            {% for error in form.cuenta_pago.errors %}
-                                                <small>{{ error }}</small>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.imagen_recibo.id_for_label }}" class="form-label">
-                                <i class="fas fa-image"></i> Imagen del Recibo
-                            </label>
-                            {{ form.imagen_recibo }}
-                            {% if form.imagen_recibo.errors %}
-                                <div class="text-danger mt-1">
-                                    {% for error in form.imagen_recibo.errors %}
-                                        <small>{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                Sube una imagen del recibo o comprobante (opcional)
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Nota:</strong> Al crear este gasto compartido, se generarán automáticamente 
-                            registros de pago para cada miembro del grupo con su parte correspondiente.
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-secondary">
+                        <div class="form-actions">
+                            <a href="{% url 'gastos_compartidos_lista' %}" class="btn-secondary">
                                 <i class="fas fa-times"></i> Cancelar
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar Gasto Compartido
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Guardar Gasto
                             </button>
                         </div>
                     </form>

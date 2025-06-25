@@ -1,0 +1,60 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar Gasto{% else %}Añadir Gasto{% endif %}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="gastos-container">
+    <div class="page-header">
+        <h1><i class="fas fa-cash-register text-primary"></i> {% if form.instance.pk %}Editar Gasto en {{ grupo.nombre }}{% else %}Añadir Gasto a {{ grupo.nombre }}{% endif %}</h1>
+        <a href="{% url 'gastos_compartidos_lista' %}?grupo={{ grupo.id }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a Gastos
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+                        {{ form.descripcion }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.monto.id_for_label }}">{{ form.monto.label }}</label>
+                        {{ form.monto }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.fecha.id_for_label }}">{{ form.fecha.label }}</label>
+                        {{ form.fecha }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.pagado_por.id_for_label }}">{{ form.pagado_por.label }}</label>
+                        {{ form.pagado_por }}
+                    </div>
+                </div>
+                
+                <div class="form-section mt-4">
+                    <label>¿Quiénes participaron en este gasto?</label>
+                    <div class="form-group">
+                        {{ form.participantes }}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'gastos_compartidos_lista' %}?grupo={{ grupo.id }}" class="btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> {% if form.instance.pk %}Guardar Cambios{% else %}Añadir Gasto{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

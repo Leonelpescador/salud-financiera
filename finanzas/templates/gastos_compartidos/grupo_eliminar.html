@@ -2,257 +2,82 @@
 {% load static %}
 
 {% block extra_head %}
-<style>
-/* ====== Gastos Compartidos - Estilos ====== */
-
-.gastos-shared-header {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    border-radius: 12px 12px 0 0;
-    padding: 24px 32px 16px 32px;
-    margin-bottom: 0;
-}
-
-.gastos-shared-card {
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
-    margin-bottom: 32px;
-    overflow: hidden;
-    border: none;
-    transition: transform 0.2s;
-}
-
-.gastos-shared-card:hover {
-    transform: translateY(-2px);
-}
-
-.gastos-shared-card .card-header {
-    border-radius: 15px 15px 0 0;
-    padding: 16px 32px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-.gastos-shared-card .card-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #f0f0f0;
-    color: #888;
-    font-size: 0.95rem;
-}
-
-.gastos-shared-btn, .btn-primary {
-    background: #3498db;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    font-weight: 500;
-    border: none;
-    transition: background 0.3s;
-    text-decoration: none;
-    display: inline-block;
-}
-.gastos-shared-btn:hover, .btn-primary:hover {
-    background: #2980b9;
-    color: #fff;
-}
-
-.btn-secondary {
-    background: #95a5a6;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    border: none;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.3s;
-    display: inline-block;
-}
-.btn-secondary:hover {
-    background: #7f8c8d;
-    color: #fff;
-}
-
-.gastos-shared-badge, .badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    background: #ecf0f1;
-    color: #764ba2;
-    margin-right: 0.5em;
-}
-
-.gastos-shared-table th, .gastos-shared-table td {
-    vertical-align: middle !important;
-}
-
-.gastos-shared-table th {
-    background: #f8f9fa;
-    color: #764ba2;
-    font-weight: 700;
-    border-bottom: 2px solid #764ba2;
-}
-
-.gastos-shared-table tr:hover {
-    background: #f3f0fa;
-}
-
-.gastos-shared-progress {
-    background: #e9ecef;
-    border-radius: 8px;
-    height: 10px;
-    overflow: hidden;
-}
-.gastos-shared-progress-bar {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    height: 100%;
-    border-radius: 8px;
-}
-
-.gastos-shared-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #764ba2;
-    margin-right: 10px;
-}
-
-.gastos-shared-empty {
-    text-align: center;
-    color: #aaa;
-    padding: 40px 0;
-}
-
-/* Header institucional morado para tarjetas */
-.gastos-shared-card .card-header.bg-primary {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-    border-bottom: 1px solid #764ba2;
-}
-
-/* Header de eliminación (rojo) */
-.gastos-shared-card .card-header.bg-danger {
-    background: #e74c3c !important;
-    color: #fff !important;
-    border-bottom: 1px solid #e74c3c;
-}
-
-/* Header con color de grupo (se mantiene inline en la plantilla, pero aseguramos contraste) */
-.gastos-shared-card .card-header[style*="background-color"] {
-    color: #fff !important;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-/* Márgenes y paddings consistentes */
-.gastos-shared-card {
-    margin-bottom: 32px;
-}
-.gastos-shared-card .card-header {
-    border-radius: 12px 12px 0 0;
-    padding: 16px 32px;
-}
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-@media (max-width: 768px) {
-    .gastos-shared-card .card-header {
-        padding: 12px 8px;
-    }
-    .gastos-shared-card .card-body {
-        padding: 16px 8px;
-    }
-    .gastos-shared-btn, .btn-primary, .btn-secondary {
-        padding: 10px 16px;
-        font-size: 1rem;
-    }
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
 {% endblock %}
 
 {% block title %}Eliminar Grupo{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="gastos-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-trash text-danger"></i> Eliminar Grupo
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="fas fa-trash"></i> Eliminar Grupo
             </h1>
-            <p class="text-muted">Confirmar eliminación del grupo de gastos compartidos</p>
+            <p class="page-subtitle">Confirmar eliminación del grupo de gastos compartidos</p>
         </div>
-        <div class="btn-group">
-            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-outline-primary">
+        <div class="header-actions">
+            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card gastos-shared-card shadow mb-4 border-danger">
-                <div class="card-header py-3 bg-danger text-white">
-                    <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
-                    </h6>
+    <div class="form-container">
+        <div class="form-card danger-card">
+            <div class="card-header bg-danger">
+                <h6 class="card-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="confirmation-content">
+                    <i class="fas fa-users confirmation-icon"></i>
+                    <h4 class="confirmation-title">¿Estás seguro?</h4>
+                    <p class="confirmation-text">
+                        Estás a punto de eliminar el grupo <strong>"{{ grupo.nombre }}"</strong>
+                    </p>
                 </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-users fa-4x text-danger mb-3"></i>
-                        <h4 class="text-danger">¿Estás seguro?</h4>
-                        <p class="text-muted">
-                            Estás a punto de eliminar el grupo <strong>"{{ grupo.nombre }}"</strong>
-                        </p>
-                    </div>
 
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Advertencia:</strong> Esta acción no se puede deshacer.
-                    </div>
+                <div class="warning-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
 
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <span class="me-2">{{ grupo.icono }}</span>
-                                {{ grupo.nombre }}
-                            </h6>
-                            {% if grupo.descripcion %}
-                                <p class="card-text text-muted">{{ grupo.descripcion }}</p>
-                            {% endif %}
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <strong class="text-primary">{{ grupo.cantidad_miembros }}</strong>
-                                    <br><small class="text-muted">Miembros</small>
-                                </div>
-                                <div class="col-6">
-                                    <strong class="text-success">${{ grupo.total_gastos_mes_actual|floatformat:2 }}</strong>
-                                    <br><small class="text-muted">Total Mes</small>
-                                </div>
+                <div class="info-card">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <span class="group-icon">{{ grupo.icono }}</span>
+                            {{ grupo.nombre }}
+                        </h6>
+                        {% if grupo.descripcion %}
+                            <p class="card-text">{{ grupo.descripcion }}</p>
+                        {% endif %}
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <strong class="stat-value">{{ grupo.cantidad_miembros }}</strong>
+                                <br><small class="stat-label">Miembros</small>
+                            </div>
+                            <div class="stat-item">
+                                <strong class="stat-value">${{ grupo.total_gastos_mes_actual|floatformat:2 }}</strong>
+                                <br><small class="stat-label">Total Mes</small>
                             </div>
                         </div>
                     </div>
-
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> Eliminar Grupo
-                            </button>
-                        </div>
-                    </form>
                 </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Eliminar Grupo
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

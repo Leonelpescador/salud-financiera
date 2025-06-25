@@ -2,274 +2,94 @@
 {% load static %}
 
 {% block extra_head %}
-<style>
-/* ====== Gastos Compartidos - Estilos ====== */
-
-.gastos-shared-header {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    border-radius: 12px 12px 0 0;
-    padding: 24px 32px 16px 32px;
-    margin-bottom: 0;
-}
-
-.gastos-shared-card {
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.10);
-    margin-bottom: 32px;
-    overflow: hidden;
-    border: none;
-    transition: transform 0.2s;
-}
-
-.gastos-shared-card:hover {
-    transform: translateY(-2px);
-}
-
-.gastos-shared-card .card-header {
-    border-radius: 15px 15px 0 0;
-    padding: 16px 32px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-.gastos-shared-card .card-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #f0f0f0;
-    color: #888;
-    font-size: 0.95rem;
-}
-
-.gastos-shared-btn, .btn-primary {
-    background: #3498db;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    font-weight: 500;
-    border: none;
-    transition: background 0.3s;
-    text-decoration: none;
-    display: inline-block;
-}
-.gastos-shared-btn:hover, .btn-primary:hover {
-    background: #2980b9;
-    color: #fff;
-}
-
-.btn-secondary {
-    background: #95a5a6;
-    color: #fff;
-    border-radius: 25px;
-    padding: 12px 24px;
-    border: none;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.3s;
-    display: inline-block;
-}
-.btn-secondary:hover {
-    background: #7f8c8d;
-    color: #fff;
-}
-
-.gastos-shared-badge, .badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    background: #ecf0f1;
-    color: #764ba2;
-    margin-right: 0.5em;
-}
-
-.gastos-shared-table th, .gastos-shared-table td {
-    vertical-align: middle !important;
-}
-
-.gastos-shared-table th {
-    background: #f8f9fa;
-    color: #764ba2;
-    font-weight: 700;
-    border-bottom: 2px solid #764ba2;
-}
-
-.gastos-shared-table tr:hover {
-    background: #f3f0fa;
-}
-
-.gastos-shared-progress {
-    background: #e9ecef;
-    border-radius: 8px;
-    height: 10px;
-    overflow: hidden;
-}
-.gastos-shared-progress-bar {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    height: 100%;
-    border-radius: 8px;
-}
-
-.gastos-shared-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #764ba2;
-    margin-right: 10px;
-}
-
-.gastos-shared-empty {
-    text-align: center;
-    color: #aaa;
-    padding: 40px 0;
-}
-
-/* Header institucional morado para tarjetas */
-.gastos-shared-card .card-header.bg-primary {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-    border-bottom: 1px solid #764ba2;
-}
-
-/* Header de eliminación (rojo) */
-.gastos-shared-card .card-header.bg-danger {
-    background: #e74c3c !important;
-    color: #fff !important;
-    border-bottom: 1px solid #e74c3c;
-}
-
-/* Header con color de grupo (se mantiene inline en la plantilla, pero aseguramos contraste) */
-.gastos-shared-card .card-header[style*="background-color"] {
-    color: #fff !important;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-/* Márgenes y paddings consistentes */
-.gastos-shared-card {
-    margin-bottom: 32px;
-}
-.gastos-shared-card .card-header {
-    border-radius: 12px 12px 0 0;
-    padding: 16px 32px;
-}
-.gastos-shared-card .card-body {
-    padding: 24px 32px;
-}
-
-@media (max-width: 768px) {
-    .gastos-shared-card .card-header {
-        padding: 12px 8px;
-    }
-    .gastos-shared-card .card-body {
-        padding: 16px 8px;
-    }
-    .gastos-shared-btn, .btn-primary, .btn-secondary {
-        padding: 10px 16px;
-        font-size: 1rem;
-    }
-}
-</style>
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
 {% endblock %}
 
 {% block title %}Gastos Compartidos{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="gastos-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-receipt text-primary"></i> Gastos Compartidos
-            </h1>
-            <p class="text-muted">Gestiona todos los gastos compartidos</p>
-        </div>
+    <div class="page-header">
+        <h1><i class="fas fa-receipt text-primary"></i> Gastos Compartidos</h1>
         <div class="btn-group">
-            <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-outline-primary">
+            <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
-            <a href="{% url 'gasto_compartido_crear' %}" class="btn btn-primary">
+            <a href="{% url 'gasto_compartido_crear' %}" class="btn-primary">
                 <i class="fas fa-plus"></i> Nuevo Gasto
             </a>
         </div>
     </div>
 
     <!-- Filtros -->
-    <div class="card gastos-shared-card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">
-                <i class="fas fa-filter"></i> Filtros
-            </h6>
+    {% if form %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3><i class="fas fa-filter"></i> Filtros</h3>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Fecha Desde</label>
-                    {{ form.fecha_desde }}
+            <form method="get" class="form-grid">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="{{ form.fecha_desde.id_for_label }}">Fecha Desde</label>
+                        {{ form.fecha_desde }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.fecha_hasta.id_for_label }}">Fecha Hasta</label>
+                        {{ form.fecha_hasta }}
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha Hasta</label>
-                    {{ form.fecha_hasta }}
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="{{ form.tipo.id_for_label }}">Tipo</label>
+                        {{ form.tipo }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.estado.id_for_label }}">Estado</label>
+                        {{ form.estado }}
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Tipo</label>
-                    {{ form.tipo }}
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="{{ form.grupo.id_for_label }}">Grupo</label>
+                        {{ form.grupo }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.monto_minimo.id_for_label }}">Monto Mínimo</label>
+                        {{ form.monto_minimo }}
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Estado</label>
-                    {{ form.estado }}
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Grupo</label>
-                    {{ form.grupo }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Monto Mínimo</label>
-                    {{ form.monto_minimo }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Monto Máximo</label>
-                    {{ form.monto_maximo }}
-                </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
                         <i class="fas fa-search"></i> Filtrar
                     </button>
-                    <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'gastos_compartidos_lista' %}" class="btn-secondary">
                         <i class="fas fa-times"></i> Limpiar
                     </a>
                 </div>
             </form>
         </div>
     </div>
+    {% endif %}
 
-    <!-- Resultados -->
-    <div class="card gastos-shared-card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold">
-                <i class="fas fa-list"></i> Gastos Compartidos ({{ total_gastos }})
-            </h6>
+    <!-- Lista de Gastos -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-list"></i> Lista de Gastos Compartidos</h3>
+            <small class="text-white">Total: {{ total_gastos }} gastos</small>
         </div>
         <div class="card-body">
             {% if page_obj %}
                 <div class="table-responsive">
-                    <table class="table table-hover gastos-shared-table">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Título</th>
                                 <th>Grupo</th>
-                                <th>Tipo</th>
-                                <th>Monto Total</th>
-                                <th>Por Persona</th>
+                                <th>Monto</th>
                                 <th>Estado</th>
                                 <th>Fecha</th>
-                                <th>Pagado Por</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -278,23 +98,19 @@
                             <tr>
                                 <td>
                                     <strong>{{ gasto.titulo }}</strong>
+                                    <br><small class="text-muted">{{ gasto.get_tipo_display }}</small>
                                     {% if gasto.descripcion %}
                                         <br><small class="text-muted">{{ gasto.descripcion|truncatechars:50 }}</small>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <span class="badge" style="background-color: {{ gasto.grupo.color }}; color: white;">
-                                        {{ gasto.grupo.icono }} {{ gasto.grupo.nombre }}
+                                        {{ gasto.grupo.nombre }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-info">{{ gasto.get_tipo_display }}</span>
-                                </td>
-                                <td>
-                                    <strong class="text-success">${{ gasto.monto_total|floatformat:2 }}</strong>
-                                </td>
-                                <td>
-                                    <span class="text-muted">${{ gasto.monto_por_persona|floatformat:2 }}</span>
+                                    <strong>${{ gasto.monto_total|floatformat:2 }}</strong>
+                                    <br><small class="text-muted">${{ gasto.monto_por_persona|floatformat:2 }} c/u</small>
                                 </td>
                                 <td>
                                     {% if gasto.estado == 'pagado' %}
@@ -310,39 +126,18 @@
                                 <td>
                                     {{ gasto.fecha|date:"d/m/Y" }}
                                     {% if gasto.fecha_vencimiento %}
-                                        <br>
-                                        {% if gasto.esta_vencido %}
-                                            <small class="text-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> Vencido
-                                            </small>
-                                        {% else %}
-                                            <small class="text-warning">
-                                                Vence: {{ gasto.fecha_vencimiento|date:"d/m/Y" }}
-                                            </small>
-                                        {% endif %}
+                                        <br><small class="text-muted">Vence: {{ gasto.fecha_vencimiento|date:"d/m/Y" }}</small>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if gasto.pagado_por %}
-                                        <span class="text-success">
-                                            <i class="fas fa-check-circle"></i> {{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-muted">No pagado</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" 
-                                           class="btn btn-outline-info" title="Ver detalles">
+                                    <div class="btn-group">
+                                        <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" class="btn-primary btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'gasto_compartido_editar' gasto.pk %}" 
-                                           class="btn btn-outline-warning" title="Editar">
+                                        <a href="{% url 'gasto_compartido_editar' gasto.pk %}" class="btn-warning btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{% url 'gasto_compartido_eliminar' gasto.pk %}" 
-                                           class="btn btn-outline-danger" title="Eliminar">
+                                        <a href="{% url 'gasto_compartido_eliminar' gasto.pk %}" class="btn-danger btn-sm">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </div>
@@ -355,60 +150,59 @@
 
                 <!-- Paginación -->
                 {% if page_obj.has_other_pages %}
-                <nav aria-label="Paginación de gastos compartidos">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
-                                    <i class="fas fa-angle-double-left"></i>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
-                                    <i class="fas fa-angle-left"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Paginación de gastos">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">{{ num }}</a>
+                                    <a class="page-link" href="?page=1{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
                                 </li>
                             {% endif %}
-                        {% endfor %}
 
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
-                                    <i class="fas fa-angle-right"></i>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
-                                    <i class="fas fa-angle-double-right"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}{% if request.GET.monto_minimo %}&monto_minimo={{ request.GET.monto_minimo }}{% endif %}{% if request.GET.monto_maximo %}&monto_maximo={{ request.GET.monto_maximo }}{% endif %}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
                 {% endif %}
+
             {% else %}
-                <div class="gastos-shared-empty text-center py-5">
-                    <i class="fas fa-receipt fa-4x text-gray-300 mb-4"></i>
-                    <h4 class="text-gray-600 mb-3">No hay gastos compartidos</h4>
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>No hay gastos compartidos</h3>
                     <p class="text-muted mb-4">
-                        {% if request.GET %}
-                            No se encontraron gastos con los filtros aplicados.
-                        {% else %}
-                            Comienza creando tu primer gasto compartido.
-                        {% endif %}
+                        No se encontraron gastos compartidos con los filtros aplicados.
                     </p>
-                    <a href="{% url 'gasto_compartido_crear' %}" class="btn btn-primary">
+                    <a href="{% url 'gasto_compartido_crear' %}" class="btn-primary">
                         <i class="fas fa-plus"></i> Crear Primer Gasto
                     </a>
                 </div>

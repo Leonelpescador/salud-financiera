@@ -67,6 +67,16 @@ urlpatterns = [
     path('gastos-compartidos/<int:pk>/detalle/', views.gasto_compartido_detalle, name='gasto_compartido_detalle'),
     path('gastos-compartidos/pago/<int:pk>/editar/', views.pago_gasto_compartido_editar, name='pago_gasto_compartido_editar'),
     
+    # URLs adicionales para gastos compartidos
+    path('gastos-compartidos/grupos/<int:pk>/saldos/', views.saldos_grupo, name='saldos_grupo'),
+    path('gastos-compartidos/grupos/<int:pk>/miembros/', views.miembros_grupo, name='miembros_grupo'),
+    path('gastos-compartidos/<int:pk>/detalles/', views.detalles_gasto, name='detalles_gasto'),
+    path('gastos-compartidos/grupos/<int:pk>/confirmar-eliminar/', views.grupo_confirm_delete, name='grupo_confirm_delete'),
+    path('gastos-compartidos/lista-alternativa/', views.gastos_compartidos_lista_alternativa, name='gastos_compartidos_lista_alternativa'),
+    path('gastos-compartidos/crear-editar/', views.crear_editar_gasto_alternativo, name='crear_editar_gasto_alternativo'),
+    path('gastos-compartidos/crear-editar/<int:pk>/', views.crear_editar_gasto_alternativo, name='crear_editar_gasto_alternativo_editar'),
+    path('gastos-compartidos/<int:pk>/eliminar-alternativo/', views.eliminar_gasto_alternativo, name='eliminar_gasto_alternativo'),
+    
     # Configuración del Sistema
     path('configuracion/', views.configuracion, name='configuracion'),
     path('configuracion/usuarios-pendientes/', views.usuarios_pendientes, name='usuarios_pendientes'),
@@ -90,4 +100,8 @@ urlpatterns = [
     path('notificaciones/', views.lista_notificaciones, name='lista_notificaciones'),
     path('notificaciones/leer/<int:pk>/', views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
     path('notificaciones/leer_todas/', views.marcar_todas_notificaciones_leidas, name='marcar_todas_notificaciones_leidas'),
+    
+    # APIs
+    path('api/cuentas-usuario/<int:user_id>/', views.api_cuentas_usuario, name='api_cuentas_usuario'),
+    path('api/grupo-info/<int:grupo_id>/', views.api_grupo_info, name='api_grupo_info'),
 ]

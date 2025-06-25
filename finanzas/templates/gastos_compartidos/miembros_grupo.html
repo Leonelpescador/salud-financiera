@@ -1,0 +1,70 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Miembros de {{ grupo.nombre }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="gastos-container">
+    <div class="page-header">
+        <h1><i class="fas fa-user-friends text-primary"></i> Miembros de "{{ grupo.nombre }}"</h1>
+        <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver a Grupos</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Miembros Actuales</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for miembro in miembros %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-user me-2"></i> {{ miembro.username }}
+                                {% if miembro == grupo.creador %}
+                                    <span class="badge bg-primary">Admin</span>
+                                {% endif %}
+                            </div>
+                            {% if request.user == grupo.creador and miembro != grupo.creador %}
+                            <form method="post" action="{% url 'eliminar_miembro' grupo.id miembro.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                            </form>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            {% if request.user == grupo.creador %}
+            <div class="card">
+                <div class="card-header">
+                    <h3>Añadir Miembro</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'agregar_miembro' grupo.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_email">Email del usuario a añadir</label>
+                            <input type="email" name="email" class="form-control" id="id_email" placeholder="ejemplo@email.com" required>
+                        </div>
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn-primary"><i class="fas fa-user-plus"></i> Añadir al grupo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
