@@ -341,6 +341,14 @@ class RegistroPublicoForm(UserCreationForm):
         return username
 
 class GrupoGastosCompartidosForm(forms.ModelForm):
+    # Campo adicional para seleccionar miembros
+    miembros = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=False,
+        help_text="Selecciona los usuarios que formarán parte del grupo"
+    )
+    
     class Meta:
         model = GrupoGastosCompartidos
         fields = ['nombre', 'descripcion', 'icono', 'color']
@@ -356,6 +364,23 @@ class GrupoGastosCompartidosForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if user:
             self.instance.creador = user
+            # Excluir al usuario actual de la lista de miembros (ya se agrega automáticamente)
+            self.fields['miembros'].queryset = User.objects.filter(is_active=True).exclude(id=user.id)
+            
+            # Si es una edición, pre-seleccionar los miembros actuales
+            if self.instance.pk:
+                self.fields['miembros'].initial = self.instance.miembros.exclude(id=user.id)
+    
+    def save(self, commit=True):
+        grupo = super().save(commit=False)
+        if commit:
+            grupo.save()
+            # Agregar el creador como miembro si no está ya
+            grupo.miembros.add(self.instance.creador)
+            # Agregar los miembros seleccionados
+            if self.cleaned_data.get('miembros'):
+                grupo.miembros.add(*self.cleaned_data['miembros'])
+        return grupo
 
 class GastoCompartidoForm(forms.ModelForm):
     class Meta:
@@ -382,15 +407,28 @@ class GastoCompartidoForm(forms.ModelForm):
         if user and grupo:
             # Filtrar miembros del grupo para el campo pagado_por
             self.fields['pagado_por'].queryset = grupo.miembros.all()
+            
             # Filtrar cuentas del usuario que pagó
             if self.instance.pk and self.instance.pagado_por:
                 self.fields['cuenta_pago'].queryset = Cuenta.objects.filter(usuario=self.instance.pagado_por, activa=True)
             else:
-                self.fields['cuenta_pago'].queryset = Cuenta.objects.none()
+                # Por defecto, mostrar las cuentas del usuario actual
+                self.fields['cuenta_pago'].queryset = Cuenta.objects.filter(usuario=user, activa=True)
             
             # Establecer fecha por defecto
             if not self.instance.pk:
                 self.fields['fecha'].initial = date.today()
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        pagado_por = cleaned_data.get('pagado_por')
+        cuenta_pago = cleaned_data.get('cuenta_pago')
+        
+        # Validar que la cuenta de pago pertenezca al usuario que pagó
+        if pagado_por and cuenta_pago and cuenta_pago.usuario != pagado_por:
+            raise forms.ValidationError("La cuenta de pago debe pertenecer al usuario que pagó el gasto.")
+        
+        return cleaned_data
 
 class PagoGastoCompartidoForm(forms.ModelForm):
     class Meta:

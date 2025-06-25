@@ -1181,8 +1181,6 @@ def grupo_gastos_compartidos_crear(request):
         form = GrupoGastosCompartidosForm(request.POST, user=request.user)
         if form.is_valid():
             grupo = form.save()
-            # Agregar al creador como miembro
-            grupo.miembros.add(request.user)
             messages.success(request, 'Grupo de gastos compartidos creado exitosamente.')
             return redirect('grupos_gastos_compartidos_lista')
     else:
@@ -1197,7 +1195,7 @@ def grupo_gastos_compartidos_crear(request):
 @login_required
 def grupo_gastos_compartidos_editar(request, pk):
     """Editar un grupo de gastos compartidos"""
-    grupo = get_object_or_404(GrupoGastosCompartidos, pk=pk, miembros=request.user)
+    grupo = get_object_or_404(GrupoGastosCompartidos, pk=pk, creador=request.user)
     
     if request.method == 'POST':
         form = GrupoGastosCompartidosForm(request.POST, instance=grupo, user=request.user)
@@ -1275,21 +1273,36 @@ def gasto_compartido_crear(request):
     if not grupos.exists():
         messages.error(request, 'Debe crear un grupo de gastos compartidos antes de agregar gastos.')
         return redirect('grupos_gastos_compartidos_lista')
+    
     if request.method == 'POST':
         grupo_id = request.POST.get('grupo')
         grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user)
         form = GastoCompartidoForm(request.POST, request.FILES, user=request.user, grupo=grupo)
+        
         if form.is_valid():
             gasto = form.save(commit=False)
             gasto.grupo = grupo
             gasto.save()
+            
+            # Determinar quién pagó el gasto
+            pagado_por_usuario = gasto.pagado_por
+            
             # Crear registros de pago para cada miembro
             for miembro in grupo.miembros.all():
+                monto_debido_miembro = gasto.monto_por_persona
+                monto_pagado_miembro = Decimal('0')
+                
+                # Si este miembro es quien pagó, registrar su pago
+                if pagado_por_usuario and miembro == pagado_por_usuario:
+                    monto_pagado_miembro = monto_debido_miembro
+                
                 PagoGastoCompartido.objects.create(
                     gasto_compartido=gasto,
                     miembro=miembro,
-                    monto_debido=gasto.monto_por_persona
+                    monto_debido=monto_debido_miembro,
+                    monto_pagado=monto_pagado_miembro
                 )
+            
             # Crear notificaciones para los miembros (excepto el creador)
             url_gasto = reverse('gasto_compartido_detalle', args=[gasto.pk])
             for miembro in grupo.miembros.all():
@@ -1299,10 +1312,18 @@ def gasto_compartido_crear(request):
                         mensaje=f"{request.user.username} ha añadido un nuevo gasto en '{grupo.nombre}': {gasto.titulo}.",
                         url_destino=url_gasto
                     )
+            
             messages.success(request, 'Gasto compartido creado exitosamente.')
             return redirect('gastos_compartidos_lista')
     else:
-        form = GastoCompartidoForm(user=request.user, grupo=grupos.first())
+        # Pre-seleccionar grupo si viene como parámetro GET
+        grupo_id = request.GET.get('grupo')
+        if grupo_id:
+            grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user, activo=True)
+            form = GastoCompartidoForm(user=request.user, grupo=grupo)
+        else:
+            form = GastoCompartidoForm(user=request.user, grupo=grupos.first())
+    
     context = {
         'form': form,
         'grupos': grupos,
@@ -1366,9 +1387,8 @@ def pago_gasto_compartido_editar(request, pk):
     if request.method == 'POST':
         form = PagoGastoCompartidoForm(request.POST, instance=pago)
         if form.is_valid():
-            pago = form.save(commit=False)
-            pago.actualizar_estado()
-            pago.save()
+            # El save() del modelo ya actualiza automáticamente el estado
+            form.save()
             messages.success(request, 'Pago actualizado exitosamente.')
             return redirect('gasto_compartido_detalle', pk=pago.gasto_compartido.pk)
     else:

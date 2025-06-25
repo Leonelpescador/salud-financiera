@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from django.utils import timezone
+from django.db.models import Sum
 
 class Categoria(models.Model):
     TIPO_CHOICES = [
@@ -511,6 +512,32 @@ class GastoCompartido(models.Model):
             dias = (self.fecha_vencimiento - date.today()).days
             return max(0, dias)
         return None
+    
+    def actualizar_estado_general(self):
+        """Actualiza el estado general del gasto compartido basado en los pagos de los miembros"""
+        # Calcula el total pagado por todos los miembros
+        total_pagado = self.pagos_miembros.aggregate(
+            total=Sum('monto_pagado')
+        )['total'] or Decimal('0')
+        
+        # Determina el nuevo estado
+        if total_pagado >= self.monto_total:
+            self.estado = 'pagado'
+        elif self.esta_vencido:
+            self.estado = 'vencido'
+        else:
+            self.estado = 'pendiente'
+        
+        # Guarda solo el campo estado para evitar recursión
+        self.save(update_fields=['estado'])
+    
+    def save(self, *args, **kwargs):
+        """Sobrescribe save para actualizar automáticamente el estado si está vencido"""
+        # Si el gasto está vencido y está pendiente, marcarlo como vencido
+        if self.esta_vencido and self.estado == 'pendiente':
+            self.estado = 'vencido'
+        
+        super().save(*args, **kwargs)
 
 class PagoGastoCompartido(models.Model):
     """Modelo para registrar los pagos individuales de cada miembro"""
@@ -566,7 +593,18 @@ class PagoGastoCompartido(models.Model):
             self.estado = 'parcial'
         else:
             self.estado = 'pendiente'
-        self.save()
+        # No llamamos a save() aquí para evitar recursión infinita
+    
+    def save(self, *args, **kwargs):
+        """Sobrescribe save para actualizar automáticamente el estado"""
+        # Actualiza el estado antes de guardar
+        self.actualizar_estado()
+        
+        # Guarda el pago
+        super().save(*args, **kwargs)
+        
+        # Después de guardar, actualiza el estado general del gasto compartido
+        self.gasto_compartido.actualizar_estado_general()
 
 class Notificacion(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
