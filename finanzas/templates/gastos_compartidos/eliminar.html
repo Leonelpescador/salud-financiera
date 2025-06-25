@@ -1,0 +1,417 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}
+    Eliminar Gasto - Gastos Compartidos
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .delete-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .delete-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .delete-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .delete-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .delete-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .warning-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .warning-icon {
+            color: #856404;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .warning-title {
+            color: #856404;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-text {
+            color: #856404;
+            margin: 0;
+        }
+        
+        .gasto-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .gasto-info h3 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #333;
+        }
+        
+        .estado-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .estado-pendiente { background: #fff3cd; color: #856404; }
+        .estado-pagado { background: #d4edda; color: #155724; }
+        .estado-vencido { background: #f8d7da; color: #721c24; }
+        .estado-cancelado { background: #e2e3e5; color: #383d41; }
+        
+        .consecuencias-section {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .consecuencias-title {
+            color: #721c24;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .consecuencias-list {
+            color: #721c24;
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .consecuencias-list li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            color: white;
+        }
+        
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .btn-volver:hover {
+            background: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .pagos-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .pagos-info h4 {
+            color: #0056b3;
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+        
+        .pagos-info p {
+            color: #0056b3;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .delete-container {
+                padding: 1rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <!-- Botón Volver -->
+    <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al Detalle
+    </a>
+    
+    <!-- Header -->
+    <div class="delete-header">
+        <h1>
+            <i class="fas fa-trash-alt"></i>
+            Eliminar Gasto
+        </h1>
+        <p>Confirmar eliminación del gasto "{{ gasto.titulo }}"</p>
+    </div>
+    
+    <!-- Contenido -->
+    <div class="delete-card">
+        <!-- Advertencia -->
+        <div class="warning-section">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="warning-title">¡Atención!</div>
+            <p class="warning-text">
+                Estás a punto de eliminar permanentemente el gasto "{{ gasto.titulo }}". 
+                Esta acción no se puede deshacer.
+            </p>
+        </div>
+        
+        <!-- Información del Gasto -->
+        <div class="gasto-info">
+            <h3><i class="fas fa-info-circle"></i> Información del Gasto</h3>
+            
+            <div class="info-item">
+                <span class="info-label">Título:</span>
+                <span class="info-value">{{ gasto.titulo }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Grupo:</span>
+                <span class="info-value">{{ gasto.grupo.nombre }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Tipo:</span>
+                <span class="info-value">{{ gasto.get_tipo_display }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">
+                    <span class="estado-badge estado-{{ gasto.estado }}">
+                        {{ gasto.get_estado_display }}
+                    </span>
+                </span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Monto Total:</span>
+                <span class="info-value">${{ gasto.monto_total|floatformat:2 }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Monto por Persona:</span>
+                <span class="info-value">${{ gasto.monto_por_persona|floatformat:2 }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Fecha:</span>
+                <span class="info-value">{{ gasto.fecha|date:"d/m/Y" }}</span>
+            </div>
+            
+            {% if gasto.fecha_vencimiento %}
+            <div class="info-item">
+                <span class="info-label">Fecha de Vencimiento:</span>
+                <span class="info-value">{{ gasto.fecha_vencimiento|date:"d/m/Y" }}</span>
+            </div>
+            {% endif %}
+            
+            {% if gasto.pagado_por %}
+            <div class="info-item">
+                <span class="info-label">Pagado por:</span>
+                <span class="info-value">{{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-item">
+                <span class="info-label">Participantes:</span>
+                <span class="info-value">{{ gasto.grupo.cantidad_miembros }} miembros</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Fecha de creación:</span>
+                <span class="info-value">{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</span>
+            </div>
+            
+            <!-- Información de pagos -->
+            <div class="pagos-info">
+                <h4><i class="fas fa-users"></i> Estado de Pagos</h4>
+                <p>
+                    {% with pagos_count=gasto.pagos_miembros.count pagados_count=gasto.pagos_miembros.filter.estado='pagado'|length %}
+                    {{ pagados_count }} de {{ pagos_count }} miembros han pagado
+                    {% endwith %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Consecuencias -->
+        <div class="consecuencias-section">
+            <div class="consecuencias-title">
+                <i class="fas fa-exclamation-circle"></i>
+                Consecuencias de la eliminación:
+            </div>
+            <ul class="consecuencias-list">
+                <li>Todos los registros de pago asociados serán eliminados permanentemente</li>
+                <li>Los saldos y deudas calculados se verán afectados</li>
+                <li>Los miembros perderán el historial de pagos de este gasto</li>
+                <li>Si hay un recibo adjunto, también será eliminado</li>
+                <li>No se podrán recuperar los datos eliminados</li>
+            </ul>
+        </div>
+        
+        <!-- Formulario de Confirmación -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-actions">
+                <a href="{% url 'gasto_compartido_detalle' gasto.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                
+                <button type="submit" class="btn btn-danger" onclick="return confirmarEliminacion()">
+                    <i class="fas fa-trash-alt"></i> Eliminar Gasto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion() {
+    const confirmacion = confirm(
+        '¿Estás completamente seguro de que quieres eliminar el gasto "{{ gasto.titulo }}"?\n\n' +
+        'Esta acción eliminará permanentemente:\n' +
+        '• Todos los registros de pago\n' +
+        '• Los saldos y deudas asociados\n' +
+        '• El historial de pagos de {{ gasto.grupo.cantidad_miembros }} miembros\n' +
+        '• El recibo adjunto (si existe)\n\n' +
+        'Esta acción NO se puede deshacer.'
+    );
+    
+    if (confirmacion) {
+        // Mostrar indicador de carga
+        const btn = document.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+        btn.disabled = true;
+        return true;
+    }
+    
+    return false;
+}
+
+// Prevenir envío accidental con Enter
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.target.matches('button[type="submit"]')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %} 

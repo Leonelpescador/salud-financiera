@@ -1,0 +1,489 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}
+    {{ gasto.titulo }} - Detalle de Gasto Compartido
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .detail-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .detail-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .detail-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .detail-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+        
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .estado-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .estado-pendiente { background: #fff3cd; color: #856404; }
+        .estado-pagado { background: #d4edda; color: #155724; }
+        .estado-vencido { background: #f8d7da; color: #721c24; }
+        .estado-cancelado { background: #e2e3e5; color: #383d41; }
+        
+        .pagos-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .pagos-table th,
+        .pagos-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .pagos-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .pagos-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+        }
+        
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .btn-volver:hover {
+            background: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .imagen-recibo {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .detail-container {
+                padding: 1rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .pagos-table {
+                font-size: 0.9rem;
+            }
+            
+            .pagos-table th,
+            .pagos-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- Botón Volver -->
+    <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </a>
+    
+    <!-- Header -->
+    <div class="detail-header">
+        <h1>
+            <i class="fas fa-receipt"></i>
+            {{ gasto.titulo }}
+        </h1>
+        <p>Detalle del gasto compartido en {{ gasto.grupo.nombre }}</p>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-value">${{ gasto.monto_total|floatformat:2 }}</div>
+            <div class="stat-label">Monto Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${{ gasto.monto_por_persona|floatformat:2 }}</div>
+            <div class="stat-label">Por Persona</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ pagos.count }}</div>
+            <div class="stat-label">Participantes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ porcentaje_pagado|floatformat:1 }}%</div>
+            <div class="stat-label">Pagado</div>
+        </div>
+    </div>
+    
+    <!-- Información del Gasto -->
+    <div class="detail-card">
+        <div class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Información del Gasto
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Título</div>
+                <div class="info-value">{{ gasto.titulo }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Grupo</div>
+                <div class="info-value">{{ gasto.grupo.nombre }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Tipo</div>
+                <div class="info-value">{{ gasto.get_tipo_display }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Estado</div>
+                <div class="info-value">
+                    <span class="estado-badge estado-{{ gasto.estado }}">
+                        {{ gasto.get_estado_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Monto Total</div>
+                <div class="info-value">${{ gasto.monto_total|floatformat:2 }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Monto por Persona</div>
+                <div class="info-value">${{ gasto.monto_por_persona|floatformat:2 }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Fecha</div>
+                <div class="info-value">{{ gasto.fecha|date:"d/m/Y" }}</div>
+            </div>
+            
+            {% if gasto.fecha_vencimiento %}
+            <div class="info-item">
+                <div class="info-label">Fecha de Vencimiento</div>
+                <div class="info-value">{{ gasto.fecha_vencimiento|date:"d/m/Y" }}</div>
+            </div>
+            {% endif %}
+            
+            {% if gasto.pagado_por %}
+            <div class="info-item">
+                <div class="info-label">Pagado por</div>
+                <div class="info-value">{{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}</div>
+            </div>
+            {% endif %}
+            
+            {% if gasto.cuenta_pago %}
+            <div class="info-item">
+                <div class="info-label">Cuenta de Pago</div>
+                <div class="info-value">{{ gasto.cuenta_pago.nombre }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if gasto.descripcion %}
+        <div class="detail-section">
+            <div class="section-title">
+                <i class="fas fa-align-left"></i>
+                Descripción
+            </div>
+            <p style="color: #666; line-height: 1.6;">{{ gasto.descripcion }}</p>
+        </div>
+        {% endif %}
+        
+        {% if gasto.imagen_recibo %}
+        <div class="detail-section">
+            <div class="section-title">
+                <i class="fas fa-image"></i>
+                Recibo
+            </div>
+            <img src="{{ gasto.imagen_recibo.url }}" alt="Recibo" class="imagen-recibo">
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Estado de Pagos -->
+    <div class="detail-card">
+        <div class="section-title">
+            <i class="fas fa-users"></i>
+            Estado de Pagos por Miembro
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ porcentaje_pagado }}%"></div>
+        </div>
+        <p style="text-align: center; margin-top: 0.5rem; color: #666;">
+            {{ porcentaje_pagado|floatformat:1 }}% pagado (${{ total_pagado|floatformat:2 }} de ${{ gasto.monto_total|floatformat:2 }})
+        </p>
+        
+        <table class="pagos-table">
+            <thead>
+                <tr>
+                    <th>Miembro</th>
+                    <th>Monto Debido</th>
+                    <th>Monto Pagado</th>
+                    <th>Pendiente</th>
+                    <th>Estado</th>
+                    <th>Fecha de Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos %}
+                <tr>
+                    <td>
+                        <strong>{{ pago.miembro.get_full_name|default:pago.miembro.username }}</strong>
+                        {% if pago.miembro == gasto.pagado_por %}
+                        <span style="color: #28a745; font-size: 0.8rem;">(Pagó)</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ pago.monto_debido|floatformat:2 }}</td>
+                    <td>${{ pago.monto_pagado|floatformat:2 }}</td>
+                    <td>${{ pago.monto_pendiente|floatformat:2 }}</td>
+                    <td>
+                        <span class="estado-badge estado-{{ pago.estado }}">
+                            {{ pago.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if pago.fecha_pago %}
+                            {{ pago.fecha_pago|date:"d/m/Y" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="detail-card">
+        <div class="section-title">
+            <i class="fas fa-cogs"></i>
+            Acciones
+        </div>
+        
+        <a href="{% url 'gasto_compartido_editar' gasto.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Editar Gasto
+        </a>
+        
+        <a href="{% url 'gasto_compartido_eliminar' gasto.pk %}" class="btn btn-danger" 
+           onclick="return confirm('¿Estás seguro de que quieres eliminar este gasto?')">
+            <i class="fas fa-trash"></i> Eliminar Gasto
+        </a>
+        
+        <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+// Calcular porcentaje de pago
+document.addEventListener('DOMContentLoaded', function() {
+    const totalPagado = {{ total_pagado }};
+    const montoTotal = {{ gasto.monto_total }};
+    const porcentaje = (totalPagado / montoTotal) * 100;
+    
+    // Actualizar la barra de progreso
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        progressFill.style.width = Math.min(porcentaje, 100) + '%';
+    }
+});
+</script>
+{% endblock %} 

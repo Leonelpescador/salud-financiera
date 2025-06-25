@@ -2032,6 +2032,8 @@ def api_crear_grupo(request):
 def api_crear_gasto(request):
     """API para crear un gasto desde el modal"""
     try:
+        from datetime import datetime
+        
         grupo_id = request.POST.get('grupo')
         titulo = request.POST.get('titulo')
         descripcion = request.POST.get('descripcion', '')
@@ -2051,13 +2053,19 @@ def api_crear_gasto(request):
         if pagado_por_id:
             pagado_por = get_object_or_404(User, id=pagado_por_id)
         
+        # Convertir fechas de string a objetos date
+        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+        fecha_vencimiento_obj = None
+        if fecha_vencimiento:
+            fecha_vencimiento_obj = datetime.strptime(fecha_vencimiento, '%Y-%m-%d').date()
+        
         gasto = GastoCompartido.objects.create(
             grupo=grupo,
             titulo=titulo,
             descripcion=descripcion,
             monto_total=monto_total,
-            fecha=fecha,
-            fecha_vencimiento=fecha_vencimiento,
+            fecha=fecha_obj,
+            fecha_vencimiento=fecha_vencimiento_obj,
             pagado_por=pagado_por
         )
         
@@ -2081,6 +2089,11 @@ def api_crear_gasto(request):
             'gasto_id': gasto.id,
             'message': 'Gasto creado exitosamente'
         })
+    except ValueError as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error en el formato de fecha: {str(e)}'
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -2095,7 +2108,7 @@ def api_editar_pago(request):
         pago_id = request.POST.get('pago_id')
         monto_pagado = request.POST.get('monto_pagado')
         estado = request.POST.get('estado')
-        comentario = request.POST.get('comentario', '')
+        notas = request.POST.get('comentario', '')  # El campo en el formulario se llama 'comentario'
         
         if not all([pago_id, monto_pagado, estado]):
             return JsonResponse({
@@ -2106,7 +2119,7 @@ def api_editar_pago(request):
         pago = get_object_or_404(PagoGastoCompartido, id=pago_id, miembro=request.user)
         pago.monto_pagado = monto_pagado
         pago.estado = estado
-        pago.comentario = comentario
+        pago.notas = notas  # El campo en el modelo se llama 'notas'
         pago.save()
         
         return JsonResponse({

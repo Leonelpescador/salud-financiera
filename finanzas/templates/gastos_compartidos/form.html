@@ -1,0 +1,550 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if gasto %}Editar Gasto{% else %}Nuevo Gasto{% endif %} - Gastos Compartidos
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .form-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .form-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc3545;
+        }
+        
+        .form-text {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+        }
+        
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .btn-volver:hover {
+            background: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-upload-label {
+            display: block;
+            padding: 0.75rem;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            text-align: center;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover .file-upload-label {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Botón Volver -->
+    <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </a>
+    
+    <!-- Header -->
+    <div class="form-header">
+        <h1>
+            <i class="fas fa-receipt"></i>
+            {% if gasto %}Editar Gasto{% else %}Nuevo Gasto{% endif %}
+        </h1>
+        <p>
+            {% if gasto %}
+                Modifica la información del gasto "{{ gasto.titulo }}"
+            {% else %}
+                Crea un nuevo gasto compartido
+            {% endif %}
+        </p>
+    </div>
+    
+    <!-- Formulario -->
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Grupo -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.grupo.id_for_label }}">
+                    <i class="fas fa-layer-group"></i> Grupo *
+                </label>
+                {{ form.grupo }}
+                {% if form.grupo.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.grupo.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Selecciona el grupo donde se registrará el gasto
+                </div>
+            </div>
+            
+            <!-- Título -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.titulo.id_for_label }}">
+                    <i class="fas fa-tag"></i> Título del Gasto *
+                </label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.titulo.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Describe brevemente el gasto (ej: "Alquiler enero", "Luz febrero")
+                </div>
+            </div>
+            
+            <!-- Descripción -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.descripcion.id_for_label }}">
+                    <i class="fas fa-align-left"></i> Descripción
+                </label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.descripcion.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Opcional: Agrega detalles adicionales sobre el gasto
+                </div>
+            </div>
+            
+            <!-- Tipo y Estado -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tipo.id_for_label }}">
+                        <i class="fas fa-list"></i> Tipo de Gasto
+                    </label>
+                    {{ form.tipo }}
+                    {% if form.tipo.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.tipo.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.estado.id_for_label }}">
+                        <i class="fas fa-check-circle"></i> Estado
+                    </label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.estado.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Monto Total -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.monto_total.id_for_label }}">
+                    <i class="fas fa-dollar-sign"></i> Monto Total *
+                </label>
+                {{ form.monto_total }}
+                {% if form.monto_total.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.monto_total.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    El monto total del gasto. Se dividirá automáticamente entre los miembros del grupo.
+                </div>
+            </div>
+            
+            <!-- Fechas -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha.id_for_label }}">
+                        <i class="fas fa-calendar"></i> Fecha del Gasto *
+                    </label>
+                    {{ form.fecha }}
+                    {% if form.fecha.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.fecha.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_vencimiento.id_for_label }}">
+                        <i class="fas fa-clock"></i> Fecha de Vencimiento
+                    </label>
+                    {{ form.fecha_vencimiento }}
+                    {% if form.fecha_vencimiento.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.fecha_vencimiento.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">
+                        Opcional: Fecha límite para el pago
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagado por y Cuenta -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.pagado_por.id_for_label }}">
+                        <i class="fas fa-user"></i> Pagado por
+                    </label>
+                    {{ form.pagado_por }}
+                    {% if form.pagado_por.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.pagado_por.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">
+                        Si alguien ya pagó el gasto, selecciónalo aquí
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.cuenta_pago.id_for_label }}">
+                        <i class="fas fa-credit-card"></i> Cuenta de Pago
+                    </label>
+                    {{ form.cuenta_pago }}
+                    {% if form.cuenta_pago.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.cuenta_pago.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">
+                        Cuenta desde donde se realizó el pago
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Imagen del Recibo -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-image"></i> Imagen del Recibo
+                </label>
+                <div class="file-upload">
+                    {{ form.imagen_recibo }}
+                    <div class="file-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="file-label">Haz clic para seleccionar una imagen o arrastra aquí</span>
+                    </div>
+                </div>
+                {% if form.imagen_recibo.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.imagen_recibo.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Opcional: Sube una imagen del recibo o comprobante
+                </div>
+                
+                {% if gasto.imagen_recibo %}
+                <div style="margin-top: 1rem;">
+                    <p><strong>Recibo actual:</strong></p>
+                    <img src="{{ gasto.imagen_recibo.url }}" alt="Recibo actual" class="preview-image">
+                </div>
+                {% endif %}
+                
+                <div id="image-preview" style="display: none; margin-top: 1rem;">
+                    <p><strong>Vista previa:</strong></p>
+                    <img id="preview-img" class="preview-image">
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="form-actions">
+                <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                
+                {% if gasto %}
+                <a href="{% url 'gasto_compartido_eliminar' gasto.pk %}" class="btn btn-danger" 
+                   onclick="return confirm('¿Estás seguro de que quieres eliminar este gasto?')">
+                    <i class="fas fa-trash"></i> Eliminar
+                </a>
+                {% endif %}
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% if gasto %}Guardar Cambios{% else %}Crear Gasto{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Preview de imagen
+document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const fileLabel = document.getElementById('file-label');
+    
+    if (file) {
+        fileLabel.textContent = file.name;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        fileLabel.textContent = 'Haz clic para seleccionar una imagen o arrastra aquí';
+        preview.style.display = 'none';
+    }
+});
+
+// Actualizar cuenta de pago cuando cambie el pagado por
+document.querySelector('select[name="pagado_por"]').addEventListener('change', function() {
+    const pagadoPorId = this.value;
+    const cuentaSelect = document.querySelector('select[name="cuenta_pago"]');
+    
+    if (pagadoPorId) {
+        fetch(`/finanzas/api/cuentas/${pagadoPorId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+                data.cuentas.forEach(cuenta => {
+                    cuentaSelect.innerHTML += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar cuentas:', error);
+        });
+    } else {
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+    }
+});
+
+// Validar formulario antes de enviar
+document.querySelector('form').addEventListener('submit', function(e) {
+    const titulo = document.querySelector('input[name="titulo"]').value.trim();
+    const montoTotal = document.querySelector('input[name="monto_total"]').value;
+    const fecha = document.querySelector('input[name="fecha"]').value;
+    const grupo = document.querySelector('select[name="grupo"]').value;
+    
+    if (!titulo || !montoTotal || !fecha || !grupo) {
+        e.preventDefault();
+        alert('Por favor completa todos los campos obligatorios');
+        return false;
+    }
+    
+    if (parseFloat(montoTotal) <= 0) {
+        e.preventDefault();
+        alert('El monto total debe ser mayor a 0');
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %} 

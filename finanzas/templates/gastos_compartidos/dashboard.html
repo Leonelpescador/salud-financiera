@@ -352,6 +352,19 @@
             box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
         }
         
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .form-text {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -364,6 +377,10 @@
             .modal-content {
                 width: 95%;
                 margin: 10% auto;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -624,40 +641,130 @@
         </div>
         <div class="modal-body">
             <form id="formCrearGasto">
+                <!-- Grupo -->
                 <div class="form-group">
-                    <label class="form-label">Grupo</label>
+                    <label class="form-label">
+                        <i class="fas fa-layer-group"></i> Grupo *
+                    </label>
                     <select class="form-control" name="grupo" required>
                         <option value="">Seleccionar grupo...</option>
                         {% for grupo in grupos %}
                         <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
                         {% endfor %}
                     </select>
+                    <div class="form-text">Selecciona el grupo donde se registrará el gasto</div>
                 </div>
+                
+                <!-- Título -->
                 <div class="form-group">
-                    <label class="form-label">Título del Gasto</label>
-                    <input type="text" class="form-control" name="titulo" required>
+                    <label class="form-label">
+                        <i class="fas fa-tag"></i> Título del Gasto *
+                    </label>
+                    <input type="text" class="form-control" name="titulo" required placeholder="Ej: Alquiler enero, Luz febrero">
+                    <div class="form-text">Describe brevemente el gasto</div>
                 </div>
+                
+                <!-- Descripción -->
                 <div class="form-group">
-                    <label class="form-label">Descripción</label>
-                    <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                    <label class="form-label">
+                        <i class="fas fa-align-left"></i> Descripción
+                    </label>
+                    <textarea class="form-control" name="descripcion" rows="3" placeholder="Agrega detalles adicionales sobre el gasto"></textarea>
+                    <div class="form-text">Opcional: Agrega detalles adicionales sobre el gasto</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Monto Total</label>
-                    <input type="number" class="form-control" name="monto_total" step="0.01" required>
+                
+                <!-- Tipo y Estado -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-list"></i> Tipo de Gasto
+                        </label>
+                        <select class="form-control" name="tipo">
+                            <option value="otros">Otros</option>
+                            <option value="alquiler">Alquiler</option>
+                            <option value="servicios">Servicios (Gas, Agua, Luz)</option>
+                            <option value="internet">Internet/TV</option>
+                            <option value="limpieza">Limpieza</option>
+                            <option value="comida">Comida/Comestibles</option>
+                            <option value="transporte">Transporte</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-check-circle"></i> Estado
+                        </label>
+                        <select class="form-control" name="estado">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="pagado">Pagado</option>
+                            <option value="vencido">Vencido</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
                 </div>
+                
+                <!-- Monto Total -->
                 <div class="form-group">
-                    <label class="form-label">Fecha</label>
-                    <input type="date" class="form-control" name="fecha" required>
+                    <label class="form-label">
+                        <i class="fas fa-dollar-sign"></i> Monto Total *
+                    </label>
+                    <input type="number" class="form-control" name="monto_total" step="0.01" min="0.01" required placeholder="0.00">
+                    <div class="form-text">El monto total del gasto. Se dividirá automáticamente entre los miembros del grupo.</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Fecha de Vencimiento</label>
-                    <input type="date" class="form-control" name="fecha_vencimiento">
+                
+                <!-- Fechas -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i> Fecha del Gasto *
+                        </label>
+                        <input type="date" class="form-control" name="fecha" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-clock"></i> Fecha de Vencimiento
+                        </label>
+                        <input type="date" class="form-control" name="fecha_vencimiento">
+                        <div class="form-text">Opcional: Fecha límite para el pago</div>
+                    </div>
                 </div>
+                
+                <!-- Pagado por y Cuenta -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> Pagado por
+                        </label>
+                        <select class="form-control" name="pagado_por">
+                            <option value="">Nadie (pendiente)</option>
+                        </select>
+                        <div class="form-text">Si alguien ya pagó el gasto, selecciónalo aquí</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-credit-card"></i> Cuenta de Pago
+                        </label>
+                        <select class="form-control" name="cuenta_pago">
+                            <option value="">Seleccionar cuenta...</option>
+                        </select>
+                        <div class="form-text">Cuenta desde donde se realizó el pago</div>
+                    </div>
+                </div>
+                
+                <!-- Imagen del Recibo -->
                 <div class="form-group">
-                    <label class="form-label">Pagado por</label>
-                    <select class="form-control" name="pagado_por">
-                        <option value="">Nadie (pendiente)</option>
-                    </select>
+                    <label class="form-label">
+                        <i class="fas fa-image"></i> Imagen del Recibo
+                    </label>
+                    <input type="file" class="form-control" name="imagen_recibo" accept="image/*">
+                    <div class="form-text">Opcional: Sube una imagen del recibo o comprobante</div>
+                    <div id="image-preview" style="display: none; margin-top: 1rem;">
+                        <p><strong>Vista previa:</strong></p>
+                        <img id="preview-img" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                    </div>
                 </div>
             </form>
         </div>
@@ -707,6 +814,12 @@
 // Funciones para manejar modales
 function openModal(modalId) {
     document.getElementById(modalId).style.display = 'block';
+    
+    // Si es el modal de crear gasto, establecer fecha por defecto
+    if (modalId === 'crearGastoModal') {
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelector('#crearGastoModal input[name="fecha"]').value = today;
+    }
 }
 
 function closeModal(modalId) {
@@ -803,6 +916,28 @@ function guardarGasto() {
     const form = document.getElementById('formCrearGasto');
     const formData = new FormData(form);
     
+    // Validar campos obligatorios
+    const grupo = formData.get('grupo');
+    const titulo = formData.get('titulo');
+    const montoTotal = formData.get('monto_total');
+    const fecha = formData.get('fecha');
+    
+    if (!grupo || !titulo || !montoTotal || !fecha) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+    
+    if (parseFloat(montoTotal) <= 0) {
+        alert('El monto total debe ser mayor a 0');
+        return;
+    }
+    
+    // Mostrar indicador de carga
+    const btn = document.querySelector('#crearGastoModal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+    btn.disabled = true;
+    
     fetch('/finanzas/api/gasto/crear/', {
         method: 'POST',
         body: formData,
@@ -822,6 +957,11 @@ function guardarGasto() {
     .catch(error => {
         console.error('Error:', error);
         alert('Error al crear el gasto');
+    })
+    .finally(() => {
+        // Restaurar botón
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     });
 }
 
@@ -871,8 +1011,10 @@ function getCookie(name) {
 document.querySelector('#crearGastoModal select[name="grupo"]').addEventListener('change', function() {
     const grupoId = this.value;
     const pagadoPorSelect = document.querySelector('#crearGastoModal select[name="pagado_por"]');
+    const cuentaSelect = document.querySelector('#crearGastoModal select[name="cuenta_pago"]');
     
     if (grupoId) {
+        // Cargar miembros del grupo
         fetch(`/finanzas/api/grupo/${grupoId}/miembros/`)
         .then(response => response.json())
         .then(data => {
@@ -886,8 +1028,54 @@ document.querySelector('#crearGastoModal select[name="grupo"]').addEventListener
         .catch(error => {
             console.error('Error al cargar miembros:', error);
         });
+        
+        // Limpiar cuenta de pago
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
     } else {
         pagadoPorSelect.innerHTML = '<option value="">Nadie (pendiente)</option>';
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+    }
+});
+
+// Actualizar cuenta de pago cuando cambie el pagado por
+document.querySelector('#crearGastoModal select[name="pagado_por"]').addEventListener('change', function() {
+    const pagadoPorId = this.value;
+    const cuentaSelect = document.querySelector('#crearGastoModal select[name="cuenta_pago"]');
+    
+    if (pagadoPorId) {
+        fetch(`/finanzas/api/cuentas/${pagadoPorId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+                data.cuentas.forEach(cuenta => {
+                    cuentaSelect.innerHTML += `<option value="${cuenta.id}">${cuenta.nombre}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar cuentas:', error);
+        });
+    } else {
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+    }
+});
+
+// Preview de imagen del recibo
+document.querySelector('#crearGastoModal input[name="imagen_recibo"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
     }
 });
 </script>
