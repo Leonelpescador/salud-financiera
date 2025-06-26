@@ -142,6 +142,12 @@ class Transaccion(models.Model):
     # Adjuntos
     imagen_recibo = models.ImageField(upload_to='recibos/', null=True, blank=True)
     
+    # Campos para cuotas
+    es_en_cuotas = models.BooleanField(default=False, help_text='¿Este gasto es en cuotas?')
+    numero_cuotas = models.PositiveIntegerField(null=True, blank=True, help_text='Cantidad total de cuotas')
+    cuota_actual = models.PositiveIntegerField(null=True, blank=True, help_text='Número de la cuota actual')
+    fecha_fin_cuotas = models.DateField(null=True, blank=True, help_text='Fecha de finalización de las cuotas')
+    
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
     
@@ -503,6 +509,12 @@ class GastoCompartido(models.Model):
     
     # Archivos adjuntos
     imagen_recibo = models.ImageField(upload_to='gastos_compartidos/', null=True, blank=True)
+    
+    # Campos para cuotas
+    es_en_cuotas = models.BooleanField(default=False, help_text='¿Este gasto es en cuotas?')
+    numero_cuotas = models.PositiveIntegerField(null=True, blank=True, help_text='Cantidad total de cuotas')
+    cuota_actual = models.PositiveIntegerField(null=True, blank=True, help_text='Número de la cuota actual')
+    fecha_fin_cuotas = models.DateField(null=True, blank=True, help_text='Fecha de finalización de las cuotas')
     
     # Metadatos
     activo = models.BooleanField(default=True)

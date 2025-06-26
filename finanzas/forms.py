@@ -8,9 +8,13 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 
 class TransaccionForm(forms.ModelForm):
+    es_en_cuotas = forms.BooleanField(required=False, label='¿Es en cuotas?')
+    numero_cuotas = forms.IntegerField(required=False, min_value=1, label='Cantidad de cuotas')
+    cuota_actual = forms.IntegerField(required=False, min_value=1, label='¿En qué cuota va?')
+    fecha_fin_cuotas = forms.DateField(required=False, label='Fecha de finalización de cuotas')
     class Meta:
         model = Transaccion
-        fields = ['monto', 'fecha', 'tipo', 'descripcion', 'categoria', 'cuenta', 'tags', 'es_recurrente', 'frecuencia_recurrencia', 'cuenta_destino', 'imagen_recibo']
+        fields = ['monto', 'fecha', 'tipo', 'descripcion', 'categoria', 'cuenta', 'tags', 'es_recurrente', 'frecuencia_recurrencia', 'cuenta_destino', 'imagen_recibo', 'es_en_cuotas', 'numero_cuotas', 'cuota_actual', 'fecha_fin_cuotas']
         widgets = {
             'fecha': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'monto': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
@@ -41,6 +45,9 @@ class TransaccionForm(forms.ModelForm):
         cleaned_data = super().clean()
         tipo = cleaned_data.get('tipo')
         cuenta_destino = cleaned_data.get('cuenta_destino')
+        es_en_cuotas = cleaned_data.get('es_en_cuotas')
+        numero_cuotas = cleaned_data.get('numero_cuotas')
+        cuota_actual = cleaned_data.get('cuota_actual')
         
         # Validar que para transferencias se especifique cuenta destino
         if tipo == 'transferencia' and not cuenta_destino:
@@ -50,6 +57,12 @@ class TransaccionForm(forms.ModelForm):
         cuenta_origen = cleaned_data.get('cuenta')
         if tipo == 'transferencia' and cuenta_origen == cuenta_destino:
             raise forms.ValidationError("La cuenta origen y destino deben ser diferentes.")
+        
+        if es_en_cuotas:
+            if not numero_cuotas or not cuota_actual:
+                raise forms.ValidationError('Debe indicar la cantidad de cuotas y la cuota actual.')
+            if cuota_actual > numero_cuotas:
+                raise forms.ValidationError('La cuota actual no puede ser mayor que el número de cuotas.')
         
         return cleaned_data
 
@@ -383,6 +396,10 @@ class GrupoGastosCompartidosForm(forms.ModelForm):
         return grupo
 
 class GastoCompartidoForm(forms.ModelForm):
+    es_en_cuotas = forms.BooleanField(required=False, label='¿Es en cuotas?')
+    numero_cuotas = forms.IntegerField(required=False, min_value=1, label='Cantidad de cuotas')
+    cuota_actual = forms.IntegerField(required=False, min_value=1, label='¿En qué cuota va?')
+    fecha_fin_cuotas = forms.DateField(required=False, label='Fecha de finalización de cuotas')
     # Campo adicional para especificar cuánto pagó inicialmente quien pagó
     monto_pagado_inicial = forms.DecimalField(
         required=False,
@@ -400,7 +417,7 @@ class GastoCompartidoForm(forms.ModelForm):
     
     class Meta:
         model = GastoCompartido
-        fields = ['grupo', 'titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo']
+        fields = ['grupo', 'titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo', 'monto_pagado_inicial', 'es_en_cuotas', 'numero_cuotas', 'cuota_actual', 'fecha_fin_cuotas']
         widgets = {
             'grupo': forms.Select(attrs={'class': 'form-control'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título del gasto compartido'}),
@@ -458,6 +475,9 @@ class GastoCompartidoForm(forms.ModelForm):
         fecha_vencimiento = cleaned_data.get('fecha_vencimiento')
         monto_total = cleaned_data.get('monto_total')
         monto_pagado_inicial = cleaned_data.get('monto_pagado_inicial')
+        es_en_cuotas = cleaned_data.get('es_en_cuotas')
+        numero_cuotas = cleaned_data.get('numero_cuotas')
+        cuota_actual = cleaned_data.get('cuota_actual')
         
         # Validar que la cuenta de pago pertenezca al usuario que pagó
         if pagado_por and cuenta_pago and cuenta_pago.usuario != pagado_por:
@@ -481,6 +501,12 @@ class GastoCompartidoForm(forms.ModelForm):
         if monto_pagado_inicial and monto_total:
             if monto_pagado_inicial > monto_total:
                 raise forms.ValidationError("El monto pagado inicial no puede exceder el monto total del gasto.")
+        
+        if es_en_cuotas:
+            if not numero_cuotas or not cuota_actual:
+                raise forms.ValidationError('Debe indicar la cantidad de cuotas y la cuota actual.')
+            if cuota_actual > numero_cuotas:
+                raise forms.ValidationError('La cuota actual no puede ser mayor que el número de cuotas.')
         
         return cleaned_data
 

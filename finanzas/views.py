@@ -35,6 +35,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from io import BytesIO
+from dateutil.relativedelta import relativedelta
 
 # Decorador personalizado para verificar permisos de staff
 def staff_required(view_func):
@@ -223,10 +224,40 @@ def transaccion_crear(request):
         if form.is_valid():
             transaccion = form.save(commit=False)
             transaccion.usuario = request.user
-            transaccion.save()
-            form.save_m2m()  # Guardar tags
-            messages.success(request, 'Transacción creada exitosamente.')
-            return redirect('transacciones_lista')
+            es_en_cuotas = form.cleaned_data.get('es_en_cuotas')
+            numero_cuotas = form.cleaned_data.get('numero_cuotas')
+            cuota_actual = form.cleaned_data.get('cuota_actual')
+            fecha = form.cleaned_data.get('fecha')
+            if es_en_cuotas and numero_cuotas and cuota_actual:
+                # Crear todas las cuotas desde la actual hasta la última
+                for i in range(cuota_actual, numero_cuotas + 1):
+                    nueva_fecha = fecha + relativedelta(months=i - cuota_actual)
+                    nueva_transaccion = Transaccion(
+                        monto=transaccion.monto,
+                        fecha=nueva_fecha,
+                        tipo=transaccion.tipo,
+                        descripcion=f"{transaccion.descripcion} (Cuota {i}/{numero_cuotas})",
+                        categoria=transaccion.categoria,
+                        cuenta=transaccion.cuenta,
+                        usuario=request.user,
+                        es_recurrente=transaccion.es_recurrente,
+                        frecuencia_recurrencia=transaccion.frecuencia_recurrencia,
+                        cuenta_destino=transaccion.cuenta_destino,
+                        imagen_recibo=transaccion.imagen_recibo,
+                        es_en_cuotas=True,
+                        numero_cuotas=numero_cuotas,
+                        cuota_actual=i,
+                        fecha_fin_cuotas=transaccion.fecha_fin_cuotas
+                    )
+                    nueva_transaccion.save()
+                    nueva_transaccion.tags.set(form.cleaned_data.get('tags'))
+                messages.success(request, f'Transacción en cuotas creada exitosamente ({numero_cuotas} cuotas).')
+                return redirect('transacciones_lista')
+            else:
+                transaccion.save()
+                form.save_m2m()  # Guardar tags
+                messages.success(request, 'Transacción creada exitosamente.')
+                return redirect('transacciones_lista')
     else:
         form = TransaccionForm(user=request.user)
     
@@ -1653,90 +1684,116 @@ def gasto_compartido_crear(request):
         if not grupos.exists():
             messages.error(request, 'Debe crear un grupo de gastos compartidos antes de agregar gastos.')
             return redirect('grupos_gastos_compartidos_lista')
-        
         if request.method == 'POST':
             form = GastoCompartidoForm(request.POST, request.FILES, user=request.user)
-            
             if form.is_valid():
                 gasto = form.save(commit=False)
                 grupo = gasto.grupo  # El grupo viene del formulario
-                
-                # Verificar que el usuario tiene permisos en el grupo
-                if grupo not in grupos:
-                    messages.error(request, 'No tienes permisos para crear gastos en este grupo.')
-                    form = GastoCompartidoForm(user=request.user)
-                    context = {
-                        'form': form,
-                        'grupos': grupos,
-                        'titulo': 'Nuevo Gasto Compartido',
-                    }
-                    return render(request, 'gastos_compartidos/form.html', context)
-                
-                gasto.save()
-                
-                # Determinar quién pagó el gasto y cuánto pagó inicialmente
-                pagado_por_usuario = gasto.pagado_por
-                monto_pagado_inicial = form.cleaned_data.get('monto_pagado_inicial')
-                
-                # Si no se especificó monto pagado inicial, asumir que pagó todo
-                if monto_pagado_inicial is None and pagado_por_usuario:
-                    monto_pagado_inicial = gasto.monto_total
-                
-                # Crear registros de pago para cada miembro
-                for miembro in grupo.miembros.all():
-                    monto_debido_miembro = gasto.monto_por_persona
-                    monto_pagado_miembro = Decimal('0')
-                    
-                    # Si este miembro es quien pagó, registrar su pago inicial
-                    if pagado_por_usuario and miembro == pagado_por_usuario:
-                        # Calcular cuánto le corresponde pagar de lo que ya pagó
-                        monto_por_persona = gasto.monto_por_persona
-                        if monto_pagado_inicial:
-                            # Si pagó más de lo que le corresponde, registrar solo lo que le corresponde
-                            monto_pagado_miembro = min(monto_por_persona, monto_pagado_inicial)
-                        else:
-                            # Si no se especificó monto pagado, asumir que pagó todo
-                            monto_pagado_miembro = monto_por_persona
-                    
-                    PagoGastoCompartido.objects.create(
-                        gasto_compartido=gasto,
-                        miembro=miembro,
-                        monto_debido=monto_debido_miembro,
-                        monto_pagado=monto_pagado_miembro
-                    )
-                
-                # Crear notificaciones para los miembros (excepto el creador)
-                url_gasto = reverse('gasto_compartido_detalle', args=[gasto.pk])
-                for miembro in grupo.miembros.all():
-                    if miembro != request.user:
-                        Notificacion.objects.create(
-                            usuario=miembro,
-                            mensaje=f"{request.user.username} ha añadido un nuevo gasto en '{grupo.nombre}': {gasto.titulo}.",
-                            url_destino=url_gasto
+                es_en_cuotas = form.cleaned_data.get('es_en_cuotas')
+                numero_cuotas = form.cleaned_data.get('numero_cuotas')
+                cuota_actual = form.cleaned_data.get('cuota_actual')
+                fecha = form.cleaned_data.get('fecha')
+                from dateutil.relativedelta import relativedelta
+                if es_en_cuotas and numero_cuotas and cuota_actual:
+                    for i in range(cuota_actual, numero_cuotas + 1):
+                        nueva_fecha = fecha + relativedelta(months=i - cuota_actual)
+                        nuevo_gasto = GastoCompartido(
+                            grupo=grupo,
+                            titulo=f"{gasto.titulo} (Cuota {i}/{numero_cuotas})",
+                            descripcion=gasto.descripcion,
+                            monto_total=gasto.monto_total,
+                            fecha=nueva_fecha,
+                            fecha_vencimiento=gasto.fecha_vencimiento,
+                            tipo=gasto.tipo,
+                            estado=gasto.estado,
+                            pagado_por=gasto.pagado_por,
+                            cuenta_pago=gasto.cuenta_pago,
+                            imagen_recibo=gasto.imagen_recibo,
+                            activo=True,
+                            es_en_cuotas=True,
+                            numero_cuotas=numero_cuotas,
+                            cuota_actual=i,
+                            fecha_fin_cuotas=gasto.fecha_fin_cuotas
                         )
-                
-                messages.success(request, 'Gasto compartido creado exitosamente.')
-                return redirect('gastos_compartidos_lista')
+                        nuevo_gasto.save()
+                        # Determinar quién pagó el gasto y cuánto pagó inicialmente
+                        pagado_por_usuario = nuevo_gasto.pagado_por
+                        monto_pagado_inicial = form.cleaned_data.get('monto_pagado_inicial')
+                        if monto_pagado_inicial is None and pagado_por_usuario:
+                            monto_pagado_inicial = nuevo_gasto.monto_total
+                        for miembro in grupo.miembros.all():
+                            monto_debido_miembro = nuevo_gasto.monto_por_persona
+                            monto_pagado_miembro = Decimal('0')
+                            if pagado_por_usuario and miembro == pagado_por_usuario:
+                                monto_por_persona = nuevo_gasto.monto_por_persona
+                                if monto_pagado_inicial:
+                                    monto_pagado_miembro = min(monto_por_persona, monto_pagado_inicial)
+                                else:
+                                    monto_pagado_miembro = monto_por_persona
+                            PagoGastoCompartido.objects.create(
+                                gasto_compartido=nuevo_gasto,
+                                miembro=miembro,
+                                monto_debido=monto_debido_miembro,
+                                monto_pagado=monto_pagado_miembro
+                            )
+                        # Notificaciones solo para la primera cuota
+                        if i == cuota_actual:
+                            url_gasto = reverse('gasto_compartido_detalle', args=[nuevo_gasto.pk])
+                            for miembro in grupo.miembros.all():
+                                if miembro != request.user:
+                                    Notificacion.objects.create(
+                                        usuario=miembro,
+                                        mensaje=f"{request.user.username} ha añadido un nuevo gasto en '{grupo.nombre}': {nuevo_gasto.titulo}.",
+                                        url_destino=url_gasto
+                                    )
+                    messages.success(request, f'Gasto compartido en cuotas creado exitosamente ({numero_cuotas} cuotas).')
+                    return redirect('gastos_compartidos_lista')
+                else:
+                    gasto.save()
+                    pagado_por_usuario = gasto.pagado_por
+                    monto_pagado_inicial = form.cleaned_data.get('monto_pagado_inicial')
+                    if monto_pagado_inicial is None and pagado_por_usuario:
+                        monto_pagado_inicial = gasto.monto_total
+                    for miembro in grupo.miembros.all():
+                        monto_debido_miembro = gasto.monto_por_persona
+                        monto_pagado_miembro = Decimal('0')
+                        if pagado_por_usuario and miembro == pagado_por_usuario:
+                            monto_por_persona = gasto.monto_por_persona
+                            if monto_pagado_inicial:
+                                monto_pagado_miembro = min(monto_por_persona, monto_pagado_inicial)
+                            else:
+                                monto_pagado_miembro = monto_por_persona
+                        PagoGastoCompartido.objects.create(
+                            gasto_compartido=gasto,
+                            miembro=miembro,
+                            monto_debido=monto_debido_miembro,
+                            monto_pagado=monto_pagado_miembro
+                        )
+                    url_gasto = reverse('gasto_compartido_detalle', args=[gasto.pk])
+                    for miembro in grupo.miembros.all():
+                        if miembro != request.user:
+                            Notificacion.objects.create(
+                                usuario=miembro,
+                                mensaje=f"{request.user.username} ha añadido un nuevo gasto en '{grupo.nombre}': {gasto.titulo}.",
+                                url_destino=url_gasto
+                            )
+                    messages.success(request, 'Gasto compartido creado exitosamente.')
+                    return redirect('gastos_compartidos_lista')
         else:
-            # Pre-seleccionar grupo si viene como parámetro GET
             grupo_id = request.GET.get('grupo')
             grupo_pre_seleccionado = None
-            
             if grupo_id:
                 try:
                     grupo_pre_seleccionado = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user, activo=True)
                 except:
                     messages.warning(request, 'El grupo especificado no existe o no tienes permisos. Selecciona otro grupo.')
-            
             form = GastoCompartidoForm(user=request.user, grupo=grupo_pre_seleccionado)
-        
         context = {
             'form': form,
             'grupos': grupos,
             'titulo': 'Nuevo Gasto Compartido',
         }
         return render(request, 'gastos_compartidos/form.html', context)
-        
     except Exception as e:
         messages.error(request, f'Error al cargar la página: {str(e)}')
         return redirect('dashboard_gastos_compartidos')

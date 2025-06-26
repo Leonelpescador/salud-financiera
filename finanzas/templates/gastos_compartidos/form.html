@@ -474,6 +474,26 @@
                 </div>
             </div>
             
+            <!-- Cuotas -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.es_en_cuotas.id_for_label }}">¿Es en cuotas?</label>
+                {{ form.es_en_cuotas }}
+            </div>
+            <div id="cuotas-fields" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.numero_cuotas.id_for_label }}">Cantidad de cuotas</label>
+                    {{ form.numero_cuotas }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.cuota_actual.id_for_label }}">¿En qué cuota va?</label>
+                    {{ form.cuota_actual }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_fin_cuotas.id_for_label }}">Fecha de finalización de cuotas</label>
+                    {{ form.fecha_fin_cuotas }}
+                </div>
+            </div>
+            
             <!-- Acciones -->
             <div class="form-actions">
                 <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-secondary">
@@ -593,6 +613,19 @@ document.querySelector('form').addEventListener('submit', function(e) {
     }
     
     return true;
+});
+
+// Mostrar/ocultar campos de cuotas
+document.addEventListener('DOMContentLoaded', function() {
+    const check = document.getElementById('id_es_en_cuotas');
+    const fields = document.getElementById('cuotas-fields');
+    if (check) {
+        function toggleCuotas() {
+            fields.style.display = check.checked ? '' : 'none';
+        }
+        check.addEventListener('change', toggleCuotas);
+        toggleCuotas();
+    }
 });
 </script>
 {% endblock %} 

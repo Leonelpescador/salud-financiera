@@ -12,8 +12,7 @@ env/
 
 ### Base de Datos ###
 # Ignora la base de datos de desarrollo local
-db.sqlite3
-db.sqlite3-journal
+
 
 ### Archivos generados por Python y Django ###
 # Ignora la caché de Python
