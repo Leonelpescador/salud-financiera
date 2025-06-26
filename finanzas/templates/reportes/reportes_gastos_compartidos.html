@@ -1,0 +1,457 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Reportes de Gastos Compartidos{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        /* Estilos para el dashboard mejorado */
+        .dashboard-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e0a800 0%, #e8590c 100%);
+            color: #212529;
+            transform: translateY(-2px);
+        }
+        
+        .formato-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .formato-option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .formato-option:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+        
+        .formato-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f2ff 0%, #e8ecff 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .formato-option input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+        
+        .formato-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .formato-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .formato-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .info-text {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .meses-disponibles {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .meses-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .mes-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mes-item:hover {
+            background: #f0f2ff;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .mes-nombre {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mes-grupo {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #666;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .empty-description {
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .formato-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-bar"></i> Reportes de Gastos Compartidos</h2>
+            <div>
+                <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn-action btn-warning">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Reporte -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-info-circle"></i> ¿Qué incluye el reporte?</h2>
+        </div>
+        <div class="section-content">
+            <div class="info-box">
+                <div class="info-title">Información detallada de gastos compartidos</div>
+                <div class="info-text">
+                    • <strong>Resumen ejecutivo:</strong> Totales y estadísticas generales<br>
+                    • <strong>Saldos por miembro:</strong> Estado detallado de cada persona<br>
+                    • <strong>Lista de gastos:</strong> Todos los gastos con fechas, montos y cuentas<br>
+                    • <strong>Detalle de pagos:</strong> Pagos realizados y pendientes<br>
+                    • <strong>Información de pagador:</strong> Quién pagó cada gasto y desde qué cuenta
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Reporte -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-cog"></i> Configurar Reporte</h2>
+        </div>
+        <div class="section-content">
+            <form method="post" action="{% url 'generar_reporte_gastos_compartidos' %}" id="reporteForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="grupo">Grupo de Gastos Compartidos:</label>
+                    <select name="grupo" id="grupo" class="form-control" required>
+                        <option value="">Selecciona un grupo</option>
+                        {% for grupo in grupos %}
+                            <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fecha_desde">Fecha Desde:</label>
+                    <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fecha_hasta">Fecha Hasta:</label>
+                    <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" required>
+                </div>
+                
+                <div class="formato-selector">
+                    <div class="formato-option" onclick="selectFormato('pdf')">
+                        <input type="radio" name="formato" value="pdf" id="pdf" checked>
+                        <div class="formato-icon">📄</div>
+                        <div class="formato-title">PDF</div>
+                        <div class="formato-description">Formato profesional para imprimir</div>
+                    </div>
+                    <div class="formato-option" onclick="selectFormato('excel')">
+                        <input type="radio" name="formato" value="excel" id="excel">
+                        <div class="formato-icon">📊</div>
+                        <div class="formato-title">Excel</div>
+                        <div class="formato-description">Datos editables y análisis</div>
+                    </div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p><strong>Generando reporte...</strong></p>
+                    <p>Esto puede tomar unos segundos</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn-action btn-primary" id="btnGenerar">
+                        <i class="fas fa-file-pdf"></i> Generar Reporte PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Meses Disponibles -->
+    {% if meses_disponibles %}
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-calendar-alt"></i> Meses con Datos Disponibles</h2>
+        </div>
+        <div class="section-content">
+            <div class="meses-disponibles">
+                <div class="meses-title">Haz clic en un mes para seleccionarlo automáticamente:</div>
+                {% for mes in meses_disponibles %}
+                <div class="mes-item" onclick="seleccionarMes('{{ mes.año }}-{{ mes.mes|stringformat:'02d' }}-01', '{{ mes.año }}-{{ mes.mes|stringformat:'02d' }}-28', {{ mes.grupo_id }})">
+                    <div class="mes-nombre">{{ mes.nombre }}</div>
+                    <div class="mes-grupo">Grupo: {{ mes.grupo_nombre }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="dashboard-section">
+        <div class="section-content">
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <div class="empty-title">No hay datos disponibles</div>
+                <div class="empty-description">Crea algunos gastos compartidos para generar reportes</div>
+                <a href="{% url 'gasto_compartido_crear' %}" class="btn-action btn-primary">
+                    <i class="fas fa-plus"></i> Crear Gasto Compartido
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function selectFormato(formato) {
+    // Remover selección previa
+    document.querySelectorAll('.formato-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Seleccionar el formato elegido
+    document.getElementById(formato).checked = true;
+    document.getElementById(formato).closest('.formato-option').classList.add('selected');
+    
+    // Actualizar texto del botón
+    const btnGenerar = document.getElementById('btnGenerar');
+    if (formato === 'pdf') {
+        btnGenerar.innerHTML = '<i class="fas fa-file-pdf"></i> Generar Reporte PDF';
+        btnGenerar.className = 'btn-action btn-primary';
+    } else {
+        btnGenerar.innerHTML = '<i class="fas fa-file-excel"></i> Generar Reporte Excel';
+        btnGenerar.className = 'btn-action btn-success';
+    }
+}
+
+function seleccionarMes(fechaDesde, fechaHasta, grupoId) {
+    document.getElementById('fecha_desde').value = fechaDesde;
+    document.getElementById('fecha_hasta').value = fechaHasta;
+    document.getElementById('grupo').value = grupoId;
+    
+    // Scroll suave al formulario
+    document.querySelector('.dashboard-section:nth-child(3)').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+// Mostrar loading al enviar el formulario
+document.getElementById('reporteForm').addEventListener('submit', function() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('btnGenerar').disabled = true;
+});
+
+// Inicializar formato seleccionado
+document.addEventListener('DOMContentLoaded', function() {
+    selectFormato('pdf');
+    
+    // Establecer fechas por defecto (último mes)
+    const hoy = new Date();
+    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    
+    document.getElementById('fecha_desde').value = primerDiaMes.toISOString().split('T')[0];
+    document.getElementById('fecha_hasta').value = ultimoDiaMes.toISOString().split('T')[0];
+});
+</script>
+{% endblock %} 

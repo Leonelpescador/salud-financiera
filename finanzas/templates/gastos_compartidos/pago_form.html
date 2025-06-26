@@ -1,0 +1,371 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Gastos Compartidos{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .form-content {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-control:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .info-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left-color: #17a2b8;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        
+        .form-actions {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 10px;
+            }
+            
+            .form-content {
+                padding: 1.5rem;
+            }
+            
+            .info-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h2><i class="fas fa-edit"></i> {{ titulo }}</h2>
+        </div>
+        
+        <div class="form-content">
+            <!-- Información del gasto -->
+            <div class="info-box">
+                <div class="info-title">
+                    <i class="fas fa-info-circle"></i> Información del Gasto
+                </div>
+                <div class="info-details">
+                    <div class="info-item">
+                        <div class="info-label">Gasto:</div>
+                        <div class="info-value">{{ pago.gasto_compartido.titulo }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Grupo:</div>
+                        <div class="info-value">{{ pago.gasto_compartido.grupo.nombre }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Monto Total:</div>
+                        <div class="info-value">${{ pago.gasto_compartido.monto_total|floatformat:2 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Monto por Persona:</div>
+                        <div class="info-value">${{ pago.gasto_compartido.monto_por_persona|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del pago -->
+            <div class="info-box">
+                <div class="info-title">
+                    <i class="fas fa-user"></i> Información del Pago
+                </div>
+                <div class="info-details">
+                    <div class="info-item">
+                        <div class="info-label">Miembro:</div>
+                        <div class="info-value">{{ pago.miembro.get_full_name|default:pago.miembro.username }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Monto Debido:</div>
+                        <div class="info-value">${{ pago.monto_debido|floatformat:2 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Monto Pagado:</div>
+                        <div class="info-value">${{ pago.monto_pagado|floatformat:2 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Saldo Pendiente:</div>
+                        <div class="info-value" style="color: {% if pago.monto_debido > pago.monto_pagado %}#dc3545{% else %}#28a745{% endif %};">
+                            ${{ pago.monto_debido|add:pago.monto_pagado|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alertas -->
+            {% if pago.monto_debido > pago.monto_pagado %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Atención:</strong> Este pago está pendiente. El monto debido es mayor al monto pagado.
+                </div>
+            {% elif pago.monto_pagado >= pago.monto_debido %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>¡Excelente!</strong> Este pago está al día o a favor.
+                </div>
+            {% endif %}
+            
+            <!-- Formulario -->
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.monto_pagado.id_for_label }}">Monto Pagado:</label>
+                    {{ form.monto_pagado }}
+                    {% if form.monto_pagado.errors %}
+                        <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                            {% for error in form.monto_pagado.errors %}
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Ingresa el monto que has pagado. El estado se actualizará automáticamente.
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.estado.id_for_label }}">Estado del Pago:</label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}
+                        <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                            {% for error in form.estado.errors %}
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if form.fecha_pago %}
+                <div class="form-group">
+                    <label for="{{ form.fecha_pago.id_for_label }}">Fecha de Pago:</label>
+                    {{ form.fecha_pago }}
+                    {% if form.fecha_pago.errors %}
+                        <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                            {% for error in form.fecha_pago.errors %}
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if form.notas %}
+                <div class="form-group">
+                    <label for="{{ form.notas.id_for_label }}">Notas (opcional):</label>
+                    {{ form.notas }}
+                    {% if form.notas.errors %}
+                        <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                            {% for error in form.notas.errors %}
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="form-actions">
+                    <a href="{% url 'gasto_compartido_detalle' pago.gasto_compartido.id %}" class="btn-action btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-action btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-actualizar estado cuando cambie el monto pagado
+    const montoPagadoInput = document.getElementById('{{ form.monto_pagado.id_for_label }}');
+    const estadoSelect = document.getElementById('{{ form.estado.id_for_label }}');
+    
+    if (montoPagadoInput && estadoSelect) {
+        montoPagadoInput.addEventListener('input', function() {
+            const montoPagado = parseFloat(this.value) || 0;
+            const montoDebido = {{ pago.monto_debido }};
+            
+            if (montoPagado >= montoDebido) {
+                estadoSelect.value = 'pagado';
+            } else if (montoPagado > 0) {
+                estadoSelect.value = 'pendiente';
+            } else {
+                estadoSelect.value = 'pendiente';
+            }
+        });
+    }
+    
+    // Validar que el monto pagado no sea negativo
+    montoPagadoInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (value < 0) {
+            alert('El monto pagado no puede ser negativo.');
+            this.value = 0;
+        }
+    });
+});
+</script>
+{% endblock %} 

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Q, Count
 from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from .models import Transaccion, Categoria, Cuenta, Tag, ConfiguracionUsuario, Presupuesto, Meta, CorteMes, GrupoGastosCompartidos, GastoCompartido, PagoGastoCompartido, Notificacion
@@ -23,6 +23,17 @@ import json
 from functools import wraps
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+import io
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+import xlsxwriter
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 # Decorador personalizado para verificar permisos de staff
 def staff_required(view_func):
@@ -2200,3 +2211,388 @@ def api_grupo_info(request, grupo_id):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+# Vistas para Reportes de Gastos Compartidos
+@login_required
+def reportes_gastos_compartidos(request):
+    """Vista principal para generar reportes de gastos compartidos"""
+    # Obtener grupos del usuario
+    grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True).order_by('nombre')
+    
+    # Obtener meses disponibles para reportes
+    meses_disponibles = []
+    for grupo in grupos:
+        gastos_grupo = GastoCompartido.objects.filter(grupo=grupo, activo=True).dates('fecha', 'month')
+        for fecha in gastos_grupo:
+            mes_info = {
+                'año': fecha.year,
+                'mes': fecha.month,
+                'nombre': fecha.strftime('%B %Y'),
+                'grupo_id': grupo.id,
+                'grupo_nombre': grupo.nombre
+            }
+            if mes_info not in meses_disponibles:
+                meses_disponibles.append(mes_info)
+    
+    # Ordenar por fecha (más reciente primero)
+    meses_disponibles.sort(key=lambda x: (x['año'], x['mes']), reverse=True)
+    
+    context = {
+        'grupos': grupos,
+        'meses_disponibles': meses_disponibles,
+        'titulo': 'Reportes de Gastos Compartidos'
+    }
+    return render(request, 'reportes/reportes_gastos_compartidos.html', context)
+
+@login_required
+def generar_reporte_gastos_compartidos(request):
+    """Generar reporte de gastos compartidos en formato PDF o Excel"""
+    if request.method != 'POST':
+        return redirect('reportes_gastos_compartidos')
+    
+    # Obtener parámetros del formulario
+    grupo_id = request.POST.get('grupo')
+    fecha_desde = request.POST.get('fecha_desde')
+    fecha_hasta = request.POST.get('fecha_hasta')
+    formato = request.POST.get('formato', 'pdf')
+    
+    # Validar parámetros
+    if not grupo_id or not fecha_desde or not fecha_hasta:
+        messages.error(request, 'Todos los campos son requeridos.')
+        return redirect('reportes_gastos_compartidos')
+    
+    try:
+        grupo = get_object_or_404(GrupoGastosCompartidos, pk=grupo_id, miembros=request.user, activo=True)
+        fecha_desde = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+        fecha_hasta = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+    except (ValueError, GrupoGastosCompartidos.DoesNotExist):
+        messages.error(request, 'Parámetros inválidos.')
+        return redirect('reportes_gastos_compartidos')
+    
+    # Obtener datos del reporte
+    gastos = GastoCompartido.objects.filter(
+        grupo=grupo,
+        activo=True,
+        fecha__gte=fecha_desde,
+        fecha__lte=fecha_hasta
+    ).select_related('pagado_por', 'cuenta_pago').order_by('fecha')
+    
+    # Obtener pagos de todos los miembros
+    pagos = PagoGastoCompartido.objects.filter(
+        gasto_compartido__in=gastos
+    ).select_related('miembro', 'gasto_compartido')
+    
+    # Calcular estadísticas
+    total_gastos = gastos.count()
+    total_monto = sum(gasto.monto_total for gasto in gastos)
+    
+    # Calcular saldos por miembro
+    saldos_miembros = {}
+    for miembro in grupo.miembros.all():
+        pagos_miembro = pagos.filter(miembro=miembro)
+        total_debido = sum(pago.monto_debido for pago in pagos_miembro)
+        total_pagado = sum(pago.monto_pagado for pago in pagos_miembro)
+        saldo = total_debido - total_pagado
+        
+        saldos_miembros[miembro.username] = {
+            'miembro': miembro,
+            'total_debido': total_debido,
+            'total_pagado': total_pagado,
+            'saldo': saldo,
+            'estado': 'al día' if saldo == 0 else 'debe' if saldo > 0 else 'a favor'
+        }
+    
+    # Preparar datos para el reporte
+    datos_reporte = {
+        'grupo': grupo,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'gastos': gastos,
+        'pagos': pagos,
+        'saldos_miembros': saldos_miembros,
+        'total_gastos': total_gastos,
+        'total_monto': total_monto,
+        'miembros_count': grupo.miembros.count(),
+        'generado_por': request.user,
+        'fecha_generacion': date.today()
+    }
+    
+    # Generar reporte según formato
+    if formato == 'pdf':
+        return generar_pdf_gastos_compartidos(datos_reporte)
+    elif formato == 'excel':
+        return generar_excel_gastos_compartidos(datos_reporte)
+    else:
+        messages.error(request, 'Formato no válido.')
+        return redirect('reportes_gastos_compartidos')
+
+def generar_pdf_gastos_compartidos(datos):
+    """Generar reporte PDF de gastos compartidos"""
+    # Crear buffer para el PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    story = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=20
+    )
+    normal_style = styles['Normal']
+    
+    # Título del reporte
+    story.append(Paragraph(f"Reporte de Gastos Compartidos", title_style))
+    story.append(Paragraph(f"Grupo: {datos['grupo'].nombre}", subtitle_style))
+    story.append(Paragraph(f"Período: {datos['fecha_desde'].strftime('%d/%m/%Y')} - {datos['fecha_hasta'].strftime('%d/%m/%Y')}", normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Resumen ejecutivo
+    story.append(Paragraph("Resumen Ejecutivo", subtitle_style))
+    resumen_data = [
+        ['Total de Gastos', str(datos['total_gastos'])],
+        ['Monto Total', f"${datos['total_monto']:,.2f}"],
+        ['Miembros', str(datos['miembros_count'])],
+        ['Monto por Persona', f"${datos['total_monto'] / datos['miembros_count']:,.2f}"],
+    ]
+    
+    resumen_table = Table(resumen_data, colWidths=[2*inch, 2*inch])
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    story.append(resumen_table)
+    story.append(Spacer(1, 20))
+    
+    # Saldos por miembro
+    story.append(Paragraph("Saldos por Miembro", subtitle_style))
+    saldos_data = [['Miembro', 'Total Debido', 'Total Pagado', 'Saldo', 'Estado']]
+    
+    for username, info in datos['saldos_miembros'].items():
+        saldos_data.append([
+            info['miembro'].get_full_name() or info['miembro'].username,
+            f"${info['total_debido']:,.2f}",
+            f"${info['total_pagado']:,.2f}",
+            f"${info['saldo']:,.2f}",
+            info['estado']
+        ])
+    
+    saldos_table = Table(saldos_data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1*inch])
+    saldos_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+    ]))
+    story.append(saldos_table)
+    story.append(Spacer(1, 20))
+    
+    # Detalle de gastos
+    story.append(Paragraph("Detalle de Gastos", subtitle_style))
+    if datos['gastos']:
+        gastos_data = [['Fecha', 'Título', 'Monto', 'Pagado por', 'Cuenta', 'Monto por Persona']]
+        
+        for gasto in datos['gastos']:
+            gastos_data.append([
+                gasto.fecha.strftime('%d/%m/%Y'),
+                gasto.titulo[:30] + '...' if len(gasto.titulo) > 30 else gasto.titulo,
+                f"${gasto.monto_total:,.2f}",
+                gasto.pagado_por.get_full_name() or gasto.pagado_por.username if gasto.pagado_por else 'N/A',
+                gasto.cuenta_pago.nombre if gasto.cuenta_pago else 'N/A',
+                f"${gasto.monto_por_persona:,.2f}"
+            ])
+        
+        gastos_table = Table(gastos_data, colWidths=[0.8*inch, 1.8*inch, 0.8*inch, 1.2*inch, 1*inch, 1*inch])
+        gastos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('ALIGN', (1, 1), (1, -1), 'LEFT'),  # Alinear título a la izquierda
+        ]))
+        story.append(gastos_table)
+    else:
+        story.append(Paragraph("No hay gastos en el período seleccionado.", normal_style))
+    
+    story.append(Spacer(1, 20))
+    
+    # Información del reporte
+    story.append(Paragraph(f"Reporte generado por: {datos['generado_por'].get_full_name() or datos['generado_por'].username}", normal_style))
+    story.append(Paragraph(f"Fecha de generación: {datos['fecha_generacion'].strftime('%d/%m/%Y')}", normal_style))
+    
+    # Construir PDF
+    doc.build(story)
+    buffer.seek(0)
+    
+    # Crear respuesta HTTP
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="reporte_gastos_compartidos_{datos["grupo"].nombre}_{datos["fecha_desde"].strftime("%Y%m%d")}_{datos["fecha_hasta"].strftime("%Y%m%d")}.pdf"'
+    
+    return response
+
+def generar_excel_gastos_compartidos(datos):
+    """Generar reporte Excel de gastos compartidos"""
+    # Crear buffer para el Excel
+    buffer = io.BytesIO()
+    workbook = xlsxwriter.Workbook(buffer)
+    
+    # Estilos
+    header_format = workbook.add_format({
+        'bold': True,
+        'text_wrap': True,
+        'valign': 'top',
+        'fg_color': '#D7E4BC',
+        'border': 1
+    })
+    
+    cell_format = workbook.add_format({
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter'
+    })
+    
+    money_format = workbook.add_format({
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'num_format': '$#,##0.00'
+    })
+    
+    title_format = workbook.add_format({
+        'bold': True,
+        'font_size': 14,
+        'align': 'center',
+        'valign': 'vcenter'
+    })
+    
+    # Hoja 1: Resumen
+    worksheet1 = workbook.add_worksheet('Resumen')
+    
+    # Título
+    worksheet1.merge_range('A1:E1', f'Reporte de Gastos Compartidos - {datos["grupo"].nombre}', title_format)
+    worksheet1.merge_range('A2:E2', f'Período: {datos["fecha_desde"].strftime("%d/%m/%Y")} - {datos["fecha_hasta"].strftime("%d/%m/%Y")}', title_format)
+    
+    # Resumen ejecutivo
+    worksheet1.write('A4', 'Resumen Ejecutivo', header_format)
+    worksheet1.write('A5', 'Total de Gastos', header_format)
+    worksheet1.write('B5', datos['total_gastos'], cell_format)
+    worksheet1.write('A6', 'Monto Total', header_format)
+    worksheet1.write('B6', datos['total_monto'], money_format)
+    worksheet1.write('A7', 'Miembros', header_format)
+    worksheet1.write('B7', datos['miembros_count'], cell_format)
+    worksheet1.write('A8', 'Monto por Persona', header_format)
+    worksheet1.write('B8', datos['total_monto'] / datos['miembros_count'], money_format)
+    
+    # Saldos por miembro
+    worksheet1.write('A10', 'Saldos por Miembro', header_format)
+    worksheet1.write('A11', 'Miembro', header_format)
+    worksheet1.write('B11', 'Total Debido', header_format)
+    worksheet1.write('C11', 'Total Pagado', header_format)
+    worksheet1.write('D11', 'Saldo', header_format)
+    worksheet1.write('E11', 'Estado', header_format)
+    
+    row = 12
+    for username, info in datos['saldos_miembros'].items():
+        worksheet1.write(row, 0, info['miembro'].get_full_name() or info['miembro'].username, cell_format)
+        worksheet1.write(row, 1, info['total_debido'], money_format)
+        worksheet1.write(row, 2, info['total_pagado'], money_format)
+        worksheet1.write(row, 3, info['saldo'], money_format)
+        worksheet1.write(row, 4, info['estado'], cell_format)
+        row += 1
+    
+    # Ajustar ancho de columnas
+    worksheet1.set_column('A:A', 20)
+    worksheet1.set_column('B:D', 15)
+    worksheet1.set_column('E:E', 12)
+    
+    # Hoja 2: Detalle de gastos
+    worksheet2 = workbook.add_worksheet('Detalle de Gastos')
+    
+    # Encabezados
+    headers = ['Fecha', 'Título', 'Monto Total', 'Pagado por', 'Cuenta', 'Monto por Persona', 'Descripción']
+    for col, header in enumerate(headers):
+        worksheet2.write(0, col, header, header_format)
+    
+    # Datos de gastos
+    row = 1
+    for gasto in datos['gastos']:
+        worksheet2.write(row, 0, gasto.fecha.strftime('%d/%m/%Y'), cell_format)
+        worksheet2.write(row, 1, gasto.titulo, cell_format)
+        worksheet2.write(row, 2, gasto.monto_total, money_format)
+        worksheet2.write(row, 3, gasto.pagado_por.get_full_name() or gasto.pagado_por.username if gasto.pagado_por else 'N/A', cell_format)
+        worksheet2.write(row, 4, gasto.cuenta_pago.nombre if gasto.cuenta_pago else 'N/A', cell_format)
+        worksheet2.write(row, 5, gasto.monto_por_persona, money_format)
+        worksheet2.write(row, 6, gasto.descripcion or '', cell_format)
+        row += 1
+    
+    # Ajustar ancho de columnas
+    worksheet2.set_column('A:A', 12)
+    worksheet2.set_column('B:B', 25)
+    worksheet2.set_column('C:C', 15)
+    worksheet2.set_column('D:D', 20)
+    worksheet2.set_column('E:E', 15)
+    worksheet2.set_column('F:F', 15)
+    worksheet2.set_column('G:G', 35)
+    
+    # Hoja 3: Pagos detallados
+    worksheet3 = workbook.add_worksheet('Pagos Detallados')
+    
+    # Encabezados
+    headers = ['Gasto', 'Miembro', 'Monto Debido', 'Monto Pagado', 'Saldo Pendiente', 'Estado']
+    for col, header in enumerate(headers):
+        worksheet3.write(0, col, header, header_format)
+    
+    # Datos de pagos
+    row = 1
+    for pago in datos['pagos']:
+        worksheet3.write(row, 0, pago.gasto_compartido.titulo, cell_format)
+        worksheet3.write(row, 1, pago.miembro.get_full_name() or pago.miembro.username, cell_format)
+        worksheet3.write(row, 2, pago.monto_debido, money_format)
+        worksheet3.write(row, 3, pago.monto_pagado, money_format)
+        worksheet3.write(row, 4, pago.monto_debido - pago.monto_pagado, money_format)
+        worksheet3.write(row, 5, pago.estado, cell_format)
+        row += 1
+    
+    # Ajustar ancho de columnas
+    worksheet3.set_column('A:A', 30)
+    worksheet3.set_column('B:B', 20)
+    worksheet3.set_column('C:E', 15)
+    worksheet3.set_column('F:F', 12)
+    
+    # Información del reporte
+    worksheet1.write('A20', f'Reporte generado por: {datos["generado_por"].get_full_name() or datos["generado_por"].username}')
+    worksheet1.write('A21', f'Fecha de generación: {datos["fecha_generacion"].strftime("%d/%m/%Y")}')
+    
+    workbook.close()
+    buffer.seek(0)
+    
+    # Crear respuesta HTTP
+    response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="reporte_gastos_compartidos_{datos["grupo"].nombre}_{datos["fecha_desde"].strftime("%Y%m%d")}_{datos["fecha_hasta"].strftime("%Y%m%d")}.xlsx"'
+    
+    return response

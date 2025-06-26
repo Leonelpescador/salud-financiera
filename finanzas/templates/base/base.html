@@ -514,6 +514,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{% url 'reportes_gastos_compartidos' %}" class="nav-link {% if 'reportes_gastos_compartidos' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">📊</span>
+                            Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{% url 'categorias_lista' %}" class="nav-link {% if 'categoria' in request.resolver_match.url_name %}active{% endif %}">
                             <span class="nav-icon">📂</span>
                             Categorías

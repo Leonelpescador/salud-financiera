@@ -111,4 +111,8 @@ urlpatterns = [
     # APIs
     path('api/cuentas-usuario/<int:user_id>/', views.api_cuentas_usuario, name='api_cuentas_usuario'),
     path('api/grupo-info/<int:grupo_id>/', views.api_grupo_info, name='api_grupo_info'),
+    
+    # Reportes
+    path('reportes/gastos-compartidos/', views.reportes_gastos_compartidos, name='reportes_gastos_compartidos'),
+    path('reportes/gastos-compartidos/generar/', views.generar_reporte_gastos_compartidos, name='generar_reporte_gastos_compartidos'),
 ]
