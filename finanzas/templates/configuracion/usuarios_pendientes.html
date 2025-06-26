@@ -4,168 +4,747 @@
 {% block title %}Usuarios Pendientes - Salud Financiera{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">
-                            <i class="fas fa-user-clock me-2"></i>
-                            Usuarios Pendientes de Activación
-                        </h4>
-                        <span class="badge bg-warning text-dark fs-6">{{ total_pendientes }} pendientes</span>
+<!-- CSRF Token para JavaScript -->
+{% csrf_token %}
+
+<div class="usuarios-pendientes-container">
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-user-clock"></i>
+            </div>
+            <div class="header-text">
+                <h1>Usuarios Pendientes de Activación</h1>
+                <p>Gestiona las solicitudes de nuevos usuarios</p>
+            </div>
+            <div class="header-badge">
+                <span class="badge-count">{{ total_pendientes }}</span>
+                <span class="badge-text">pendientes</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        {% if usuarios_pendientes %}
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-list"></i>
+                        Lista de Usuarios Pendientes
+                    </div>
+                    <div class="table-actions">
+                        <button class="btn-refresh" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="card-body">
-                    {% if usuarios_pendientes %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th><i class="fas fa-user me-1"></i> Usuario</th>
-                                        <th><i class="fas fa-envelope me-1"></i> Email</th>
-                                        <th><i class="fas fa-id-card me-1"></i> Nombre Completo</th>
-                                        <th><i class="fas fa-calendar me-1"></i> Fecha de Registro</th>
-                                        <th><i class="fas fa-clock me-1"></i> Estado</th>
-                                        <th><i class="fas fa-cogs me-1"></i> Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for usuario in usuarios_pendientes %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm me-3">
-                                                    <img src="{% static 'image/default_profile.jpg' %}" 
-                                                         alt="Avatar" 
-                                                         class="rounded-circle" 
-                                                         width="40" 
-                                                         height="40">
-                                                </div>
-                                                <div>
-                                                    <strong>{{ usuario.username }}</strong>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">{{ usuario.email|default:"No especificado" }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">
-                                                {{ usuario.first_name|default:"-" }} {{ usuario.last_name|default:"-" }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">
-                                                {{ usuario.date_joined|date:"d/m/Y H:i" }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-warning text-dark">
-                                                <i class="fas fa-clock me-1"></i>
-                                                Pendiente
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{% url 'usuario_activar' usuario.pk %}" 
-                                                   class="btn btn-success btn-sm"
-                                                   title="Activar usuario"
-                                                   onclick="return confirm('¿Estás seguro de que quieres activar este usuario?')">
-                                                    <i class="fas fa-check"></i>
-                                                    Activar
-                                                </a>
-                                                <a href="{% url 'usuario_eliminar' usuario.pk %}" 
-                                                   class="btn btn-danger btn-sm"
-                                                   title="Eliminar usuario">
-                                                    <i class="fas fa-trash"></i>
-                                                    Eliminar
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
-                            </div>
-                            <h4 class="text-muted">¡Excelente!</h4>
-                            <p class="text-muted">No hay usuarios pendientes de activación.</p>
-                        </div>
-                    {% endif %}
+                
+                <div class="table-wrapper">
+                    <table class="modern-table">
+                        <tbody>
+                            {% for usuario in usuarios_pendientes %}
+                            <tr class="user-row" data-user-id="{{ usuario.pk }}">
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            <img src="{% static 'image/default_profile.jpg' %}" 
+                                                 alt="Avatar de {{ usuario.username }}" 
+                                                 class="avatar-img">
+                                            <div class="avatar-status pending"></div>
+                                        </div>
+                                        <div class="user-details">
+                                            <div class="username">{{ usuario.username }}</div>
+                                            <div class="user-id">ID: {{ usuario.pk }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="email-info">
+                                        <i class="fas fa-envelope email-icon"></i>
+                                        <span class="email-text">{{ usuario.email|default:"No especificado" }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="name-info">
+                                        <span class="full-name">
+                                            {{ usuario.first_name|default:"-" }} {{ usuario.last_name|default:"-" }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-info">
+                                        <div class="date-main">{{ usuario.date_joined|date:"d/m/Y" }}</div>
+                                        <div class="date-time">{{ usuario.date_joined|date:"H:i" }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="status-badge pending">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Pendiente</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action btn-activate" 
+                                                onclick="activarUsuario({{ usuario.pk }}, '{{ usuario.username }}')"
+                                                title="Activar usuario">
+                                            <i class="fas fa-check"></i>
+                                            <span>Activar</span>
+                                        </button>
+                                        <button class="btn-action btn-delete" 
+                                                onclick="eliminarUsuario({{ usuario.pk }}, '{{ usuario.username }}')"
+                                                title="Eliminar usuario">
+                                            <i class="fas fa-trash"></i>
+                                            <span>Eliminar</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{% url 'configuracion' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>
-                            Volver a Configuración
-                        </a>
-                        {% if usuarios_pendientes %}
-                            <div class="text-muted">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Los usuarios marcados como "Pendiente" necesitan ser activados por un administrador.
-                                </small>
-                            </div>
-                        {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="empty-content">
+                    <h3>¡Excelente!</h3>
+                    <p>No hay usuarios pendientes de activación en este momento.</p>
+                    <div class="empty-actions">
+                        <button class="btn-secondary" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i>
+                            Actualizar
+                        </button>
                     </div>
                 </div>
             </div>
+        {% endif %}
+    </div>
+
+    <div class="page-footer">
+        <div class="footer-content">
+            <a href="{% url 'configuracion' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                <span>Volver a Configuración</span>
+            </a>
+            {% if usuarios_pendientes %}
+                <div class="footer-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Los usuarios marcados como "Pendiente" necesitan ser activados por un administrador.</span>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-    .avatar-sm img {
-        object-fit: cover;
-        border: 2px solid #e9ecef;
+    /* Variables CSS */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --border-radius: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
-    .table th {
-        border-top: none;
-        font-weight: 600;
-        color: #495057;
+
+    /* Contenedor principal */
+    .usuarios-pendientes-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        animation: fadeInUp 0.6s ease-out;
     }
-    
-    .table td {
-        vertical-align: middle;
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
-    .btn-group .btn {
-        margin-right: 5px;
-    }
-    
-    .btn-group .btn:last-child {
-        margin-right: 0;
-    }
-    
-    .badge {
-        font-size: 0.75rem;
-    }
-    
-    .card {
-        border-radius: 15px;
+
+    /* Header de la página */
+    .page-header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-soft);
+        position: relative;
         overflow: hidden;
     }
-    
-    .card-header {
-        border-bottom: none;
-        padding: 1.5rem;
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
     }
-    
-    .card-body {
-        padding: 1.5rem;
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
     }
-    
-    .card-footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-        padding: 1rem 1.5rem;
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: var(--shadow-soft);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .header-text {
+        flex: 1;
+    }
+
+    .header-text h1 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d3436;
+        margin: 0 0 8px 0;
+    }
+
+    .header-text p {
+        font-size: 1.1rem;
+        color: #636e72;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .header-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--warning-gradient);
+        padding: 15px 20px;
+        border-radius: var(--border-radius);
+        color: white;
+        box-shadow: var(--shadow-soft);
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+
+    .badge-count {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .badge-text {
+        font-size: 0.9rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    /* Tarjeta de contenido */
+    .content-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-strong);
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+    }
+
+    /* Header de la tabla */
+    .table-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 25px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-refresh {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 10px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-refresh:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(180deg);
+    }
+
+    /* Contenedor de tabla */
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 0;
+    }
+
+    /* Tabla moderna */
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: transparent;
+    }
+
+    .modern-table thead {
+        background: rgba(248, 249, 250, 0.8);
+    }
+
+    .modern-table th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.95rem;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modern-table th i {
+        color: #6c757d;
+        width: 16px;
+    }
+
+    .modern-table tbody tr {
+        transition: var(--transition);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .modern-table tbody tr:hover {
+        background: rgba(74, 144, 226, 0.05);
+        transform: translateX(5px);
+    }
+
+    .modern-table td {
+        padding: 20px 15px;
+        vertical-align: middle;
+    }
+
+    /* Información del usuario */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .user-avatar {
+        position: relative;
+    }
+
+    .avatar-img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e9ecef;
+        transition: var(--transition);
+    }
+
+    .user-row:hover .avatar-img {
+        border-color: #4facfe;
+        transform: scale(1.1);
+    }
+
+    .avatar-status {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .avatar-status.pending {
+        background: #ffc107;
+        animation: pulse 2s infinite;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .username {
+        font-weight: 600;
+        color: #2d3436;
+        font-size: 1rem;
+    }
+
+    .user-id {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    /* Información de email */
+    .email-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .email-icon {
+        color: #6c757d;
+        width: 16px;
+    }
+
+    .email-text {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    /* Información de nombre */
+    .name-info {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    /* Información de fecha */
+    .date-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .date-main {
+        font-weight: 600;
+        color: #2d3436;
+    }
+
+    .date-time {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    /* Badge de estado */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .status-badge.pending {
+        background: var(--warning-gradient);
+        animation: pulse 2s infinite;
+    }
+
+    /* Botones de acción */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-activate {
+        background: var(--success-gradient);
+    }
+
+    .btn-activate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-delete {
+        background: var(--danger-gradient);
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 154, 158, 0.4);
+    }
+
+    /* Estado vacío */
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: #28a745;
+        margin-bottom: 30px;
+        animation: scaleIn 0.6s ease-out;
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .empty-content h3 {
+        font-size: 2rem;
+        color: #2d3436;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .empty-content p {
+        font-size: 1.1rem;
+        color: #636e72;
+        margin-bottom: 30px;
+    }
+
+    .empty-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .btn-secondary {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Footer de la página */
+    .page-footer {
+        margin-top: 30px;
+        padding: 25px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .btn-back {
+        background: var(--primary-gradient);
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-back:hover {
+        transform: translateX(-5px);
+        box-shadow: var(--shadow-soft);
+        color: white;
+        text-decoration: none;
+    }
+
+    .footer-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #636e72;
+        font-size: 0.9rem;
+    }
+
+    .footer-info i {
+        color: #4facfe;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .usuarios-pendientes-container {
+            padding: 15px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .header-text h1 {
+            font-size: 2rem;
+        }
+
+        .table-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .modern-table {
+            font-size: 0.9rem;
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: 15px 10px;
+        }
+    }
+
+    /* Scrollbar personalizado */
+    .table-wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+        background: var(--primary-gradient);
+        border-radius: 4px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: var(--secondary-gradient);
     }
 </style>
+
+<script>
+    function activarUsuario(userId, username) {
+        if (confirm(`¿Estás seguro de que quieres activar al usuario "${username}"?`)) {
+            window.location.href = `/finanzas/usuarios/${userId}/activar/`;
+        }
+    }
+
+    function eliminarUsuario(userId, username) {
+        if (confirm(`¿Estás seguro de que quieres eliminar al usuario "${username}"? Esta acción no se puede deshacer.`)) {
+            // Crear un formulario temporal para hacer POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/finanzas/usuarios/${userId}/eliminar/`;
+            
+            // Agregar CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Agregar el formulario al DOM y enviarlo
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Animación de entrada para las filas de la tabla
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.user-row');
+        rows.forEach((row, index) => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                row.style.transition = 'all 0.5s ease-out';
+                row.style.opacity = '1';
+                row.style.transform = 'translateX(0)';
+            }, index * 100);
+        });
+    });
+</script>
 {% endblock %} 

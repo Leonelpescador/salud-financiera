@@ -1271,6 +1271,11 @@ def usuario_eliminar(request, pk):
         username = usuario.username
         usuario.delete()
         messages.success(request, f'Usuario "{username}" eliminado exitosamente.')
+        
+        # Redirigir a usuarios_pendientes si viene de esa página, sino a configuracion
+        referer = request.META.get('HTTP_REFERER', '')
+        if 'usuarios-pendientes' in referer:
+            return redirect('usuarios_pendientes')
         return redirect('configuracion')
     
     context = {
@@ -1286,6 +1291,11 @@ def usuario_activar(request, pk):
     usuario.is_active = True
     usuario.save()
     messages.success(request, f'Usuario "{usuario.username}" activado exitosamente.')
+    
+    # Redirigir a usuarios_pendientes si viene de esa página, sino a configuracion
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'usuarios-pendientes' in referer:
+        return redirect('usuarios_pendientes')
     return redirect('configuracion')
 
 @login_required

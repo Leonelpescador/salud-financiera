@@ -354,9 +354,35 @@ class Meta(models.Model):
 
 # Modelo para configuraciones del usuario
 class ConfiguracionUsuario(models.Model):
+    MONEDA_CHOICES = [
+        ('ARS', 'Peso Argentino'),
+        ('USD', 'Dólar Estadounidense'),
+        ('EUR', 'Euro'),
+        ('BRL', 'Real Brasileño'),
+        ('CLP', 'Peso Chileno'),
+        ('COP', 'Peso Colombiano'),
+        ('MXN', 'Peso Mexicano'),
+        ('PEN', 'Sol Peruano'),
+        ('UYU', 'Peso Uruguayo'),
+        ('VES', 'Bolívar Venezolano'),
+    ]
+    
+    ZONA_HORARIA_CHOICES = [
+        ('America/Argentina/Buenos_Aires', 'Argentina (Buenos Aires)'),
+        ('America/New_York', 'Estados Unidos (Nueva York)'),
+        ('Europe/Madrid', 'España (Madrid)'),
+        ('America/Sao_Paulo', 'Brasil (São Paulo)'),
+        ('America/Santiago', 'Chile (Santiago)'),
+        ('America/Bogota', 'Colombia (Bogotá)'),
+        ('America/Mexico_City', 'México (Ciudad de México)'),
+        ('America/Lima', 'Perú (Lima)'),
+        ('America/Montevideo', 'Uruguay (Montevideo)'),
+        ('America/Caracas', 'Venezuela (Caracas)'),
+    ]
+    
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='configuracion')
-    moneda_principal = models.CharField(max_length=3, default='ARS')
-    zona_horaria = models.CharField(max_length=50, default='America/Argentina/Buenos_Aires')
+    moneda_principal = models.CharField(max_length=3, choices=MONEDA_CHOICES, default='ARS')
+    zona_horaria = models.CharField(max_length=50, choices=ZONA_HORARIA_CHOICES, default='America/Argentina/Buenos_Aires')
     notificaciones_activas = models.BooleanField(default=True)
     recordatorios_pago = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
