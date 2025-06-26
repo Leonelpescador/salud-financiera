@@ -71,6 +71,7 @@ urlpatterns = [
     path('gastos/<int:pk>/editar/', views.gasto_compartido_editar, name='gasto_compartido_editar'),
     path('gastos/<int:pk>/eliminar/', views.gasto_compartido_eliminar, name='gasto_compartido_eliminar'),
     path('gastos/<int:pk>/detalle/', views.gasto_compartido_detalle, name='gasto_compartido_detalle'),
+    path('gastos/historico/', views.historico_gastos_compartidos, name='historico_gastos_compartidos'),
     
     # Pagos de Gastos Compartidos
     path('pagos/<int:pk>/editar/', views.pago_gasto_compartido_editar, name='pago_gasto_compartido_editar'),

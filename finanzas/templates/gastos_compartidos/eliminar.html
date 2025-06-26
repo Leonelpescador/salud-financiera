@@ -344,11 +344,7 @@
             <!-- Información de pagos -->
             <div class="pagos-info">
                 <h4><i class="fas fa-users"></i> Estado de Pagos</h4>
-                <p>
-                    {% with pagos_count=gasto.pagos_miembros.count pagados_count=gasto.pagos_miembros.filter.estado='pagado'|length %}
-                    {{ pagados_count }} de {{ pagos_count }} miembros han pagado
-                    {% endwith %}
-                </p>
+                <p>{{ pagados_count }} de {{ pagos_count }} miembros han pagado</p>
             </div>
         </div>
         
@@ -367,7 +363,7 @@
             </ul>
         </div>
         
-        <!-- Formulario de Confirmación -->
+        <!-- Formulario de Confirmación SIMPLE -->
         <form method="post">
             {% csrf_token %}
             
@@ -376,42 +372,11 @@
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 
-                <button type="submit" class="btn btn-danger" onclick="return confirmarEliminacion()">
+                <button type="submit" class="btn btn-danger">
                     <i class="fas fa-trash-alt"></i> Eliminar Gasto
                 </button>
             </div>
         </form>
     </div>
 </div>
-
-<script>
-function confirmarEliminacion() {
-    const confirmacion = confirm(
-        '¿Estás completamente seguro de que quieres eliminar el gasto "{{ gasto.titulo }}"?\n\n' +
-        'Esta acción eliminará permanentemente:\n' +
-        '• Todos los registros de pago\n' +
-        '• Los saldos y deudas asociados\n' +
-        '• El historial de pagos de {{ gasto.grupo.cantidad_miembros }} miembros\n' +
-        '• El recibo adjunto (si existe)\n\n' +
-        'Esta acción NO se puede deshacer.'
-    );
-    
-    if (confirmacion) {
-        // Mostrar indicador de carga
-        const btn = document.querySelector('button[type="submit"]');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-        btn.disabled = true;
-        return true;
-    }
-    
-    return false;
-}
-
-// Prevenir envío accidental con Enter
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.target.matches('button[type="submit"]')) {
-        e.preventDefault();
-    }
-});
-</script>
 {% endblock %} 

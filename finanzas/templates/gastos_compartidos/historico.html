@@ -1,0 +1,158 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Histórico de Grupos y Gastos Eliminados{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+<style>
+    .historico-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #764ba2;
+        margin-bottom: 1rem;
+        margin-top: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .historico-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .historico-table th, .historico-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e9ecef;
+        text-align: left;
+    }
+    .historico-table th {
+        background: #f8f9fa;
+        color: #764ba2;
+        font-weight: 700;
+    }
+    .historico-table tr:last-child td {
+        border-bottom: none;
+    }
+    .badge-inactivo {
+        background: #e0a800;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.2rem 0.7rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .badge-eliminado {
+        background: #dc3545;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.2rem 0.7rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .empty-historico {
+        text-align: center;
+        color: #aaa;
+        padding: 2rem 0;
+    }
+    @media (max-width: 768px) {
+        .historico-container {
+            padding: 1rem;
+        }
+        .historico-table th, .historico-table td {
+            padding: 0.5rem 0.5rem;
+            font-size: 0.95rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="historico-container">
+    <h1 class="section-title"><i class="fas fa-history"></i> Histórico de Grupos y Gastos Eliminados</h1>
+    <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary" style="margin-bottom:2rem;">
+        <i class="fas fa-arrow-left"></i> Volver a Grupos Activos
+    </a>
+
+    <!-- Grupos Eliminados -->
+    <h2 class="section-title"><i class="fas fa-users-slash"></i> Grupos Eliminados ({{ total_grupos_inactivos }})</h2>
+    {% if grupos_inactivos %}
+    <table class="historico-table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Miembros</th>
+                <th>Fecha de creación</th>
+                <th>Fecha de eliminación</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grupo in grupos_inactivos %}
+            <tr>
+                <td>{{ grupo.nombre }}</td>
+                <td>{{ grupo.descripcion|default:'-' }}</td>
+                <td>{{ grupo.miembros.count }}</td>
+                <td>{{ grupo.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                <td>{{ grupo.fecha_modificacion|date:"d/m/Y H:i" }}</td>
+                <td><span class="badge-inactivo">Inactivo</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-historico">
+        <i class="fas fa-users-slash fa-2x"></i><br>
+        No hay grupos eliminados.
+    </div>
+    {% endif %}
+
+    <!-- Gastos Eliminados -->
+    <h2 class="section-title"><i class="fas fa-money-bill-wave-slash"></i> Gastos Eliminados ({{ total_gastos_inactivos }})</h2>
+    {% if gastos_inactivos %}
+    <table class="historico-table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Grupo</th>
+                <th>Monto</th>
+                <th>Tipo</th>
+                <th>Pagado por</th>
+                <th>Fecha</th>
+                <th>Fecha de eliminación</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gasto in gastos_inactivos %}
+            <tr>
+                <td>{{ gasto.titulo }}</td>
+                <td>{{ gasto.grupo.nombre }}</td>
+                <td>${{ gasto.monto_total|floatformat:2 }}</td>
+                <td>{{ gasto.get_tipo_display }}</td>
+                <td>{{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}</td>
+                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                <td>{{ gasto.fecha_modificacion|date:"d/m/Y H:i" }}</td>
+                <td><span class="badge-eliminado">Eliminado</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-historico">
+        <i class="fas fa-money-bill-wave-slash fa-2x"></i><br>
+        No hay gastos eliminados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

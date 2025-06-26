@@ -109,6 +109,28 @@
             border: 2px solid #ddd;
         }
         
+        .miembros-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+        
+        .miembros-container .form-check {
+            margin-bottom: 0.5rem;
+        }
+        
+        .miembros-container .form-check-input {
+            margin-right: 0.5rem;
+        }
+        
+        .miembros-container .form-check-label {
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
         .form-actions {
             display: flex;
             gap: 1rem;
@@ -256,6 +278,24 @@
                 </div>
             </div>
             
+            <!-- Icono -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.icono.id_for_label }}">
+                    <i class="fas fa-icons"></i> Icono del Grupo
+                </label>
+                {{ form.icono }}
+                {% if form.icono.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.icono.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Opcional: Emoji o icono para identificar visualmente el grupo (ej: 🏠, 🏢, 🏘️)
+                </div>
+            </div>
+            
             <!-- Color -->
             <div class="form-group">
                 <label class="form-label" for="{{ form.color.id_for_label }}">
@@ -274,6 +314,26 @@
                 {% endif %}
                 <div class="form-text">
                     Elige un color para identificar visualmente el grupo
+                </div>
+            </div>
+            
+            <!-- Miembros -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-users"></i> Miembros del Grupo
+                </label>
+                <div class="miembros-container">
+                    {{ form.miembros }}
+                </div>
+                {% if form.miembros.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.miembros.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    Selecciona los usuarios que formarán parte del grupo. Tú serás agregado automáticamente como miembro.
                 </div>
             </div>
             

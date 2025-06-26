@@ -385,8 +385,9 @@ class GrupoGastosCompartidosForm(forms.ModelForm):
 class GastoCompartidoForm(forms.ModelForm):
     class Meta:
         model = GastoCompartido
-        fields = ['titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo']
+        fields = ['grupo', 'titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo']
         widgets = {
+            'grupo': forms.Select(attrs={'class': 'form-control'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título del gasto compartido'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del gasto'}),
             'monto_total': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': 'Monto total'}),
@@ -404,9 +405,24 @@ class GastoCompartidoForm(forms.ModelForm):
         grupo = kwargs.pop('grupo', None)
         super().__init__(*args, **kwargs)
         
-        if user and grupo:
-            # Filtrar miembros del grupo para el campo pagado_por
-            self.fields['pagado_por'].queryset = grupo.miembros.all()
+        if user:
+            # Filtrar grupos del usuario para el campo grupo
+            self.fields['grupo'].queryset = GrupoGastosCompartidos.objects.filter(miembros=user, activo=True)
+            
+            # Si se pasa un grupo específico, pre-seleccionarlo
+            if grupo:
+                self.fields['grupo'].initial = grupo
+                # Filtrar miembros del grupo para el campo pagado_por
+                self.fields['pagado_por'].queryset = grupo.miembros.all()
+            else:
+                # Si no hay grupo específico, usar el primer grupo disponible
+                grupos_usuario = GrupoGastosCompartidos.objects.filter(miembros=user, activo=True)
+                if grupos_usuario.exists():
+                    primer_grupo = grupos_usuario.first()
+                    self.fields['grupo'].initial = primer_grupo
+                    self.fields['pagado_por'].queryset = primer_grupo.miembros.all()
+                else:
+                    self.fields['pagado_por'].queryset = User.objects.none()
             
             # Filtrar cuentas del usuario que pagó
             if self.instance.pk and self.instance.pagado_por:

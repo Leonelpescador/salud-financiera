@@ -309,7 +309,7 @@
             
             <div class="info-item">
                 <span class="info-label">Gastos registrados:</span>
-                <span class="info-value">{{ grupo.gastos.count }} gastos</span>
+                <span class="info-value">{{ gastos_count }} gastos</span>
             </div>
             
             <div class="info-item">
@@ -333,7 +333,7 @@
             </ul>
         </div>
         
-        <!-- Formulario de Confirmación -->
+        <!-- Formulario de Confirmación SIMPLE -->
         <form method="post">
             {% csrf_token %}
             
@@ -342,42 +342,11 @@
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 
-                <button type="submit" class="btn btn-danger" onclick="return confirmarEliminacion()">
+                <button type="submit" class="btn btn-danger">
                     <i class="fas fa-trash-alt"></i> Eliminar Grupo
                 </button>
             </div>
         </form>
     </div>
 </div>
-
-<script>
-function confirmarEliminacion() {
-    const confirmacion = confirm(
-        '¿Estás completamente seguro de que quieres eliminar el grupo "{{ grupo.nombre }}"?\n\n' +
-        'Esta acción eliminará permanentemente:\n' +
-        '• {{ grupo.gastos.count }} gastos\n' +
-        '• Todos los pagos registrados\n' +
-        '• Los saldos y deudas\n' +
-        '• El acceso de {{ grupo.miembros.count }} miembros\n\n' +
-        'Esta acción NO se puede deshacer.'
-    );
-    
-    if (confirmacion) {
-        // Mostrar indicador de carga
-        const btn = document.querySelector('button[type="submit"]');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-        btn.disabled = true;
-        return true;
-    }
-    
-    return false;
-}
-
-// Prevenir envío accidental con Enter
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.target.matches('button[type="submit"]')) {
-        e.preventDefault();
-    }
-});
-</script>
 {% endblock %} 

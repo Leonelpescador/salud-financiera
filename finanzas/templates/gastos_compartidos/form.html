@@ -501,13 +501,43 @@ document.querySelector('input[type="file"]').addEventListener('change', function
     }
 });
 
+// Actualizar miembros del grupo cuando se selecciona un grupo
+document.querySelector('select[name="grupo"]').addEventListener('change', function() {
+    const grupoId = this.value;
+    const pagadoPorSelect = document.querySelector('select[name="pagado_por"]');
+    const cuentaSelect = document.querySelector('select[name="cuenta_pago"]');
+    
+    if (grupoId) {
+        // Cargar miembros del grupo
+        fetch(`/finanzas/api/grupo/${grupoId}/miembros/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pagadoPorSelect.innerHTML = '<option value="">Nadie (pendiente)</option>';
+                data.miembros.forEach(miembro => {
+                    pagadoPorSelect.innerHTML += `<option value="${miembro.id}">${miembro.nombre}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar miembros:', error);
+        });
+        
+        // Limpiar cuenta de pago
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+    } else {
+        pagadoPorSelect.innerHTML = '<option value="">Nadie (pendiente)</option>';
+        cuentaSelect.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+    }
+});
+
 // Actualizar cuenta de pago cuando cambie el pagado por
 document.querySelector('select[name="pagado_por"]').addEventListener('change', function() {
     const pagadoPorId = this.value;
     const cuentaSelect = document.querySelector('select[name="cuenta_pago"]');
     
     if (pagadoPorId) {
-        fetch(`/finanzas/api/cuentas/${pagadoPorId}/`)
+        fetch(`/finanzas/api/cuentas-usuario/${pagadoPorId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -527,12 +557,12 @@ document.querySelector('select[name="pagado_por"]').addEventListener('change', f
 
 // Validar formulario antes de enviar
 document.querySelector('form').addEventListener('submit', function(e) {
+    const grupo = document.querySelector('select[name="grupo"]').value;
     const titulo = document.querySelector('input[name="titulo"]').value.trim();
     const montoTotal = document.querySelector('input[name="monto_total"]').value;
     const fecha = document.querySelector('input[name="fecha"]').value;
-    const grupo = document.querySelector('select[name="grupo"]').value;
     
-    if (!titulo || !montoTotal || !fecha || !grupo) {
+    if (!grupo || !titulo || !montoTotal || !fecha) {
         e.preventDefault();
         alert('Por favor completa todos los campos obligatorios');
         return false;

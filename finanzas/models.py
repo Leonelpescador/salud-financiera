@@ -479,6 +479,7 @@ class GastoCompartido(models.Model):
     imagen_recibo = models.ImageField(upload_to='gastos_compartidos/', null=True, blank=True)
     
     # Metadatos
+    activo = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
     

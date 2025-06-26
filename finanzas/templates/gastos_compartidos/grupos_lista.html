@@ -1,0 +1,435 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}
+    Grupos de Gastos Compartidos
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/gastos_compartidos.css' %}">
+    <style>
+        .grupos-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .page-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #117a8b;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            color: #212529;
+            text-decoration: none;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .grupos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .grupo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .grupo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .grupo-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .grupo-color {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--grupo-color, #667eea);
+        }
+        
+        .grupo-title {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .grupo-color-badge {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+        
+        .grupo-descripcion {
+            color: #666;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .grupo-body {
+            padding: 1.5rem;
+        }
+        
+        .grupo-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .grupo-members {
+            margin-bottom: 1.5rem;
+        }
+        
+        .members-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .members-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .member-tag {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .grupo-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-title {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-text {
+            color: #999;
+            margin-bottom: 2rem;
+        }
+        
+        .breadcrumb {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .grupos-container {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .grupos-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .grupo-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .grupo-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="grupos-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a> &gt;
+        <a href="{% url 'dashboard_gastos_compartidos' %}">Gastos Compartidos</a> &gt;
+        <span>Grupos</span>
+    </div>
+    
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>
+                <i class="fas fa-users"></i>
+                Grupos de Gastos Compartidos
+            </h1>
+            <p>Gestiona tus grupos para compartir gastos con familiares y amigos</p>
+        </div>
+        
+        <div class="header-actions">
+            <a href="{% url 'historico_gastos_compartidos' %}" class="btn btn-warning">
+                <i class="fas fa-history"></i> Ver Histórico
+            </a>
+            <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nuevo Grupo
+            </a>
+            <a href="{% url 'gastos_compartidos_lista' %}" class="btn btn-info">
+                <i class="fas fa-list"></i> Ver Gastos
+            </a>
+        </div>
+    </div>
+    
+    <!-- Contenido -->
+    {% if grupos %}
+        <div class="grupos-grid">
+            {% for grupo in grupos %}
+            <div class="grupo-card">
+                <div class="grupo-header">
+                    <div class="grupo-color" style="--grupo-color: {{ grupo.color }};"></div>
+                    
+                    <h3 class="grupo-title">
+                        <span class="grupo-color-badge" style="background-color: {{ grupo.color }};"></span>
+                        {{ grupo.nombre }}
+                    </h3>
+                    
+                    {% if grupo.descripcion %}
+                    <p class="grupo-descripcion">{{ grupo.descripcion }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="grupo-body">
+                    <!-- Estadísticas -->
+                    <div class="grupo-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">{{ grupo.miembros.count }}</span>
+                            <span class="stat-label">Miembros</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ grupo.gastocompartido_set.count }}</span>
+                            <span class="stat-label">Gastos</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Miembros -->
+                    <div class="grupo-members">
+                        <div class="members-title">
+                            <i class="fas fa-users"></i> Miembros:
+                        </div>
+                        <div class="members-list">
+                            {% for miembro in grupo.miembros.all %}
+                            <span class="member-tag">
+                                <i class="fas fa-user"></i>
+                                {{ miembro.get_full_name|default:miembro.username }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Acciones -->
+                    <div class="grupo-actions">
+                        {% if grupo.creador == request.user %}
+                        <a href="{% url 'grupo_gastos_compartidos_editar' grupo.pk %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'grupo_gastos_compartidos_eliminar' grupo.pk %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'saldos_grupo' grupo.pk %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-calculator"></i> Saldos
+                        </a>
+                        
+                        <a href="{% url 'miembros_grupo' grupo.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-user-cog"></i> Miembros
+                        </a>
+                        
+                        <a href="{% url 'gasto_compartido_crear' %}?grupo={{ grupo.pk }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Agregar Gasto
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Estado vacío -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="empty-title">No tienes grupos creados</h3>
+            <p class="empty-text">
+                Crea tu primer grupo para empezar a compartir gastos con familiares y amigos.
+            </p>
+            <a href="{% url 'grupo_gastos_compartidos_crear' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Crear Primer Grupo
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
