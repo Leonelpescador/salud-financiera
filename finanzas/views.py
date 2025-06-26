@@ -2328,13 +2328,11 @@ def generar_reporte_gastos_compartidos(request):
         return redirect('reportes_gastos_compartidos')
 
 def generar_pdf_gastos_compartidos(datos):
-    """Generar reporte PDF de gastos compartidos"""
-    # Crear buffer para el PDF
+    """Generar reporte PDF de gastos compartidos (versión con saldos netos entre usuarios)"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4)
     story = []
-    
-    # Estilos
+
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         'CustomTitle',
@@ -2350,69 +2348,17 @@ def generar_pdf_gastos_compartidos(datos):
         spaceAfter=20
     )
     normal_style = styles['Normal']
-    
-    # Título del reporte
+
+    # Título y periodo
     story.append(Paragraph(f"Reporte de Gastos Compartidos", title_style))
     story.append(Paragraph(f"Grupo: {datos['grupo'].nombre}", subtitle_style))
     story.append(Paragraph(f"Período: {datos['fecha_desde'].strftime('%d/%m/%Y')} - {datos['fecha_hasta'].strftime('%d/%m/%Y')}", normal_style))
     story.append(Spacer(1, 20))
-    
-    # Resumen ejecutivo
-    story.append(Paragraph("Resumen Ejecutivo", subtitle_style))
-    resumen_data = [
-        ['Total de Gastos', str(datos['total_gastos'])],
-        ['Monto Total', f"${datos['total_monto']:,.2f}"],
-        ['Miembros', str(datos['miembros_count'])],
-        ['Monto por Persona', f"${datos['total_monto'] / datos['miembros_count']:,.2f}"],
-    ]
-    
-    resumen_table = Table(resumen_data, colWidths=[2*inch, 2*inch])
-    resumen_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    story.append(resumen_table)
-    story.append(Spacer(1, 20))
-    
-    # Saldos por miembro
-    story.append(Paragraph("Saldos por Miembro", subtitle_style))
-    saldos_data = [['Miembro', 'Total Debido', 'Total Pagado', 'Saldo', 'Estado']]
-    
-    for username, info in datos['saldos_miembros'].items():
-        saldos_data.append([
-            info['miembro'].get_full_name() or info['miembro'].username,
-            f"${info['total_debido']:,.2f}",
-            f"${info['total_pagado']:,.2f}",
-            f"${info['saldo']:,.2f}",
-            info['estado']
-        ])
-    
-    saldos_table = Table(saldos_data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1*inch])
-    saldos_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTSIZE', (0, 1), (-1, -1), 9),
-    ]))
-    story.append(saldos_table)
-    story.append(Spacer(1, 20))
-    
+
     # Detalle de gastos
     story.append(Paragraph("Detalle de Gastos", subtitle_style))
     if datos['gastos']:
         gastos_data = [['Fecha', 'Título', 'Monto', 'Pagado por', 'Cuenta', 'Monto por Persona']]
-        
         for gasto in datos['gastos']:
             gastos_data.append([
                 gasto.fecha.strftime('%d/%m/%Y'),
@@ -2422,7 +2368,6 @@ def generar_pdf_gastos_compartidos(datos):
                 gasto.cuenta_pago.nombre if gasto.cuenta_pago else 'N/A',
                 f"${gasto.monto_por_persona:,.2f}"
             ])
-        
         gastos_table = Table(gastos_data, colWidths=[0.8*inch, 1.8*inch, 0.8*inch, 1.2*inch, 1*inch, 1*inch])
         gastos_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -2434,35 +2379,69 @@ def generar_pdf_gastos_compartidos(datos):
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 1), (-1, -1), 7),
-            ('ALIGN', (1, 1), (1, -1), 'LEFT'),  # Alinear título a la izquierda
+            ('ALIGN', (1, 1), (1, -1), 'LEFT'),
         ]))
         story.append(gastos_table)
+        story.append(Spacer(1, 20))
+        # Calcular saldos netos entre usuarios
+        miembros = list(datos['grupo'].miembros.all())
+        pagos = datos['pagos']
+        # Diccionario: {usuario: {otro_usuario: saldo}}
+        saldos = {m: {o: 0 for o in miembros if o != m} for m in miembros}
+        # Para cada gasto, calcular cuánto debe cada uno al pagador
+        for gasto in datos['gastos']:
+            pagador = gasto.pagado_por
+            if not pagador:
+                continue
+            for miembro in miembros:
+                if miembro != pagador:
+                    monto = float(gasto.monto_por_persona)
+                    saldos[miembro][pagador] += monto
+        # Netear saldos (solo mostrar deudores netos)
+        saldos_neto = []
+        for a in miembros:
+            for b in miembros:
+                if a != b:
+                    neto = saldos[a][b] - saldos[b][a]
+                    if neto > 0:
+                        saldos_neto.append((a, b, neto))
+        if saldos_neto:
+            story.append(Paragraph("Saldos entre usuarios (quién le debe a quién):", subtitle_style))
+            tabla_saldos = [["Deudor", "Acreedor", "Monto"]]
+            for deudor, acreedor, monto in saldos_neto:
+                tabla_saldos.append([
+                    deudor.get_full_name() or deudor.username,
+                    acreedor.get_full_name() or acreedor.username,
+                    f"${monto:,.2f}"
+                ])
+            tabla = Table(tabla_saldos, colWidths=[2*inch, 2*inch, 1.2*inch])
+            tabla.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ]))
+            story.append(tabla)
     else:
         story.append(Paragraph("No hay gastos en el período seleccionado.", normal_style))
-    
     story.append(Spacer(1, 20))
-    
-    # Información del reporte
     story.append(Paragraph(f"Reporte generado por: {datos['generado_por'].get_full_name() or datos['generado_por'].username}", normal_style))
     story.append(Paragraph(f"Fecha de generación: {datos['fecha_generacion'].strftime('%d/%m/%Y')}", normal_style))
-    
-    # Construir PDF
     doc.build(story)
     buffer.seek(0)
-    
-    # Crear respuesta HTTP
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="reporte_gastos_compartidos_{datos["grupo"].nombre}_{datos["fecha_desde"].strftime("%Y%m%d")}_{datos["fecha_hasta"].strftime("%Y%m%d")}.pdf"'
-    
     return response
 
 def generar_excel_gastos_compartidos(datos):
-    """Generar reporte Excel de gastos compartidos"""
-    # Crear buffer para el Excel
+    """Generar reporte Excel de gastos compartidos (versión con saldos netos entre usuarios)"""
     buffer = io.BytesIO()
     workbook = xlsxwriter.Workbook(buffer)
-    
-    # Estilos
     header_format = workbook.add_format({
         'bold': True,
         'text_wrap': True,
@@ -2470,132 +2449,96 @@ def generar_excel_gastos_compartidos(datos):
         'fg_color': '#D7E4BC',
         'border': 1
     })
-    
     cell_format = workbook.add_format({
         'border': 1,
         'align': 'center',
         'valign': 'vcenter'
     })
-    
     money_format = workbook.add_format({
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
         'num_format': '$#,##0.00'
     })
-    
     title_format = workbook.add_format({
         'bold': True,
         'font_size': 14,
         'align': 'center',
         'valign': 'vcenter'
     })
-    
-    # Hoja 1: Resumen
-    worksheet1 = workbook.add_worksheet('Resumen')
-    
-    # Título
-    worksheet1.merge_range('A1:E1', f'Reporte de Gastos Compartidos - {datos["grupo"].nombre}', title_format)
-    worksheet1.merge_range('A2:E2', f'Período: {datos["fecha_desde"].strftime("%d/%m/%Y")} - {datos["fecha_hasta"].strftime("%d/%m/%Y")}', title_format)
-    
-    # Resumen ejecutivo
-    worksheet1.write('A4', 'Resumen Ejecutivo', header_format)
-    worksheet1.write('A5', 'Total de Gastos', header_format)
-    worksheet1.write('B5', datos['total_gastos'], cell_format)
-    worksheet1.write('A6', 'Monto Total', header_format)
-    worksheet1.write('B6', datos['total_monto'], money_format)
-    worksheet1.write('A7', 'Miembros', header_format)
-    worksheet1.write('B7', datos['miembros_count'], cell_format)
-    worksheet1.write('A8', 'Monto por Persona', header_format)
-    worksheet1.write('B8', datos['total_monto'] / datos['miembros_count'], money_format)
-    
-    # Saldos por miembro
-    worksheet1.write('A10', 'Saldos por Miembro', header_format)
-    worksheet1.write('A11', 'Miembro', header_format)
-    worksheet1.write('B11', 'Total Debido', header_format)
-    worksheet1.write('C11', 'Total Pagado', header_format)
-    worksheet1.write('D11', 'Saldo', header_format)
-    worksheet1.write('E11', 'Estado', header_format)
-    
-    row = 12
-    for username, info in datos['saldos_miembros'].items():
-        worksheet1.write(row, 0, info['miembro'].get_full_name() or info['miembro'].username, cell_format)
-        worksheet1.write(row, 1, info['total_debido'], money_format)
-        worksheet1.write(row, 2, info['total_pagado'], money_format)
-        worksheet1.write(row, 3, info['saldo'], money_format)
-        worksheet1.write(row, 4, info['estado'], cell_format)
-        row += 1
-    
-    # Ajustar ancho de columnas
-    worksheet1.set_column('A:A', 20)
-    worksheet1.set_column('B:D', 15)
-    worksheet1.set_column('E:E', 12)
-    
-    # Hoja 2: Detalle de gastos
-    worksheet2 = workbook.add_worksheet('Detalle de Gastos')
-    
-    # Encabezados
-    headers = ['Fecha', 'Título', 'Monto Total', 'Pagado por', 'Cuenta', 'Monto por Persona', 'Descripción']
+    worksheet = workbook.add_worksheet('Detalle de Gastos')
+    worksheet.merge_range('A1:F1', f'Reporte de Gastos Compartidos - {datos["grupo"].nombre}', title_format)
+    worksheet.merge_range('A2:F2', f'Período: {datos["fecha_desde"].strftime("%d/%m/%Y")} - {datos["fecha_hasta"].strftime("%d/%m/%Y")}', title_format)
+    headers = ['Fecha', 'Título', 'Monto Total', 'Pagado por', 'Cuenta', 'Monto por Persona']
     for col, header in enumerate(headers):
-        worksheet2.write(0, col, header, header_format)
-    
-    # Datos de gastos
-    row = 1
+        worksheet.write(3, col, header, header_format)
+    row = 4
+    pagos_por_usuario = {}
+    miembros = list(datos['grupo'].miembros.all())
     for gasto in datos['gastos']:
-        worksheet2.write(row, 0, gasto.fecha.strftime('%d/%m/%Y'), cell_format)
-        worksheet2.write(row, 1, gasto.titulo, cell_format)
-        worksheet2.write(row, 2, gasto.monto_total, money_format)
-        worksheet2.write(row, 3, gasto.pagado_por.get_full_name() or gasto.pagado_por.username if gasto.pagado_por else 'N/A', cell_format)
-        worksheet2.write(row, 4, gasto.cuenta_pago.nombre if gasto.cuenta_pago else 'N/A', cell_format)
-        worksheet2.write(row, 5, gasto.monto_por_persona, money_format)
-        worksheet2.write(row, 6, gasto.descripcion or '', cell_format)
+        worksheet.write(row, 0, gasto.fecha.strftime('%d/%m/%Y'), cell_format)
+        worksheet.write(row, 1, gasto.titulo, cell_format)
+        worksheet.write(row, 2, gasto.monto_total, money_format)
+        pagador = gasto.pagado_por.get_full_name() or gasto.pagado_por.username if gasto.pagado_por else 'N/A'
+        worksheet.write(row, 3, pagador, cell_format)
+        worksheet.write(row, 4, gasto.cuenta_pago.nombre if gasto.cuenta_pago else 'N/A', cell_format)
+        worksheet.write(row, 5, gasto.monto_por_persona, money_format)
+        if gasto.pagado_por:
+            pagos_por_usuario[pagador] = pagos_por_usuario.get(pagador, 0) + float(gasto.monto_total)
         row += 1
-    
-    # Ajustar ancho de columnas
-    worksheet2.set_column('A:A', 12)
-    worksheet2.set_column('B:B', 25)
-    worksheet2.set_column('C:C', 15)
-    worksheet2.set_column('D:D', 20)
-    worksheet2.set_column('E:E', 15)
-    worksheet2.set_column('F:F', 15)
-    worksheet2.set_column('G:G', 35)
-    
-    # Hoja 3: Pagos detallados
-    worksheet3 = workbook.add_worksheet('Pagos Detallados')
-    
-    # Encabezados
-    headers = ['Gasto', 'Miembro', 'Monto Debido', 'Monto Pagado', 'Saldo Pendiente', 'Estado']
-    for col, header in enumerate(headers):
-        worksheet3.write(0, col, header, header_format)
-    
-    # Datos de pagos
-    row = 1
-    for pago in datos['pagos']:
-        worksheet3.write(row, 0, pago.gasto_compartido.titulo, cell_format)
-        worksheet3.write(row, 1, pago.miembro.get_full_name() or pago.miembro.username, cell_format)
-        worksheet3.write(row, 2, pago.monto_debido, money_format)
-        worksheet3.write(row, 3, pago.monto_pagado, money_format)
-        worksheet3.write(row, 4, pago.monto_debido - pago.monto_pagado, money_format)
-        worksheet3.write(row, 5, pago.estado, cell_format)
-        row += 1
-    
-    # Ajustar ancho de columnas
-    worksheet3.set_column('A:A', 30)
-    worksheet3.set_column('B:B', 20)
-    worksheet3.set_column('C:E', 15)
-    worksheet3.set_column('F:F', 12)
-    
-    # Información del reporte
-    worksheet1.write('A20', f'Reporte generado por: {datos["generado_por"].get_full_name() or datos["generado_por"].username}')
-    worksheet1.write('A21', f'Fecha de generación: {datos["fecha_generacion"].strftime("%d/%m/%Y")}')
-    
+    # Calcular saldos netos entre usuarios
+    saldos = {m: {o: 0 for o in miembros if o != m} for m in miembros}
+    for gasto in datos['gastos']:
+        pagador = gasto.pagado_por
+        if not pagador:
+            continue
+        for miembro in miembros:
+            if miembro != pagador:
+                monto = float(gasto.monto_por_persona)
+                saldos[miembro][pagador] += monto
+    saldos_neto = []
+    for a in miembros:
+        for b in miembros:
+            if a != b:
+                neto = saldos[a][b] - saldos[b][a]
+                if neto > 0:
+                    saldos_neto.append((a, b, neto))
+    if saldos_neto:
+        worksheet.write(row+1, 1, 'Deudor', header_format)
+        worksheet.write(row+1, 2, 'Acreedor', header_format)
+        worksheet.write(row+1, 3, 'Monto', header_format)
+        for i, (deudor, acreedor, monto) in enumerate(saldos_neto):
+            worksheet.write(row+2+i, 1, deudor.get_full_name() or deudor.username, cell_format)
+            worksheet.write(row+2+i, 2, acreedor.get_full_name() or acreedor.username, cell_format)
+            worksheet.write(row+2+i, 3, monto, money_format)
+    # Gráfico de torta
+    if pagos_por_usuario:
+        chart = workbook.add_chart({'type': 'pie'})
+        usuarios = list(pagos_por_usuario.keys())
+        valores = list(pagos_por_usuario.values())
+        for i, usuario_nombre in enumerate(usuarios):
+            worksheet.write(row+20+i, 1, usuario_nombre)
+            worksheet.write(row+20+i, 2, valores[i])
+        chart.add_series({
+            'name': 'Proporción de gastos pagados',
+            'categories': ['Detalle de Gastos', row+20, 1, row+20+len(usuarios)-1, 1],
+            'values':     ['Detalle de Gastos', row+20, 2, row+20+len(usuarios)-1, 2],
+            'data_labels': {'percentage': True}
+        })
+        chart.set_title({'name': 'Gastos pagados por usuario'})
+        worksheet.insert_chart(row+20, 4, chart, {'x_offset': 25, 'y_offset': 10})
+    worksheet.set_column('A:A', 12)
+    worksheet.set_column('B:B', 25)
+    worksheet.set_column('C:C', 15)
+    worksheet.set_column('D:D', 20)
+    worksheet.set_column('E:E', 15)
+    worksheet.set_column('F:F', 15)
+    worksheet.write(row+40, 0, f'Reporte generado por: {datos['generado_por'].get_full_name() or datos['generado_por'].username}')
+    worksheet.write(row+41, 0, f'Fecha de generación: {datos["fecha_generacion"].strftime("%d/%m/%Y")}')
     workbook.close()
     buffer.seek(0)
-    
-    # Crear respuesta HTTP
     response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="reporte_gastos_compartidos_{datos["grupo"].nombre}_{datos["fecha_desde"].strftime("%Y%m%d")}_{datos["fecha_hasta"].strftime("%Y%m%d")}.xlsx"'
-    
     return response
 
 @login_required
