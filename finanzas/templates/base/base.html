@@ -516,7 +516,13 @@
                     <li class="nav-item">
                         <a href="{% url 'reportes_gastos_compartidos' %}" class="nav-link {% if 'reportes_gastos_compartidos' in request.resolver_match.url_name %}active{% endif %}">
                             <span class="nav-icon">📊</span>
-                            Reportes
+                            Reportes Gastos Compartidos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'reportes_corte_mes' %}" class="nav-link {% if 'reportes_corte_mes' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">📈</span>
+                            Reportes Corte de Mes
                         </a>
                     </li>
                     <li class="nav-item">

@@ -34,6 +34,7 @@ import xlsxwriter
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from io import BytesIO
 
 # Decorador personalizado para verificar permisos de staff
 def staff_required(view_func):
@@ -806,7 +807,7 @@ def corte_mes_ejecutar(request):
     corte_existente = CorteMes.objects.filter(
         usuario=request.user,
         mes_cortado=mes_actual,
-        año_actual=año_actual
+        año_cortado=año_actual
     ).first()
     
     if corte_existente:
@@ -2595,4 +2596,420 @@ def generar_excel_gastos_compartidos(datos):
     response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="reporte_gastos_compartidos_{datos["grupo"].nombre}_{datos["fecha_desde"].strftime("%Y%m%d")}_{datos["fecha_hasta"].strftime("%Y%m%d")}.xlsx"'
     
+    return response
+
+@login_required
+def reportes_corte_mes(request):
+    """Vista para mostrar el formulario de reportes de corte de mes"""
+    # Obtener cortes disponibles del usuario
+    cortes_disponibles = CorteMes.objects.filter(usuario=request.user).order_by('-fecha_corte')
+    
+    context = {
+        'cortes_disponibles': cortes_disponibles,
+    }
+    return render(request, 'reportes/reportes_corte_mes.html', context)
+
+@login_required
+def generar_reporte_corte_mes(request):
+    """Vista para generar reportes de corte de mes"""
+    if request.method != 'POST':
+        return redirect('reportes_corte_mes')
+    
+    # Obtener parámetros del formulario
+    corte_id = request.POST.get('corte_id')
+    formato = request.POST.get('formato', 'pdf')
+    
+    try:
+        corte = CorteMes.objects.get(id=corte_id, usuario=request.user)
+    except CorteMes.DoesNotExist:
+        messages.error(request, 'Corte de mes no encontrado.')
+        return redirect('reportes_corte_mes')
+    
+    # Preparar datos para el reporte
+    datos = {
+        'corte': corte,
+        'usuario': request.user,
+        'fecha_generacion': timezone.now(),
+    }
+    
+    # Generar reporte según el formato
+    if formato == 'pdf':
+        response = generar_pdf_corte_mes(datos)
+        filename = f"corte_mes_{corte.mes_cortado}_{corte.año_cortado}.pdf"
+    else:  # excel
+        response = generar_excel_corte_mes(datos)
+        filename = f"corte_mes_{corte.mes_cortado}_{corte.año_cortado}.xlsx"
+    
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+def generar_pdf_corte_mes(datos):
+    """Genera un reporte PDF del corte de mes"""
+    corte = datos['corte']
+    usuario = datos['usuario']
+    
+    # Crear el buffer para el PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1,  # Centrado
+        textColor=colors.darkblue
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=20,
+        textColor=colors.darkblue
+    )
+    
+    normal_style = styles['Normal']
+    
+    # Título del reporte
+    elements.append(Paragraph(f"Reporte de Corte de Mes - {corte.mes_nombre} {corte.año_cortado}", title_style))
+    elements.append(Paragraph(f"Usuario: {usuario.get_full_name() or usuario.username}", normal_style))
+    elements.append(Paragraph(f"Fecha de generación: {datos['fecha_generacion'].strftime('%d/%m/%Y %H:%M')}", normal_style))
+    elements.append(Spacer(1, 20))
+    
+    # Resumen ejecutivo
+    elements.append(Paragraph("Resumen Ejecutivo", subtitle_style))
+    
+    # Tabla de resumen
+    resumen_data = [
+        ['Concepto', 'Monto'],
+        ['Total Ingresos', f"${corte.total_ingresos:,.2f}"],
+        ['Total Gastos', f"${corte.total_gastos:,.2f}"],
+        ['Balance del Mes', f"${corte.balance_mes:,.2f}"],
+    ]
+    
+    resumen_table = Table(resumen_data, colWidths=[200, 100])
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),  # Alinear montos a la derecha
+    ]))
+    elements.append(resumen_table)
+    elements.append(Spacer(1, 20))
+    
+    # Saldos de cuentas
+    elements.append(Paragraph("Saldos de Cuentas al Corte", subtitle_style))
+    
+    saldos_data = [['Cuenta', 'Saldo']]
+    
+    # Verificar el formato de los datos
+    if isinstance(corte.saldos_cuentas, dict):
+        # Si es el formato nuevo (JSON con datos completos)
+        if 'saldos_cuentas' in corte.saldos_cuentas:
+            # Formato nuevo: {'saldos_cuentas': {cuenta_id: saldo}, 'gastos_compartidos': {...}}
+            for cuenta_id, saldo in corte.saldos_cuentas['saldos_cuentas'].items():
+                try:
+                    # Asegurar que cuenta_id sea un número
+                    cuenta_id_int = int(cuenta_id)
+                    cuenta = Cuenta.objects.get(id=cuenta_id_int)
+                    saldos_data.append([cuenta.nombre, f"${saldo:,.2f}"])
+                except (ValueError, Cuenta.DoesNotExist):
+                    continue
+        else:
+            # Formato antiguo: {cuenta_id: saldo}
+            for cuenta_id, saldo in corte.saldos_cuentas.items():
+                try:
+                    # Asegurar que cuenta_id sea un número
+                    cuenta_id_int = int(cuenta_id)
+                    cuenta = Cuenta.objects.get(id=cuenta_id_int)
+                    saldos_data.append([cuenta.nombre, f"${saldo:,.2f}"])
+                except (ValueError, Cuenta.DoesNotExist):
+                    continue
+    
+    if len(saldos_data) > 1:
+        saldos_table = Table(saldos_data, colWidths=[200, 100])
+        saldos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        ]))
+        elements.append(saldos_table)
+    else:
+        elements.append(Paragraph("No hay datos de saldos de cuentas disponibles.", normal_style))
+    
+    elements.append(Spacer(1, 20))
+    
+    # Gastos compartidos (si están disponibles)
+    if isinstance(corte.saldos_cuentas, dict) and 'gastos_compartidos' in corte.saldos_cuentas:
+        gastos_compartidos = corte.saldos_cuentas['gastos_compartidos']
+        
+        elements.append(Paragraph("Gastos Compartidos del Mes", subtitle_style))
+        
+        # Resumen de gastos compartidos
+        gc_resumen_data = [
+            ['Concepto', 'Monto'],
+            ['Total Gastos Compartidos', f"${gastos_compartidos.get('total_gastos_compartidos_mes', 0):,.2f}"],
+            ['Gastos Pagados por Usuario', f"${gastos_compartidos.get('gastos_pagados_por_usuario', 0):,.2f}"],
+            ['Pagos Realizados por Usuario', f"${gastos_compartidos.get('pagos_usuario_mes', 0):,.2f}"],
+            ['Total Saldo Pendiente', f"${gastos_compartidos.get('total_saldo_pendiente', 0):,.2f}"],
+        ]
+        
+        gc_resumen_table = Table(gc_resumen_data, colWidths=[200, 100])
+        gc_resumen_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        ]))
+        elements.append(gc_resumen_table)
+        elements.append(Spacer(1, 20))
+        
+        # Detalle de saldos por grupo
+        if 'saldos_pendientes_grupos' in gastos_compartidos:
+            elements.append(Paragraph("Saldos Pendientes por Grupo", subtitle_style))
+            
+            gc_saldos_data = [
+                ['Grupo', 'Total Debido', 'Total Pagado', 'Saldo Pendiente', 'Miembros']
+            ]
+            
+            for grupo_id, datos_grupo in gastos_compartidos['saldos_pendientes_grupos'].items():
+                gc_saldos_data.append([
+                    datos_grupo['nombre'],
+                    f"${datos_grupo['total_debido']:,.2f}",
+                    f"${datos_grupo['total_pagado']:,.2f}",
+                    f"${datos_grupo['saldo_pendiente']:,.2f}",
+                    str(datos_grupo['cantidad_miembros'])
+                ])
+            
+            gc_saldos_table = Table(gc_saldos_data, colWidths=[120, 80, 80, 80, 60])
+            gc_saldos_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ]))
+            elements.append(gc_saldos_table)
+    
+    # Información adicional
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("Información Adicional", subtitle_style))
+    elements.append(Paragraph(f"Fecha de corte: {corte.fecha_corte.strftime('%d/%m/%Y')}", normal_style))
+    elements.append(Paragraph(f"Mantener saldos: {'Sí' if corte.mantener_saldos else 'No'}", normal_style))
+    elements.append(Paragraph(f"Fecha de creación del corte: {corte.fecha_creacion.strftime('%d/%m/%Y %H:%M')}", normal_style))
+    
+    # Construir el PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Crear la respuesta HTTP
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    return response
+
+def generar_excel_corte_mes(datos):
+    """Genera un reporte Excel del corte de mes"""
+    corte = datos['corte']
+    usuario = datos['usuario']
+    
+    # Crear el workbook
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
+    
+    # Formatos
+    title_format = workbook.add_format({
+        'bold': True,
+        'font_size': 16,
+        'align': 'center',
+        'valign': 'vcenter',
+        'bg_color': '#2E86AB',
+        'font_color': 'white',
+        'border': 1
+    })
+    
+    subtitle_format = workbook.add_format({
+        'bold': True,
+        'font_size': 12,
+        'bg_color': '#A23B72',
+        'font_color': 'white',
+        'border': 1
+    })
+    
+    header_format = workbook.add_format({
+        'bold': True,
+        'font_size': 11,
+        'bg_color': '#F18F01',
+        'font_color': 'white',
+        'border': 1,
+        'align': 'center'
+    })
+    
+    money_format = workbook.add_format({
+        'num_format': '$#,##0.00',
+        'border': 1,
+        'align': 'right'
+    })
+    
+    normal_format = workbook.add_format({
+        'border': 1,
+        'align': 'left'
+    })
+    
+    # Hoja 1: Resumen
+    worksheet = workbook.add_worksheet('Resumen')
+    
+    # Título
+    worksheet.merge_range('A1:D1', f'Reporte de Corte de Mes - {corte.mes_nombre} {corte.año_cortado}', title_format)
+    worksheet.write('A3', 'Usuario:', normal_format)
+    worksheet.write('B3', usuario.get_full_name() or usuario.username, normal_format)
+    worksheet.write('A4', 'Fecha de generación:', normal_format)
+    worksheet.write('B4', datos['fecha_generacion'].strftime('%d/%m/%Y %H:%M'), normal_format)
+    
+    # Resumen ejecutivo
+    worksheet.merge_range('A6:D6', 'Resumen Ejecutivo', subtitle_format)
+    worksheet.write('A7', 'Concepto', header_format)
+    worksheet.write('B7', 'Monto', header_format)
+    
+    resumen_data = [
+        ['Total Ingresos', float(corte.total_ingresos)],
+        ['Total Gastos', float(corte.total_gastos)],
+        ['Balance del Mes', float(corte.balance_mes)],
+    ]
+    
+    for i, (concepto, monto) in enumerate(resumen_data):
+        worksheet.write(f'A{8+i}', concepto, normal_format)
+        worksheet.write(f'B{8+i}', monto, money_format)
+    
+    # Saldos de cuentas
+    row = 12
+    worksheet.merge_range(f'A{row}:D{row}', 'Saldos de Cuentas al Corte', subtitle_format)
+    row += 1
+    
+    worksheet.write(f'A{row}', 'Cuenta', header_format)
+    worksheet.write(f'B{row}', 'Saldo', header_format)
+    row += 1
+    
+    # Verificar el formato de los datos
+    if isinstance(corte.saldos_cuentas, dict):
+        # Si es el formato nuevo (JSON con datos completos)
+        if 'saldos_cuentas' in corte.saldos_cuentas:
+            # Formato nuevo: {'saldos_cuentas': {cuenta_id: saldo}, 'gastos_compartidos': {...}}
+            for cuenta_id, saldo in corte.saldos_cuentas['saldos_cuentas'].items():
+                try:
+                    # Asegurar que cuenta_id sea un número
+                    cuenta_id_int = int(cuenta_id)
+                    cuenta = Cuenta.objects.get(id=cuenta_id_int)
+                    worksheet.write(f'A{row}', cuenta.nombre, normal_format)
+                    worksheet.write(f'B{row}', float(saldo), money_format)
+                    row += 1
+                except (ValueError, Cuenta.DoesNotExist):
+                    continue
+        else:
+            # Formato antiguo: {cuenta_id: saldo}
+            for cuenta_id, saldo in corte.saldos_cuentas.items():
+                try:
+                    # Asegurar que cuenta_id sea un número
+                    cuenta_id_int = int(cuenta_id)
+                    cuenta = Cuenta.objects.get(id=cuenta_id_int)
+                    worksheet.write(f'A{row}', cuenta.nombre, normal_format)
+                    worksheet.write(f'B{row}', float(saldo), money_format)
+                    row += 1
+                except (ValueError, Cuenta.DoesNotExist):
+                    continue
+    
+    # Gastos compartidos (si están disponibles)
+    if isinstance(corte.saldos_cuentas, dict) and 'gastos_compartidos' in corte.saldos_cuentas:
+        gastos_compartidos = corte.saldos_cuentas['gastos_compartidos']
+        
+        row += 2
+        worksheet.merge_range(f'A{row}:D{row}', 'Gastos Compartidos del Mes', subtitle_format)
+        row += 1
+        
+        worksheet.write(f'A{row}', 'Concepto', header_format)
+        worksheet.write(f'B{row}', 'Monto', header_format)
+        row += 1
+        
+        gc_resumen_data = [
+            ['Total Gastos Compartidos', gastos_compartidos.get('total_gastos_compartidos_mes', 0)],
+            ['Gastos Pagados por Usuario', gastos_compartidos.get('gastos_pagados_por_usuario', 0)],
+            ['Pagos Realizados por Usuario', gastos_compartidos.get('pagos_usuario_mes', 0)],
+            ['Total Saldo Pendiente', gastos_compartidos.get('total_saldo_pendiente', 0)],
+        ]
+        
+        for concepto, monto in gc_resumen_data:
+            worksheet.write(f'A{row}', concepto, normal_format)
+            worksheet.write(f'B{row}', monto, money_format)
+            row += 1
+        
+        # Detalle de saldos por grupo
+        if 'saldos_pendientes_grupos' in gastos_compartidos:
+            row += 2
+            worksheet.merge_range(f'A{row}:E{row}', 'Saldos Pendientes por Grupo', subtitle_format)
+            row += 1
+            
+            worksheet.write(f'A{row}', 'Grupo', header_format)
+            worksheet.write(f'B{row}', 'Total Debido', header_format)
+            worksheet.write(f'C{row}', 'Total Pagado', header_format)
+            worksheet.write(f'D{row}', 'Saldo Pendiente', header_format)
+            worksheet.write(f'E{row}', 'Miembros', header_format)
+            row += 1
+            
+            for grupo_id, datos_grupo in gastos_compartidos['saldos_pendientes_grupos'].items():
+                worksheet.write(f'A{row}', datos_grupo['nombre'], normal_format)
+                worksheet.write(f'B{row}', datos_grupo['total_debido'], money_format)
+                worksheet.write(f'C{row}', datos_grupo['total_pagado'], money_format)
+                worksheet.write(f'D{row}', datos_grupo['saldo_pendiente'], money_format)
+                worksheet.write(f'E{row}', datos_grupo['cantidad_miembros'], normal_format)
+                row += 1
+    
+    # Información adicional
+    row += 2
+    worksheet.merge_range(f'A{row}:D{row}', 'Información Adicional', subtitle_format)
+    row += 1
+    
+    worksheet.write(f'A{row}', 'Fecha de corte:', normal_format)
+    worksheet.write(f'B{row}', corte.fecha_corte.strftime('%d/%m/%Y'), normal_format)
+    row += 1
+    
+    worksheet.write(f'A{row}', 'Mantener saldos:', normal_format)
+    worksheet.write(f'B{row}', 'Sí' if corte.mantener_saldos else 'No', normal_format)
+    row += 1
+    
+    worksheet.write(f'A{row}', 'Fecha de creación:', normal_format)
+    worksheet.write(f'B{row}', corte.fecha_creacion.strftime('%d/%m/%Y %H:%M'), normal_format)
+    
+    # Ajustar ancho de columnas
+    worksheet.set_column('A:A', 25)
+    worksheet.set_column('B:B', 15)
+    worksheet.set_column('C:E', 15)
+    
+    workbook.close()
+    output.seek(0)
+    
+    # Crear la respuesta HTTP
+    response = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     return response

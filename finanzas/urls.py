@@ -115,4 +115,6 @@ urlpatterns = [
     # Reportes
     path('reportes/gastos-compartidos/', views.reportes_gastos_compartidos, name='reportes_gastos_compartidos'),
     path('reportes/gastos-compartidos/generar/', views.generar_reporte_gastos_compartidos, name='generar_reporte_gastos_compartidos'),
+    path('reportes/corte-mes/', views.reportes_corte_mes, name='reportes_corte_mes'),
+    path('reportes/corte-mes/generar/', views.generar_reporte_corte_mes, name='generar_reporte_corte_mes'),
 ]
