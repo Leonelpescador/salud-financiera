@@ -78,13 +78,34 @@
 
 {% block content %}
 <div class="historico-container">
-    <h1 class="section-title"><i class="fas fa-history"></i> Histórico de Grupos y Gastos Eliminados</h1>
-    <a href="{% url 'grupos_gastos_compartidos_lista' %}" class="btn btn-secondary" style="margin-bottom:2rem;">
-        <i class="fas fa-arrow-left"></i> Volver a Grupos Activos
+    <h1 class="section-title">
+        <i class="fas fa-history"></i> 
+        {% if es_staff %}
+            Histórico Completo - Vista de Administrador
+        {% else %}
+            Histórico de Grupos y Gastos Eliminados
+        {% endif %}
+    </h1>
+    
+    {% if es_staff %}
+    <div class="alert alert-info" style="margin-bottom: 2rem; background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 1rem; border-radius: 8px;">
+        <i class="fas fa-shield-alt"></i> 
+        <strong>Vista de Administrador:</strong> Estás viendo el histórico completo de todos los usuarios del sistema.
+    </div>
+    {% endif %}
+    
+    <a href="{% url 'dashboard_gastos_compartidos' %}" class="btn btn-secondary" style="margin-bottom:2rem;">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
     </a>
 
     <!-- Grupos Eliminados -->
-    <h2 class="section-title"><i class="fas fa-users-slash"></i> Grupos Eliminados ({{ total_grupos_inactivos }})</h2>
+    <h2 class="section-title">
+        <i class="fas fa-users-slash"></i> 
+        Grupos Eliminados ({{ total_grupos_inactivos }})
+        {% if es_staff %}
+            <span style="font-size: 0.8rem; color: #666;">- Todos los usuarios</span>
+        {% endif %}
+    </h2>
     {% if grupos_inactivos %}
     <table class="historico-table">
         <thead>
@@ -92,6 +113,9 @@
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Miembros</th>
+                {% if es_staff %}
+                <th>Creador</th>
+                {% endif %}
                 <th>Fecha de creación</th>
                 <th>Fecha de eliminación</th>
                 <th>Estado</th>
@@ -103,6 +127,9 @@
                 <td>{{ grupo.nombre }}</td>
                 <td>{{ grupo.descripcion|default:'-' }}</td>
                 <td>{{ grupo.miembros.count }}</td>
+                {% if es_staff %}
+                <td>{{ grupo.creador.get_full_name|default:grupo.creador.username }}</td>
+                {% endif %}
                 <td>{{ grupo.fecha_creacion|date:"d/m/Y H:i" }}</td>
                 <td>{{ grupo.fecha_modificacion|date:"d/m/Y H:i" }}</td>
                 <td><span class="badge-inactivo">Inactivo</span></td>
@@ -118,7 +145,13 @@
     {% endif %}
 
     <!-- Gastos Eliminados -->
-    <h2 class="section-title"><i class="fas fa-money-bill-wave-slash"></i> Gastos Eliminados ({{ total_gastos_inactivos }})</h2>
+    <h2 class="section-title">
+        <i class="fas fa-money-bill-wave-slash"></i> 
+        Gastos Eliminados ({{ total_gastos_inactivos }})
+        {% if es_staff %}
+            <span style="font-size: 0.8rem; color: #666;">- Todos los usuarios</span>
+        {% endif %}
+    </h2>
     {% if gastos_inactivos %}
     <table class="historico-table">
         <thead>
@@ -128,6 +161,9 @@
                 <th>Monto</th>
                 <th>Tipo</th>
                 <th>Pagado por</th>
+                {% if es_staff %}
+                <th>Usuario</th>
+                {% endif %}
                 <th>Fecha</th>
                 <th>Fecha de eliminación</th>
                 <th>Estado</th>
@@ -140,7 +176,14 @@
                 <td>{{ gasto.grupo.nombre }}</td>
                 <td>${{ gasto.monto_total|floatformat:2 }}</td>
                 <td>{{ gasto.get_tipo_display }}</td>
-                <td>{{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username }}</td>
+                <td>{{ gasto.pagado_por.get_full_name|default:gasto.pagado_por.username|default:'-' }}</td>
+                {% if es_staff %}
+                <td>
+                    {% for miembro in gasto.grupo.miembros.all %}
+                        {{ miembro.get_full_name|default:miembro.username }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                {% endif %}
                 <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
                 <td>{{ gasto.fecha_modificacion|date:"d/m/Y H:i" }}</td>
                 <td><span class="badge-eliminado">Eliminado</span></td>

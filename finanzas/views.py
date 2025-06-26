@@ -1167,7 +1167,8 @@ def configuracion_personal(request):
 # Vistas para Gastos Compartidos
 @login_required
 def dashboard_gastos_compartidos(request):
-    """Dashboard principal de gastos compartidos"""
+    """Dashboard principal de gastos compartidos mejorado"""
+    from datetime import date, timedelta
     try:
         # Obtener grupos donde el usuario es miembro
         grupos = GrupoGastosCompartidos.objects.filter(miembros=request.user, activo=True)
@@ -1193,7 +1194,7 @@ def dashboard_gastos_compartidos(request):
         
         total_pendiente = sum(pago.monto_debido - pago.monto_pagado for pago in pagos_pendientes)
         
-        # Obtener gastos recientes (últimos 5)
+        # Obtener gastos recientes (últimos 5, incluyendo cancelados)
         gastos_recientes = GastoCompartido.objects.filter(
             grupo__in=grupos, 
             activo=True
@@ -1212,6 +1213,23 @@ def dashboard_gastos_compartidos(request):
             estado='vencido'
         ).count()
         
+        gastos_cancelados = GastoCompartido.objects.filter(
+            grupo__in=grupos,
+            activo=True,
+            estado='cancelado'
+        ).count()
+        
+        # Gastos próximos a vencer (en los próximos 3 días)
+        hoy = date.today()
+        proximos_vencer = GastoCompartido.objects.filter(
+            grupo__in=grupos,
+            activo=True,
+            estado='pendiente',
+            fecha_vencimiento__isnull=False,
+            fecha_vencimiento__gte=hoy,
+            fecha_vencimiento__lte=hoy + timedelta(days=3)
+        ).order_by('fecha_vencimiento')
+        
         # Obtener pagos pendientes del usuario para mostrar en la sección correspondiente
         pagos_pendientes_usuario = PagoGastoCompartido.objects.filter(
             miembro=request.user,
@@ -1219,8 +1237,32 @@ def dashboard_gastos_compartidos(request):
             estado='pendiente'
         ).select_related('gasto_compartido', 'gasto_compartido__grupo')
         
+        # Resumen por grupo: saldo neto del usuario en cada grupo
+        grupos_con_saldo = []
+        for grupo in grupos:
+            pagos_miembro = PagoGastoCompartido.objects.filter(
+                gasto_compartido__grupo=grupo,
+                miembro=request.user
+            )
+            total_debido = sum(p.monto_debido for p in pagos_miembro)
+            total_pagado = sum(p.monto_pagado for p in pagos_miembro)
+            saldo_neto = total_debido - total_pagado
+            grupos_con_saldo.append({
+                'grupo': grupo,
+                'saldo_neto': saldo_neto
+            })
+        
+        # Filtros rápidos (opcional: puedes expandir esto en el template)
+        estados_posibles = [
+            {'valor': 'pendiente', 'nombre': 'Pendiente'},
+            {'valor': 'pagado', 'nombre': 'Pagado'},
+            {'valor': 'vencido', 'nombre': 'Vencido'},
+            {'valor': 'cancelado', 'nombre': 'Cancelado'},
+        ]
+        
         context = {
             'grupos': grupos,  # Lista directa de grupos
+            'grupos_con_saldo': grupos_con_saldo,
             'total_grupos': total_grupos,
             'total_gastos': total_gastos,
             'total_gastado': total_gastado,
@@ -1230,11 +1272,12 @@ def dashboard_gastos_compartidos(request):
             'pagos_pendientes_usuario': pagos_pendientes_usuario,
             'gastos_pendientes': gastos_pendientes,
             'gastos_vencidos': gastos_vencidos,
+            'gastos_cancelados': gastos_cancelados,
             'total_adeudado': total_pendiente,  # Alias para el template
+            'proximos_vencer': proximos_vencer,
+            'estados_posibles': estados_posibles,
         }
-        
         return render(request, 'gastos_compartidos/dashboard.html', context)
-        
     except Exception as e:
         messages.error(request, f'Error al cargar el dashboard: {str(e)}')
         return redirect('dashboard')
@@ -1401,17 +1444,29 @@ def gasto_compartido_crear(request):
                 
                 gasto.save()
                 
-                # Determinar quién pagó el gasto
+                # Determinar quién pagó el gasto y cuánto pagó inicialmente
                 pagado_por_usuario = gasto.pagado_por
+                monto_pagado_inicial = form.cleaned_data.get('monto_pagado_inicial')
+                
+                # Si no se especificó monto pagado inicial, asumir que pagó todo
+                if monto_pagado_inicial is None and pagado_por_usuario:
+                    monto_pagado_inicial = gasto.monto_total
                 
                 # Crear registros de pago para cada miembro
                 for miembro in grupo.miembros.all():
                     monto_debido_miembro = gasto.monto_por_persona
                     monto_pagado_miembro = Decimal('0')
                     
-                    # Si este miembro es quien pagó, registrar su pago
+                    # Si este miembro es quien pagó, registrar su pago inicial
                     if pagado_por_usuario and miembro == pagado_por_usuario:
-                        monto_pagado_miembro = monto_debido_miembro
+                        # Calcular cuánto le corresponde pagar de lo que ya pagó
+                        monto_por_persona = gasto.monto_por_persona
+                        if monto_pagado_inicial:
+                            # Si pagó más de lo que le corresponde, registrar solo lo que le corresponde
+                            monto_pagado_miembro = min(monto_por_persona, monto_pagado_inicial)
+                        else:
+                            # Si no se especificó monto pagado, asumir que pagó todo
+                            monto_pagado_miembro = monto_por_persona
                     
                     PagoGastoCompartido.objects.create(
                         gasto_compartido=gasto,
@@ -1514,9 +1569,42 @@ def gasto_compartido_detalle(request, pk):
     gasto = get_object_or_404(GastoCompartido, pk=pk, grupo__miembros=request.user, activo=True)
     pagos = PagoGastoCompartido.objects.filter(gasto_compartido=gasto).select_related('miembro')
     
+    # Calcular estadísticas de pagos
+    total_pagado = sum(pago.monto_pagado for pago in pagos)
+    total_debido = sum(pago.monto_debido for pago in pagos)
+    total_pendiente = total_debido - total_pagado
+    
+    # Calcular porcentaje de pago
+    if gasto.monto_total > 0:
+        porcentaje_pagado = (total_pagado / gasto.monto_total) * 100
+    else:
+        porcentaje_pagado = 0
+    
+    # Contar pagos por estado
+    pagos_pendientes = pagos.filter(estado='pendiente').count()
+    pagos_pagados = pagos.filter(estado='pagado').count()
+    pagos_vencidos = pagos.filter(estado='vencido').count()
+    
+    # Determinar el estado general del gasto
+    if total_pendiente == 0:
+        estado_general = 'pagado'
+    elif gasto.fecha_vencimiento and gasto.fecha_vencimiento < date.today():
+        estado_general = 'vencido'
+    else:
+        estado_general = 'pendiente'
+    
     context = {
         'gasto': gasto,
         'pagos': pagos,
+        'total_pagado': total_pagado,
+        'total_debido': total_debido,
+        'total_pendiente': total_pendiente,
+        'porcentaje_pagado': porcentaje_pagado,
+        'pagos_pendientes': pagos_pendientes,
+        'pagos_pagados': pagos_pagados,
+        'pagos_vencidos': pagos_vencidos,
+        'estado_general': estado_general,
+        'total_miembros': pagos.count(),
     }
     return render(request, 'gastos_compartidos/detalle.html', context)
 
@@ -1546,23 +1634,38 @@ def pago_gasto_compartido_editar(request, pk):
 @login_required
 def historico_gastos_compartidos(request):
     """Vista para ver el histórico de grupos y gastos eliminados"""
-    # Obtener grupos inactivos donde el usuario es miembro o creador
-    grupos_inactivos = GrupoGastosCompartidos.objects.filter(
-        Q(miembros=request.user) | Q(creador=request.user),
-        activo=False
-    ).order_by('-fecha_modificacion')
     
-    # Obtener gastos inactivos de grupos donde el usuario es miembro
-    gastos_inactivos = GastoCompartido.objects.filter(
-        grupo__miembros=request.user,
-        activo=False
-    ).select_related('grupo', 'pagado_por').order_by('-fecha_modificacion')
+    # Si el usuario es staff, mostrar todo el histórico
+    if request.user.is_staff or request.user.is_superuser:
+        grupos_inactivos = GrupoGastosCompartidos.objects.filter(
+            activo=False
+        ).order_by('-fecha_modificacion')
+        
+        gastos_inactivos = GastoCompartido.objects.filter(
+            activo=False
+        ).select_related('grupo', 'pagado_por').order_by('-fecha_modificacion')
+        
+        es_staff = True
+    else:
+        # Usuario normal: solo ver su propio histórico
+        grupos_inactivos = GrupoGastosCompartidos.objects.filter(
+            Q(miembros=request.user) | Q(creador=request.user),
+            activo=False
+        ).order_by('-fecha_modificacion')
+        
+        gastos_inactivos = GastoCompartido.objects.filter(
+            grupo__miembros=request.user,
+            activo=False
+        ).select_related('grupo', 'pagado_por').order_by('-fecha_modificacion')
+        
+        es_staff = False
     
     context = {
         'grupos_inactivos': grupos_inactivos,
         'gastos_inactivos': gastos_inactivos,
         'total_grupos_inactivos': grupos_inactivos.count(),
         'total_gastos_inactivos': gastos_inactivos.count(),
+        'es_staff': es_staff,
     }
     return render(request, 'gastos_compartidos/historico.html', context)
 

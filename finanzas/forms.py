@@ -383,6 +383,21 @@ class GrupoGastosCompartidosForm(forms.ModelForm):
         return grupo
 
 class GastoCompartidoForm(forms.ModelForm):
+    # Campo adicional para especificar cuánto pagó inicialmente quien pagó
+    monto_pagado_inicial = forms.DecimalField(
+        required=False,
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0'),
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01',
+            'min': '0',
+            'placeholder': 'Monto que pagó inicialmente (opcional)'
+        }),
+        help_text="Si quien pagó solo pagó una parte del gasto, especifica cuánto pagó. Si no especificas, se asume que pagó todo."
+    )
+    
     class Meta:
         model = GastoCompartido
         fields = ['grupo', 'titulo', 'descripcion', 'monto_total', 'fecha', 'fecha_vencimiento', 'tipo', 'estado', 'pagado_por', 'cuenta_pago', 'imagen_recibo']
@@ -442,6 +457,7 @@ class GastoCompartidoForm(forms.ModelForm):
         fecha = cleaned_data.get('fecha')
         fecha_vencimiento = cleaned_data.get('fecha_vencimiento')
         monto_total = cleaned_data.get('monto_total')
+        monto_pagado_inicial = cleaned_data.get('monto_pagado_inicial')
         
         # Validar que la cuenta de pago pertenezca al usuario que pagó
         if pagado_por and cuenta_pago and cuenta_pago.usuario != pagado_por:
@@ -460,6 +476,11 @@ class GastoCompartidoForm(forms.ModelForm):
         # Validar que el monto total sea razonable
         if monto_total and monto_total > Decimal('999999.99'):
             raise forms.ValidationError("El monto total no puede exceder $999,999.99")
+        
+        # Validar que el monto pagado inicial no exceda el monto total
+        if monto_pagado_inicial and monto_total:
+            if monto_pagado_inicial > monto_total:
+                raise forms.ValidationError("El monto pagado inicial no puede exceder el monto total del gasto.")
         
         return cleaned_data
 

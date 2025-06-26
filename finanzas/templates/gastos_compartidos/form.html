@@ -420,6 +420,24 @@
                 </div>
             </div>
             
+            <!-- Monto Pagado Inicial -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.monto_pagado_inicial.id_for_label }}">
+                    <i class="fas fa-money-bill-wave"></i> Monto Pagado Inicialmente
+                </label>
+                {{ form.monto_pagado_inicial }}
+                {% if form.monto_pagado_inicial.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.monto_pagado_inicial.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    {{ form.monto_pagado_inicial.help_text }}
+                </div>
+            </div>
+            
             <!-- Imagen del Recibo -->
             <div class="form-group">
                 <label class="form-label">

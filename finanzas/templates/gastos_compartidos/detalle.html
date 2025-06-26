@@ -296,12 +296,20 @@
             <div class="stat-label">Por Persona</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ pagos.count }}</div>
+            <div class="stat-value">{{ total_miembros }}</div>
             <div class="stat-label">Participantes</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">{{ porcentaje_pagado|floatformat:1 }}%</div>
             <div class="stat-label">Pagado</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${{ total_pagado|floatformat:2 }}</div>
+            <div class="stat-label">Total Pagado</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${{ total_pendiente|floatformat:2 }}</div>
+            <div class="stat-label">Pendiente</div>
         </div>
     </div>
     
