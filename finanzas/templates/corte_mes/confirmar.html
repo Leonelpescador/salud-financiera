@@ -330,6 +330,28 @@
         </div>
     </div>
 
+    <!-- Resumen de gastos compartidos -->
+    {% if grupos_usuario %}
+    <div class="stats-grid">
+        <div class="stat-card" style="background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white;">
+            <h5><i class="fas fa-users me-2"></i>Gastos Compartidos</h5>
+            <h3>${{ total_gastos_compartidos_mes|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #fd79a8, #e84393); color: white;">
+            <h5><i class="fas fa-credit-card me-2"></i>Pagados por Mí</h5>
+            <h3>${{ gastos_pagados_por_usuario|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #fdcb6e, #e17055); color: white;">
+            <h5><i class="fas fa-hand-holding-usd me-2"></i>Mis Pagos</h5>
+            <h3>${{ pagos_usuario_mes|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-card {% if total_saldo_pendiente_gastos_compartidos > 0 %}negative{% endif %}" style="background: linear-gradient(135deg, #74b9ff, #0984e3); color: white;">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Saldo Pendiente</h5>
+            <h3>${{ total_saldo_pendiente_gastos_compartidos|floatformat:2 }}</h3>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Información adicional -->
     <div class="info-section">
         <div class="info-card">
@@ -375,6 +397,30 @@
                 {% endfor %}
             </div>
         </div>
+        
+        {% if saldos_pendientes_gastos_compartidos %}
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fas fa-users me-2"></i>Saldos Pendientes - Gastos Compartidos
+            </div>
+            <div class="info-card-body">
+                {% for grupo_id, saldo in saldos_pendientes_gastos_compartidos.items %}
+                <div class="account-item">
+                    <div>
+                        <span class="account-name">{{ saldo.nombre }}</span>
+                        <small class="text-muted d-block">{{ saldo.cantidad_miembros }} miembros</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="account-balance {% if saldo.saldo_pendiente >= 0 %}positive{% else %}negative{% endif %}">
+                            ${{ saldo.saldo_pendiente|floatformat:2 }}
+                        </span>
+                        <small class="text-muted d-block">Pagado: ${{ saldo.total_pagado|floatformat:2 }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Advertencias -->

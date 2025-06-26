@@ -399,15 +399,37 @@
         </div>
     </div>
 
+    <!-- Resumen de gastos compartidos -->
+    {% if datos_gastos_compartidos %}
+    <div class="stats-overview">
+        <div class="stat-overview-card" style="background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white;">
+            <h5><i class="fas fa-users me-2"></i>Gastos Compartidos</h5>
+            <h3>${{ datos_gastos_compartidos.total_gastos_compartidos_mes|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-overview-card" style="background: linear-gradient(135deg, #fd79a8, #e84393); color: white;">
+            <h5><i class="fas fa-credit-card me-2"></i>Pagados por Mí</h5>
+            <h3>${{ datos_gastos_compartidos.gastos_pagados_por_usuario|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-overview-card" style="background: linear-gradient(135deg, #fdcb6e, #e17055); color: white;">
+            <h5><i class="fas fa-hand-holding-usd me-2"></i>Mis Pagos</h5>
+            <h3>${{ datos_gastos_compartidos.pagos_usuario_mes|floatformat:2 }}</h3>
+        </div>
+        <div class="stat-overview-card {% if datos_gastos_compartidos.total_saldo_pendiente > 0 %}negative{% endif %}" style="background: linear-gradient(135deg, #74b9ff, #0984e3); color: white;">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Saldo Pendiente</h5>
+            <h3>${{ datos_gastos_compartidos.total_saldo_pendiente|floatformat:2 }}</h3>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Saldos de cuentas al momento del corte -->
     <div class="content-section">
         <div class="section-header">
             <i class="fas fa-wallet me-2"></i>Saldos de Cuentas al Corte
         </div>
         <div class="section-body">
-            {% if corte.saldos_cuentas %}
+            {% if saldos_cuentas_originales %}
             <div class="accounts-grid">
-                {% for cuenta_id, saldo in corte.saldos_cuentas.items %}
+                {% for cuenta_id, saldo in saldos_cuentas_originales.items %}
                 <div class="account-item">
                     <div class="account-info">
                         <div class="account-details">
@@ -430,6 +452,35 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Saldos pendientes en gastos compartidos -->
+    {% if datos_gastos_compartidos and datos_gastos_compartidos.saldos_pendientes_grupos %}
+    <div class="content-section">
+        <div class="section-header">
+            <i class="fas fa-users me-2"></i>Saldos Pendientes - Gastos Compartidos
+        </div>
+        <div class="section-body">
+            <div class="accounts-grid">
+                {% for grupo_id, saldo in datos_gastos_compartidos.saldos_pendientes_grupos.items %}
+                <div class="account-item">
+                    <div class="account-info">
+                        <div class="account-details">
+                            <h6>{{ saldo.nombre }}</h6>
+                            <small>{{ saldo.cantidad_miembros }} miembros</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="account-balance {% if saldo.saldo_pendiente >= 0 %}positive{% else %}negative{% endif %}">
+                                ${{ saldo.saldo_pendiente|floatformat:2 }}
+                            </span>
+                            <small class="d-block text-muted">Pagado: ${{ saldo.total_pagado|floatformat:2 }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Gastos por categoría -->
     {% if gastos_por_categoria %}
@@ -513,5 +564,113 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Gastos compartidos del mes -->
+    {% if gastos_compartidos_mes %}
+    <div class="content-section">
+        <div class="section-header">
+            <i class="fas fa-users me-2"></i>Gastos Compartidos del Mes ({{ total_gastos_compartidos }})
+        </div>
+        <div class="section-body">
+            <div class="transactions-table">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Título</th>
+                                <th>Grupo</th>
+                                <th>Pagado por</th>
+                                <th>Estado</th>
+                                <th class="text-end">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos_compartidos_mes %}
+                            <tr>
+                                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ gasto.titulo }}</td>
+                                <td>
+                                    <span class="category-badge" style="background-color: {{ gasto.grupo.color }};">
+                                        {{ gasto.grupo.nombre }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if gasto.pagado_por %}
+                                        {{ gasto.pagado_por.username }}
+                                    {% else %}
+                                        <span class="text-muted">No especificado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="transaction-badge {% if gasto.estado == 'pagado' %}ingreso{% elif gasto.estado == 'vencido' %}gasto{% else %}transferencia{% endif %}">
+                                        {{ gasto.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end amount-negative">
+                                    ${{ gasto.monto_total|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pagos realizados por el usuario en gastos compartidos -->
+    {% if pagos_usuario_mes %}
+    <div class="content-section">
+        <div class="section-header">
+            <i class="fas fa-hand-holding-usd me-2"></i>Mis Pagos en Gastos Compartidos ({{ total_pagos_usuario }})
+        </div>
+        <div class="section-body">
+            <div class="transactions-table">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha Pago</th>
+                                <th>Gasto</th>
+                                <th>Grupo</th>
+                                <th>Estado</th>
+                                <th class="text-end">Monto Pagado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in pagos_usuario_mes %}
+                            <tr>
+                                <td>
+                                    {% if pago.fecha_pago %}
+                                        {{ pago.fecha_pago|date:"d/m/Y" }}
+                                    {% else %}
+                                        <span class="text-muted">No especificada</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ pago.gasto_compartido.titulo }}</td>
+                                <td>
+                                    <span class="category-badge" style="background-color: {{ pago.gasto_compartido.grupo.color }};">
+                                        {{ pago.gasto_compartido.grupo.nombre }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="transaction-badge {% if pago.estado == 'pagado' %}ingreso{% elif pago.estado == 'parcial' %}transferencia{% else %}gasto{% endif %}">
+                                        {{ pago.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end amount-positive">
+                                    ${{ pago.monto_pagado|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

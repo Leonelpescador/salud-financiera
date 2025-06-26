@@ -686,6 +686,78 @@ def corte_mes_confirmar(request):
         fecha__lte=fecha_fin_mes
     ).count()
     
+    # CALCULAR ESTADÍSTICAS DE GASTOS COMPARTIDOS
+    # Gastos compartidos del mes donde el usuario es miembro
+    grupos_usuario = GrupoGastosCompartidos.objects.filter(
+        miembros=request.user,
+        activo=True
+    )
+    
+    gastos_compartidos_mes = GastoCompartido.objects.filter(
+        grupo__in=grupos_usuario,
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes,
+        activo=True
+    )
+    
+    total_gastos_compartidos_mes = gastos_compartidos_mes.aggregate(
+        total=Sum('monto_total')
+    )['total'] or Decimal('0')
+    
+    # Gastos compartidos pagados por el usuario en el mes
+    gastos_pagados_por_usuario = gastos_compartidos_mes.filter(
+        pagado_por=request.user
+    ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0')
+    
+    # Pagos realizados por el usuario en gastos compartidos del mes
+    pagos_usuario_mes = PagoGastoCompartido.objects.filter(
+        miembro=request.user,
+        gasto_compartido__fecha__gte=inicio_mes,
+        gasto_compartido__fecha__lte=fecha_fin_mes,
+        gasto_compartido__activo=True
+    ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0')
+    
+    # Saldos pendientes en gastos compartidos al final del mes
+    saldos_pendientes_gastos_compartidos = {}
+    for grupo in grupos_usuario:
+        gastos_grupo = GastoCompartido.objects.filter(
+            grupo=grupo,
+            activo=True
+        )
+        
+        total_debido_usuario = gastos_grupo.aggregate(
+            total=Sum('monto_total')
+        )['total'] or Decimal('0')
+        
+        # Calcular cuánto debe pagar el usuario (dividir por cantidad de miembros)
+        cantidad_miembros = grupo.cantidad_miembros
+        if cantidad_miembros > 0:
+            monto_por_persona = total_debido_usuario / cantidad_miembros
+        else:
+            monto_por_persona = Decimal('0')
+        
+        # Calcular cuánto ya pagó el usuario
+        pagos_usuario_grupo = PagoGastoCompartido.objects.filter(
+            miembro=request.user,
+            gasto_compartido__grupo=grupo,
+            gasto_compartido__activo=True
+        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0')
+        
+        saldo_pendiente = monto_por_persona - pagos_usuario_grupo
+        
+        saldos_pendientes_gastos_compartidos[grupo.id] = {
+            'nombre': grupo.nombre,
+            'total_debido': float(monto_por_persona),
+            'total_pagado': float(pagos_usuario_grupo),
+            'saldo_pendiente': float(saldo_pendiente),
+            'cantidad_miembros': cantidad_miembros
+        }
+    
+    # Total de saldos pendientes en gastos compartidos
+    total_saldo_pendiente_gastos_compartidos = sum(
+        saldo['saldo_pendiente'] for saldo in saldos_pendientes_gastos_compartidos.values()
+    )
+    
     context = {
         'mes_actual': mes_actual,
         'año_actual': año_actual,
@@ -697,6 +769,13 @@ def corte_mes_confirmar(request):
         'saldos_cuentas': saldos_cuentas,
         'transacciones_mes': transacciones_mes,
         'cuentas_activas': cuentas_activas,
+        # Nuevos datos de gastos compartidos
+        'total_gastos_compartidos_mes': total_gastos_compartidos_mes,
+        'gastos_pagados_por_usuario': gastos_pagados_por_usuario,
+        'pagos_usuario_mes': pagos_usuario_mes,
+        'saldos_pendientes_gastos_compartidos': saldos_pendientes_gastos_compartidos,
+        'total_saldo_pendiente_gastos_compartidos': total_saldo_pendiente_gastos_compartidos,
+        'grupos_usuario': grupos_usuario,
     }
     
     return render(request, 'corte_mes/confirmar.html', context)
@@ -753,7 +832,78 @@ def corte_mes_ejecutar(request):
     for cuenta in cuentas_activas:
         saldos_cuentas[cuenta.id] = float(cuenta.saldo_actual)
     
-    # Crear el registro del corte
+    # CALCULAR ESTADÍSTICAS DE GASTOS COMPARTIDOS
+    grupos_usuario = GrupoGastosCompartidos.objects.filter(
+        miembros=request.user,
+        activo=True
+    )
+    
+    gastos_compartidos_mes = GastoCompartido.objects.filter(
+        grupo__in=grupos_usuario,
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes,
+        activo=True
+    )
+    
+    total_gastos_compartidos_mes = gastos_compartidos_mes.aggregate(
+        total=Sum('monto_total')
+    )['total'] or Decimal('0')
+    
+    # Gastos compartidos pagados por el usuario en el mes
+    gastos_pagados_por_usuario = gastos_compartidos_mes.filter(
+        pagado_por=request.user
+    ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0')
+    
+    # Pagos realizados por el usuario en gastos compartidos del mes
+    pagos_usuario_mes = PagoGastoCompartido.objects.filter(
+        miembro=request.user,
+        gasto_compartido__fecha__gte=inicio_mes,
+        gasto_compartido__fecha__lte=fecha_fin_mes,
+        gasto_compartido__activo=True
+    ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0')
+    
+    # Saldos pendientes en gastos compartidos al final del mes
+    saldos_pendientes_gastos_compartidos = {}
+    for grupo in grupos_usuario:
+        gastos_grupo = GastoCompartido.objects.filter(
+            grupo=grupo,
+            activo=True
+        )
+        
+        total_debido_usuario = gastos_grupo.aggregate(
+            total=Sum('monto_total')
+        )['total'] or Decimal('0')
+        
+        # Calcular cuánto debe pagar el usuario (dividir por cantidad de miembros)
+        cantidad_miembros = grupo.cantidad_miembros
+        if cantidad_miembros > 0:
+            monto_por_persona = total_debido_usuario / cantidad_miembros
+        else:
+            monto_por_persona = Decimal('0')
+        
+        # Calcular cuánto ya pagó el usuario
+        pagos_usuario_grupo = PagoGastoCompartido.objects.filter(
+            miembro=request.user,
+            gasto_compartido__grupo=grupo,
+            gasto_compartido__activo=True
+        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0')
+        
+        saldo_pendiente = monto_por_persona - pagos_usuario_grupo
+        
+        saldos_pendientes_gastos_compartidos[grupo.id] = {
+            'nombre': grupo.nombre,
+            'total_debido': float(monto_por_persona),
+            'total_pagado': float(pagos_usuario_grupo),
+            'saldo_pendiente': float(saldo_pendiente),
+            'cantidad_miembros': cantidad_miembros
+        }
+    
+    # Total de saldos pendientes en gastos compartidos
+    total_saldo_pendiente_gastos_compartidos = sum(
+        saldo['saldo_pendiente'] for saldo in saldos_pendientes_gastos_compartidos.values()
+    )
+    
+    # Crear el registro del corte con datos de gastos compartidos
     corte_mes = CorteMes.objects.create(
         usuario=request.user,
         fecha_corte=fecha_fin_mes,
@@ -766,13 +916,29 @@ def corte_mes_ejecutar(request):
         mantener_saldos=True
     )
     
+    # Guardar datos de gastos compartidos en el campo saldos_cuentas (extendemos su uso)
+    datos_completos = {
+        'saldos_cuentas': saldos_cuentas,
+        'gastos_compartidos': {
+            'total_gastos_compartidos_mes': float(total_gastos_compartidos_mes),
+            'gastos_pagados_por_usuario': float(gastos_pagados_por_usuario),
+            'pagos_usuario_mes': float(pagos_usuario_mes),
+            'saldos_pendientes_grupos': saldos_pendientes_gastos_compartidos,
+            'total_saldo_pendiente': float(total_saldo_pendiente_gastos_compartidos)
+        }
+    }
+    
+    # Actualizar el campo saldos_cuentas con todos los datos
+    corte_mes.saldos_cuentas = datos_completos
+    corte_mes.save()
+    
     # Opcional: Archivar transacciones del mes (mover a una tabla de histórico)
     # Por ahora solo registramos el corte sin eliminar transacciones
     
     messages.success(
         request, 
         f'Corte de mes realizado exitosamente para {corte_mes.mes_nombre} {año_actual}. '
-        f'Balance: ${balance_mes:,.2f}'
+        f'Balance: ${balance_mes:,.2f} | Gastos Compartidos: ${total_gastos_compartidos_mes:,.2f}'
     )
     
     return redirect('dashboard')
@@ -820,11 +986,53 @@ def corte_mes_detalle(request, pk):
         total=Sum('monto')
     ).order_by('-total')
     
+    # Extraer datos de gastos compartidos del corte
+    datos_gastos_compartidos = {}
+    saldos_cuentas_originales = {}
+    
+    if isinstance(corte.saldos_cuentas, dict):
+        if 'gastos_compartidos' in corte.saldos_cuentas:
+            # Formato nuevo con gastos compartidos
+            datos_gastos_compartidos = corte.saldos_cuentas.get('gastos_compartidos', {})
+            saldos_cuentas_originales = corte.saldos_cuentas.get('saldos_cuentas', {})
+        else:
+            # Formato antiguo, solo saldos de cuentas
+            saldos_cuentas_originales = corte.saldos_cuentas
+    
+    # Obtener información actualizada de gastos compartidos del mes
+    grupos_usuario = GrupoGastosCompartidos.objects.filter(
+        miembros=request.user,
+        activo=True
+    )
+    
+    gastos_compartidos_mes = GastoCompartido.objects.filter(
+        grupo__in=grupos_usuario,
+        fecha__gte=inicio_mes,
+        fecha__lte=fecha_fin_mes,
+        activo=True
+    ).select_related('grupo', 'pagado_por').order_by('-fecha')
+    
+    # Pagos del usuario en gastos compartidos del mes
+    pagos_usuario_mes = PagoGastoCompartido.objects.filter(
+        miembro=request.user,
+        gasto_compartido__fecha__gte=inicio_mes,
+        gasto_compartido__fecha__lte=fecha_fin_mes,
+        gasto_compartido__activo=True
+    ).select_related('gasto_compartido', 'gasto_compartido__grupo').order_by('-fecha_pago')
+    
     context = {
         'corte': corte,
         'transacciones': transacciones,
         'gastos_por_categoria': gastos_por_categoria,
         'total_transacciones': transacciones.count(),
+        # Datos de gastos compartidos
+        'datos_gastos_compartidos': datos_gastos_compartidos,
+        'saldos_cuentas_originales': saldos_cuentas_originales,
+        'grupos_usuario': grupos_usuario,
+        'gastos_compartidos_mes': gastos_compartidos_mes,
+        'pagos_usuario_mes': pagos_usuario_mes,
+        'total_gastos_compartidos': gastos_compartidos_mes.count(),
+        'total_pagos_usuario': pagos_usuario_mes.count(),
     }
     
     return render(request, 'corte_mes/detalle.html', context)
@@ -1877,7 +2085,25 @@ def lista_notificaciones(request):
         usuario=request.user
     ).order_by('-fecha_creacion')
     
-    # Paginación
+    # Si es una petición AJAX, devolver JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        notificaciones_data = []
+        for notif in notificaciones[:10]:  # Solo las últimas 10
+            notificaciones_data.append({
+                'id': notif.id,
+                'mensaje': notif.mensaje,
+                'url_destino': notif.url_destino or '',
+                'leida': notif.leida,
+                'fecha_creacion': notif.fecha_creacion.isoformat()
+            })
+        
+        return JsonResponse({
+            'notificaciones': notificaciones_data,
+            'total': notificaciones.count(),
+            'no_leidas': notificaciones.filter(leida=False).count()
+        })
+    
+    # Paginación para vista normal
     paginator = Paginator(notificaciones, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -1911,6 +2137,24 @@ def marcar_todas_notificaciones_leidas(request):
         return JsonResponse({'success': True})
     
     messages.success(request, 'Todas las notificaciones han sido marcadas como leídas.')
+    return redirect('lista_notificaciones')
+
+@login_required
+def notificaciones_count(request):
+    """Obtener el conteo de notificaciones no leídas"""
+    count = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    return JsonResponse({'count': count})
+
+@login_required
+def eliminar_notificacion(request, pk):
+    """Eliminar una notificación"""
+    notificacion = get_object_or_404(Notificacion, pk=pk, usuario=request.user)
+    notificacion.delete()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    
+    messages.success(request, 'Notificación eliminada correctamente.')
     return redirect('lista_notificaciones')
 
 # APIs adicionales

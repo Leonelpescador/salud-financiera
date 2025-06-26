@@ -105,6 +105,8 @@ urlpatterns = [
     path('notificaciones/', views.lista_notificaciones, name='lista_notificaciones'),
     path('notificaciones/leer/<int:pk>/', views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
     path('notificaciones/leer_todas/', views.marcar_todas_notificaciones_leidas, name='marcar_todas_notificaciones_leidas'),
+    path('notificaciones/count/', views.notificaciones_count, name='notificaciones_count'),
+    path('notificaciones/eliminar/<int:pk>/', views.eliminar_notificacion, name='eliminar_notificacion'),
     
     # APIs
     path('api/cuentas-usuario/<int:user_id>/', views.api_cuentas_usuario, name='api_cuentas_usuario'),
